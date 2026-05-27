@@ -38,6 +38,14 @@ type ExchangePosition = {
   kept_minor_decline: 'knight' | 'bishop';
 };
 
+type EndgameTask = {
+  id: number;
+  fen: string;
+  source?: string;
+  success?: string;
+  partial?: string;
+};
+
 export function getTacticalTaskPositions(taskId: number): TacticalTaskPosition[] {
   const task = calibrationPositions.tasks.find((entry) => entry.id === taskId) as TacticalTask | undefined;
   return task?.positions ?? [];
@@ -60,4 +68,9 @@ export function getExchangePositions(): ExchangePosition[] {
     | { positions?: ExchangePosition[] }
     | undefined;
   return task?.positions ?? [];
+}
+
+export function getEndgameTechniqueTask(): EndgameTask | null {
+  const task = calibrationPositions.tasks.find((entry) => entry.id === 3) as EndgameTask | undefined;
+  return task ?? null;
 }
