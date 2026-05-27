@@ -15,6 +15,9 @@ const CDN_ENGINE = 'https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-
 let engine: Worker | null = null;
 let activeRequestId: number | null = null;
 let readySent = false;
+let cdnBlobUrl: string | null = null;
+
+type EngineSource = 'local' | 'cdn';
 
 function send<T extends object>(msg: T): void {
   (self as DedicatedWorkerGlobalScope).postMessage(msg);
@@ -67,42 +70,100 @@ function formatSetOption(name: string, value: string | number | boolean | undefi
   return `setoption name ${name} value ${String(value)}`;
 }
 
-function init(): void {
-  if (engine) return;
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
-  const createWorker = (url: string): Worker => new Worker(url);
-
-  try {
-    engine = createWorker(LOCAL_ENGINE);
-  } catch (localErr) {
-    try {
-      engine = createWorker(CDN_ENGINE);
-    } catch (cdnErr) {
-      send({
-        type: 'error',
-        message:
-          `Could not start Stockfish worker locally or via CDN. Local: ${localErr instanceof Error ? localErr.message : String(localErr)}. CDN: ${cdnErr instanceof Error ? cdnErr.message : String(cdnErr)}`,
-      });
-      return;
-    }
+function createEngineWorker(url: string, source: EngineSource): Worker {
+  if (source === 'cdn') {
+    cdnBlobUrl = URL.createObjectURL(
+      new Blob([`importScripts(${JSON.stringify(url)});`], { type: 'application/javascript' })
+    );
+    return new Worker(cdnBlobUrl);
   }
 
+  return new Worker(url);
+}
+
+function cleanupEngine(): void {
+  if (engine) {
+    engine.terminate();
+    engine = null;
+  }
+
+  if (cdnBlobUrl) {
+    URL.revokeObjectURL(cdnBlobUrl);
+    cdnBlobUrl = null;
+  }
+}
+
+function reportStartupFailure(localError: string, cdnError: string): void {
+  send({
+    type: 'error',
+    message: `Could not start Stockfish worker locally or via CDN. Local: ${localError}. CDN: ${cdnError}`,
+  });
+}
+
+function attachEngine(candidate: Worker, source: EngineSource, localError: string | null): void {
+  engine = candidate;
+
   try {
-    engine.addEventListener('message', (event: MessageEvent<string>) => {
+    candidate.addEventListener('message', (event: MessageEvent<string>) => {
       handleLine(event.data);
     });
-    engine.addEventListener('error', (event) => {
-      send({ type: 'error', message: event.message });
+    candidate.addEventListener('error', (event) => {
+      const message = event.message || 'Unknown Stockfish worker load error.';
+      if (source === 'local' && !readySent) {
+        cleanupEngine();
+        startEngine('cdn', message);
+        return;
+      }
+
+      if (source === 'cdn' && localError) {
+        reportStartupFailure(localError, message);
+        return;
+      }
+
+      send({ type: 'error', message });
     });
-    engine.postMessage('uci');
-    engine.postMessage('isready');
-    setTimeout(markReady, 1500);
+    candidate.postMessage('uci');
+    candidate.postMessage('isready');
+    setTimeout(() => {
+      if (engine === candidate) markReady();
+    }, 1500);
   } catch (err) {
+    cleanupEngine();
+    if (source === 'local') {
+      startEngine('cdn', formatError(err));
+      return;
+    }
+
     send({
       type: 'error',
-      message: err instanceof Error ? err.message : 'Could not start Stockfish worker.',
+      message: `Could not start Stockfish worker locally or via CDN. Local: ${localError ?? 'not attempted'}. CDN: ${formatError(err)}`,
     });
   }
+}
+
+function startEngine(source: EngineSource, localError: string | null = null): void {
+  const url = source === 'local' ? LOCAL_ENGINE : CDN_ENGINE;
+
+  try {
+    attachEngine(createEngineWorker(url, source), source, localError);
+  } catch (err) {
+    cleanupEngine();
+    if (source === 'local') {
+      startEngine('cdn', formatError(err));
+      return;
+    }
+
+    reportStartupFailure(localError ?? 'not attempted', formatError(err));
+  }
+}
+
+function init(): void {
+  if (engine) return;
+  startEngine('local');
 }
 
 self.onmessage = (e: MessageEvent<WorkerCommand>) => {
