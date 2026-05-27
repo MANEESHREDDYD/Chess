@@ -49,12 +49,11 @@ export async function move(
   const moveTimeoutMs = options.moveTimeoutMs ?? DEFAULT_MOVE_TIMEOUT_MS;
 
   return new Promise((resolve) => {
-    clearPendingMove();
+    settlePendingMove(null);
 
     const timer = window.setTimeout(() => {
       activeWorker.postMessage({ cmd: 'stop', requestId });
-      clearPendingMove();
-      resolve(null);
+      settlePendingMove(null);
     }, moveTimeoutMs);
 
     pendingMove = { requestId, resolve, timer };
@@ -63,7 +62,7 @@ export async function move(
 }
 
 export function dispose(): void {
-  clearPendingMove();
+  settlePendingMove(null);
   readyWaiters.splice(0).forEach((resolve) => resolve());
 
   if (worker) {
@@ -132,16 +131,16 @@ function handleMessage(event: MessageEvent<EngineMessage>): void {
   }
 
   if (data.type === 'bestmove' && pendingMove && data.requestId === pendingMove.requestId) {
-    const { resolve } = pendingMove;
-    clearPendingMove();
-    resolve(data.move ?? null);
+    settlePendingMove(data.move ?? null);
   }
 }
 
-function clearPendingMove(): void {
+function settlePendingMove(move: string | null): void {
   if (!pendingMove) return;
+  const { resolve } = pendingMove;
   window.clearTimeout(pendingMove.timer);
   pendingMove = null;
+  resolve(move);
 }
 
 function nextRequestId(): number {
