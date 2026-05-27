@@ -5,6 +5,29 @@ import { init as initCalibrationOpponent, move as moveCalibrationOpponent, dispo
 import type { ThemeManifest } from '../../lib/theme';
 import { getEndgameTechniqueTask } from './taskData';
 
+function computeStrength(moves: number): number {
+  return Math.max(0, 100 - moves * 4);
+}
+
+function evaluateUserOutcome(game: Chess, userPromoted: boolean): 'user_won' | 'draw' | 'continuing' {
+  if (userPromoted) return 'user_won';
+  if (game.isCheckmate()) {
+    // Side TO MOVE has just been mated. User mated the opponent iff Black is to move.
+    return game.turn() === 'b' ? 'user_won' : 'draw';
+  }
+  if (game.isDraw()) return 'draw';
+  return 'continuing';
+}
+
+function evaluateEngineOutcome(game: Chess): 'user_lost' | 'draw' | 'continuing' {
+  if (game.isCheckmate()) {
+    // Engine just moved. If White is now to move and in mate, the engine mated the user.
+    return game.turn() === 'w' ? 'user_lost' : 'continuing';
+  }
+  if (game.isDraw()) return 'draw';
+  return 'continuing';
+}
+
 type PendingPromotion = {
   from: string;
   to: string;
@@ -35,9 +58,9 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
     if (moveCount >= 25 && status === 'playing') {
       setStatus('game-over');
       setResult('Conversion budget exhausted');
-      onComplete?.({ endgame_strength: endgameStrength, moveCount, success: false });
+      onComplete?.({ endgame_strength: computeStrength(moveCount), moveCount, success: false });
     }
-  }, [endgameStrength, moveCount, onComplete, status]);
+  }, [moveCount, onComplete, status]);
 
   useEffect(() => {
     setEndgameStrength(Math.max(0, 100 - moveCount * 4));
@@ -45,7 +68,50 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
 
   const currentStatus = useMemo(() => status, [status]);
 
-  const handleDrop = async (from: string, to: string): Promise<boolean> => {
+  const playEngineReply = async (nextMoveCount: number): Promise<void> => {
+    const reply = await moveCalibrationOpponent(game.fen(), { depth: 6, skillLevel: 8 });
+    setEngineThinking(false);
+
+    if (reply) {
+      const engineMove = game.move({ from: reply.slice(0, 2), to: reply.slice(2, 4), promotion: reply[4] as 'q' | 'r' | 'b' | 'n' | undefined });
+      if (engineMove) {
+        setFen(game.fen());
+      }
+    }
+
+    const engineOutcome = evaluateEngineOutcome(game);
+    if (engineOutcome !== 'continuing') {
+      setStatus('game-over');
+      setResult(engineOutcome === 'user_lost' ? 'You were mated' : 'Game ended without conversion');
+      onComplete?.({ endgame_strength: 0, moveCount: nextMoveCount, success: false });
+    }
+
+    return;
+  };
+
+  const completeUserMove = (nextMoveCount: number, userPromoted: boolean): boolean => {
+    setFen(game.fen());
+    setMoveCount(nextMoveCount);
+
+    const userOutcome = evaluateUserOutcome(game, userPromoted);
+    if (userOutcome !== 'continuing') {
+      setStatus('game-over');
+      const userSuccess = userOutcome === 'user_won';
+      setResult(userSuccess ? 'Conversion complete' : 'Game ended without conversion');
+      onComplete?.({
+        endgame_strength: userSuccess ? computeStrength(nextMoveCount) : 0,
+        moveCount: nextMoveCount,
+        success: userSuccess,
+      });
+      return true;
+    }
+
+    setEngineThinking(true);
+    void playEngineReply(nextMoveCount);
+    return true;
+  };
+
+  const handleDrop = (from: string, to: string): boolean => {
     if (currentStatus !== 'playing' || engineThinking) return false;
 
     let move;
@@ -57,34 +123,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
 
     if (!move) return false;
 
-    setFen(game.fen());
-    setMoveCount((previous) => previous + 1);
-
-    if (game.isGameOver()) {
-      setStatus('game-over');
-      setResult('Conversion complete');
-      onComplete?.({ endgame_strength: endgameStrength, moveCount: moveCount + 1, success: true });
-      return true;
-    }
-
-    setEngineThinking(true);
-    const reply = await moveCalibrationOpponent(game.fen(), { depth: 6, skillLevel: 8 });
-    setEngineThinking(false);
-
-    if (reply) {
-      const engineMove = game.move({ from: reply.slice(0, 2), to: reply.slice(2, 4), promotion: reply[4] as 'q' | 'r' | 'b' | 'n' | undefined });
-      if (engineMove) {
-        setFen(game.fen());
-      }
-    }
-
-    if (game.isGameOver()) {
-      setStatus('game-over');
-      setResult('Conversion complete');
-      onComplete?.({ endgame_strength: endgameStrength, moveCount: moveCount + 1, success: true });
-    }
-
-    return true;
+    return completeUserMove(moveCount + 1, Boolean(move.promotion));
   };
 
   const handlePromotionCheck = (sourceSquare: string, targetSquare: string, piece: string): boolean => {
@@ -96,7 +135,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
     return true;
   };
 
-  const handlePromotionPieceSelect = async (piece?: string): Promise<boolean> => {
+  const handlePromotionPieceSelect = (piece?: string): boolean => {
     if (!piece || !pendingPromotion) {
       setPendingPromotion(null);
       return false;
@@ -113,9 +152,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
     setPendingPromotion(null);
     if (!move) return false;
 
-    setFen(game.fen());
-    setMoveCount((previous) => previous + 1);
-    return true;
+    return completeUserMove(moveCount + 1, Boolean(move.promotion));
   };
 
   if (!task) return null;
@@ -148,15 +185,9 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
         playerColor="white"
         status={currentStatus}
         engineThinking={engineThinking}
-        onPieceDrop={(from, to) => {
-          void handleDrop(from, to);
-          return true;
-        }}
+        onPieceDrop={handleDrop}
         onPromotionCheck={handlePromotionCheck}
-        onPromotionPieceSelect={(piece) => {
-          void handlePromotionPieceSelect(piece);
-          return true;
-        }}
+        onPromotionPieceSelect={handlePromotionPieceSelect}
         themeManifest={themeManifest}
       />
 
