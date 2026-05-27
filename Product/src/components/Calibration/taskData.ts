@@ -46,6 +46,14 @@ type EndgameTask = {
   partial?: string;
 };
 
+type MoralChessTask = {
+  id: number;
+  fen: string;
+  choices: Array<{ id: string; move: string; label: string; depth14_cp: number }>;
+  swindle_line: string[];
+  source?: string;
+};
+
 export function getTacticalTaskPositions(taskId: number): TacticalTaskPosition[] {
   const task = calibrationPositions.tasks.find((entry) => entry.id === taskId) as TacticalTask | undefined;
   return task?.positions ?? [];
@@ -72,5 +80,10 @@ export function getExchangePositions(): ExchangePosition[] {
 
 export function getEndgameTechniqueTask(): EndgameTask | null {
   const task = calibrationPositions.tasks.find((entry) => entry.id === 3) as EndgameTask | undefined;
+  return task ?? null;
+}
+
+export function getMoralChessTask(): MoralChessTask | null {
+  const task = calibrationPositions.tasks.find((entry) => entry.id === 5) as MoralChessTask | undefined;
   return task ?? null;
 }
