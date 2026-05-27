@@ -79,8 +79,7 @@ export default function Play() {
         </div>
 
         <p className="play-note">
-          Agent A scope. Calibration (Agent B) and the Mirror match (Agent C) arrive in the next
-          commits, still within Stage 0.
+          Calibration is available from Home. The Mirror match arrives in the next phase.
         </p>
       </aside>
 

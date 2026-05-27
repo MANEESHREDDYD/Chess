@@ -14,8 +14,11 @@ export default function Home() {
           feels like you. Stage 0 is a bare prototype. No story, no theme, no signup. Just chess.
         </p>
         <div className="home-actions">
-          <Link to="/play" className="btn btn-primary">
-            Begin
+          <Link to="/calibration" className="btn btn-primary">
+            Begin Calibration
+          </Link>
+          <Link to="/play" className="btn btn-ghost">
+            Free play
           </Link>
         </div>
         <p className="home-privacy">
