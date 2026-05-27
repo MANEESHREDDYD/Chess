@@ -1,0 +1,48 @@
+{
+  "name": "mirror-pwa",
+  "private": true,
+  "version": "0.1.0-stage0",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "node scripts/setup-stockfish.js"
+  },
+  "dependencies": {
+    "chess.js": "1.4.0",
+    "idb": "8.0.3",
+    "react": "18.3.1",
+    "react-chessboard": "4.7.3",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.3",
+    "zustand": "4.5.7"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.5.0",
+    "@testing-library/react": "16.3.0",
+    "@types/react": "18.3.29",
+    "@types/react-dom": "18.3.7",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "eslint": "8.57.1",
+    "eslint-plugin-react-hooks": "4.6.2",
+    "eslint-plugin-react-refresh": "0.4.26",
+    "fake-indexeddb": "6.2.5",
+    "jsdom": "25.0.1",
+    "prettier": "3.8.3",
+    "stockfish": "16.0.0",
+    "typescript": "5.9.3",
+    "vite": "5.4.21",
+    "vite-plugin-pwa": "0.20.5",
+    "vite-plugin-static-copy": "1.0.6",
+    "vitest": "2.1.9"
+  }
+}

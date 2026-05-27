@@ -1,0 +1,47 @@
+/* Design tokens. Single source of truth for color, typography, spacing.
+   These match the v3/v4 design bible palettes. */
+
+:root {
+  /* Surface */
+  --bg: #f5f0e6;
+  --bg-deep: #ebe4d4;
+  --paper: #fbf8f1;
+  --paper-warm: #f8f1de;
+
+  /* Ink */
+  --ink: #1f1b16;
+  --ink-soft: #423b32;
+  --ink-faded: #74695c;
+
+  /* Rules */
+  --rule: #c4b896;
+  --rule-soft: #d8cdb3;
+
+  /* Pandava (player) */
+  --pandava-deep: #1e3a5f;
+  --pandava-indigo: #2c4d7a;
+  --pandava-gold: #b8923a;
+  --pandava-gold-light: #d4b15c;
+
+  /* Kaurava (opponent) */
+  --kaurava-crimson: #8b2635;
+  --kaurava-obsidian: #1c1814;
+
+  /* Semantic */
+  --good: #4a6b3a;
+  --warn: #8b2635;
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+}

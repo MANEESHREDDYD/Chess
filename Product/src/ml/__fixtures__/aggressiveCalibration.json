@@ -1,0 +1,42 @@
+{
+  "task1": {
+    "correct_count": 1,
+    "total_count": 4,
+    "motif_blindness": {
+      "fork": 0.75,
+      "pin": 0.5,
+      "skewer": 0.5,
+      "removing_the_defender": 0.75
+    }
+  },
+  "task2": {
+    "selected_move": "e4"
+  },
+  "task3": {
+    "outcome": "none"
+  },
+  "task4": {
+    "correct_count": 1,
+    "total_count": 4,
+    "time_pressure_blunder_rate": 0.75
+  },
+  "task5": {
+    "choice": "swindle"
+  },
+  "task6": {
+    "selected_replies": ["e5", "Nf6"]
+  },
+  "task7": {
+    "choices": [
+      { "decision": "accept", "kept_minor": "bishop" },
+      { "decision": "accept", "kept_minor": "bishop" },
+      { "decision": "accept", "kept_minor": "bishop" },
+      { "decision": "accept", "kept_minor": "bishop" }
+    ]
+  },
+  "task8": {
+    "result": "loss",
+    "avg_cp_loss": 180,
+    "avg_move_time_ms": 4200
+  }
+}

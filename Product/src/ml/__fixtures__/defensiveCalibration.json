@@ -1,0 +1,42 @@
+{
+  "task1": {
+    "correct_count": 3,
+    "total_count": 4,
+    "motif_blindness": {
+      "fork": 0.25,
+      "pin": 0.25,
+      "skewer": 0.25,
+      "removing_the_defender": 0.25
+    }
+  },
+  "task2": {
+    "selected_move": "d4"
+  },
+  "task3": {
+    "outcome": "full"
+  },
+  "task4": {
+    "correct_count": 3,
+    "total_count": 4,
+    "time_pressure_blunder_rate": 0.25
+  },
+  "task5": {
+    "choice": "principled"
+  },
+  "task6": {
+    "selected_replies": ["d5", "Nf6"]
+  },
+  "task7": {
+    "choices": [
+      { "decision": "decline", "kept_minor": "knight" },
+      { "decision": "decline", "kept_minor": "knight" },
+      { "decision": "decline", "kept_minor": "knight" },
+      { "decision": "decline", "kept_minor": "knight" }
+    ]
+  },
+  "task8": {
+    "result": "draw",
+    "avg_cp_loss": 45,
+    "avg_move_time_ms": 15750
+  }
+}

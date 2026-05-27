@@ -1,0 +1,2150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MIRROR · Implementation Bible — The Executable Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e6;
+  --bg-deep: #ebe4d4;
+  --paper: #fbf8f1;
+  --paper-warm: #f8f1de;
+  --ink: #1f1b16;
+  --ink-soft: #423b32;
+  --ink-faded: #74695c;
+  --rule: #c8baa0;
+  --rule-soft: #d8cdb3;
+  --indigo: #1e3a5f;
+  --indigo-deep: #14283f;
+  --gold: #b8923a;
+  --gold-light: #d4b15c;
+  --gold-deep: #8a6c20;
+  --crimson: #8b2635;
+  --obsidian: #1c1814;
+  --code-bg: #1f1a14;
+  --code-ink: #ebe0c4;
+  --code-key: #d4b15c;
+  --code-str: #b6c98e;
+  --code-com: #8a7d65;
+  --code-fn: #9bb5d4;
+  --warn: #8b2635;
+  --good: #4a6b3a;
+  --info: #3e5c84;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Lora', Georgia, serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.65;
+  font-size: 16px;
+  background-image:
+    radial-gradient(circle at 15% 25%, rgba(184,146,58,0.04) 0, transparent 50%),
+    radial-gradient(circle at 85% 75%, rgba(30,58,95,0.03) 0, transparent 50%);
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 70px 56px 110px; }
+@media (max-width: 720px) {
+  .wrap { padding: 40px 22px 80px; }
+  body { font-size: 15px; }
+}
+
+/* COVER */
+.cover {
+  text-align: center;
+  padding: 70px 0 56px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 60px;
+  position: relative;
+}
+.cover::before, .cover::after {
+  content: "✦"; position: absolute; left: 50%; transform: translateX(-50%);
+  color: var(--gold); font-size: 14px; background: var(--bg); padding: 0 14px;
+}
+.cover::before { top: -8px; } .cover::after { bottom: -8px; }
+.cover .eyebrow {
+  font-style: italic; font-size: 13px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--ink-faded); margin-bottom: 22px;
+}
+.cover .title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(54px, 9vw, 92px); font-weight: 500; line-height: 0.95;
+  letter-spacing: -0.025em; color: var(--ink);
+}
+.cover .title .accent {
+  display: block; font-style: italic; font-weight: 400;
+  color: var(--gold); font-size: 0.42em; margin-top: 20px; letter-spacing: 0.02em;
+}
+.cover .subtitle {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 22px; color: var(--ink-soft); margin-top: 26px;
+  max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.45;
+}
+.cover .meta {
+  margin-top: 40px; font-size: 12px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-faded);
+}
+.cover .meta span + span::before { content: " · "; margin: 0 8px; }
+
+/* QUICKSTART */
+.quickstart {
+  background: var(--paper-warm); padding: 38px 44px; margin: 50px 0;
+  border-left: 4px solid var(--gold); position: relative;
+}
+.quickstart .qs-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold);
+  font-weight: 700; margin-bottom: 12px;
+}
+.quickstart h2 {
+  font-family: 'Cormorant Garamond', serif; font-size: 32px;
+  font-weight: 600; margin-bottom: 18px; color: var(--ink);
+}
+.quickstart p { margin-bottom: 14px; }
+.quickstart .step {
+  display: flex; align-items: baseline; gap: 18px; margin: 10px 0;
+  font-size: 15px;
+}
+.quickstart .step .num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.1em; color: var(--gold); font-weight: 700;
+  min-width: 28px;
+}
+
+/* TYPOGRAPHY */
+h1, h2, h3, h4 { font-family: 'Cormorant Garamond', serif; font-weight: 500; color: var(--ink); line-height: 1.15; }
+section.major {
+  margin: 100px 0 50px; padding-top: 56px; border-top: 1px solid var(--rule);
+}
+section.major .section-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold);
+  margin-bottom: 14px; display: block;
+}
+section.major h1 {
+  font-size: clamp(36px, 5.5vw, 54px); letter-spacing: -0.02em; margin-bottom: 12px;
+}
+section.major h1 .sub {
+  display: block; font-style: italic; font-size: 0.46em;
+  color: var(--ink-soft); margin-top: 12px; font-weight: 400; line-height: 1.35;
+}
+section.major .lede {
+  font-family: 'Cormorant Garamond', serif; font-size: 21px;
+  font-style: italic; color: var(--ink-soft); line-height: 1.5;
+  margin: 22px 0 44px; max-width: 740px;
+}
+h2.sub { font-size: 28px; font-weight: 600; margin: 50px 0 16px; letter-spacing: -0.005em; }
+h2.sub::before {
+  content: ""; display: inline-block; width: 24px; height: 1px;
+  background: var(--gold); vertical-align: middle; margin-right: 14px;
+}
+h3.minor {
+  font-size: 22px; font-weight: 600; margin: 34px 0 12px; color: var(--indigo);
+}
+h4.tinier {
+  font-family: 'Lora', serif; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--ink-faded); margin: 22px 0 8px;
+}
+p { margin-bottom: 14px; max-width: 760px; }
+strong { font-weight: 600; color: var(--ink); }
+em { color: var(--ink-soft); }
+ul, ol { margin: 10px 0 18px 28px; max-width: 760px; }
+li { margin-bottom: 5px; }
+
+/* TOC */
+.toc {
+  background: var(--paper); border: 1px solid var(--rule);
+  padding: 34px 40px; margin: 50px 0;
+}
+.toc h2 {
+  font-size: 13px; font-family: 'Lora', serif; text-transform: uppercase;
+  letter-spacing: 0.22em; color: var(--ink-faded); margin-bottom: 24px;
+  font-weight: 600;
+}
+.toc ol { list-style: none; counter-reset: toc; margin: 0; }
+.toc li {
+  counter-increment: toc; padding: 5px 0; font-size: 18px;
+  font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  display: flex; align-items: baseline;
+}
+.toc li::before {
+  content: counter(toc, decimal-leading-zero);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--gold); margin-right: 16px; letter-spacing: 0.08em; font-weight: 400;
+}
+.toc a { color: var(--ink); text-decoration: none; }
+.toc a:hover { color: var(--indigo); text-decoration: underline; text-underline-offset: 4px; }
+
+/* CALLOUTS */
+.callout {
+  background: var(--paper); border-left: 3px solid var(--gold);
+  padding: 20px 26px; margin: 22px 0;
+}
+.callout .label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold);
+  margin-bottom: 8px; display: block; font-weight: 700;
+}
+.callout.warn { border-left-color: var(--warn); }
+.callout.warn .label { color: var(--warn); }
+.callout.good { border-left-color: var(--good); }
+.callout.good .label { color: var(--good); }
+.callout.info { border-left-color: var(--info); }
+.callout.info .label { color: var(--info); }
+.callout p:last-child { margin-bottom: 0; }
+
+/* CODE */
+pre, code { font-family: 'JetBrains Mono', monospace; }
+code {
+  background: var(--bg-deep); padding: 2px 7px; border-radius: 3px;
+  color: var(--ink); font-size: 13px;
+}
+pre {
+  background: var(--code-bg); color: var(--code-ink);
+  padding: 22px 26px; margin: 22px 0; overflow-x: auto;
+  line-height: 1.6; border-left: 3px solid var(--gold); font-size: 12.5px;
+}
+pre code { background: transparent; padding: 0; color: inherit; }
+.c-key { color: var(--code-key); }
+.c-str { color: var(--code-str); }
+.c-com { color: var(--code-com); font-style: italic; }
+.c-fn { color: var(--code-fn); }
+.code-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faded);
+  margin-bottom: 6px; display: block; font-weight: 600;
+}
+
+/* TABLES */
+table {
+  width: 100%; border-collapse: collapse; margin: 24px 0;
+  font-size: 14px; background: var(--paper);
+}
+th, td {
+  text-align: left; padding: 11px 14px;
+  border-bottom: 1px solid var(--rule-soft); vertical-align: top;
+}
+th {
+  font-family: 'Lora', serif; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.16em; font-weight: 700; color: var(--ink-faded);
+  background: var(--bg-deep); border-bottom: 2px solid var(--rule);
+}
+td { line-height: 1.5; }
+
+/* DL SPEC */
+dl.spec {
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 8px 24px; margin: 18px 0; font-size: 14px;
+}
+dl.spec dt {
+  font-weight: 700; color: var(--ink-soft); font-family: 'Lora', serif;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; padding-top: 2px;
+}
+@media (max-width: 720px) {
+  dl.spec { grid-template-columns: 1fr; gap: 2px 0; }
+  dl.spec dt { margin-top: 10px; }
+}
+
+/* AGENT BRIEF */
+.agent-brief {
+  border: 1px solid var(--rule); background: var(--paper);
+  margin: 30px 0; overflow: hidden;
+}
+.agent-brief .ab-head {
+  background: var(--indigo); color: white;
+  padding: 16px 24px; display: flex; justify-content: space-between;
+  align-items: baseline; flex-wrap: wrap; gap: 10px;
+}
+.agent-brief .ab-name {
+  font-family: 'Cormorant Garamond', serif; font-size: 22px;
+  font-weight: 600;
+}
+.agent-brief .ab-meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85;
+}
+.agent-brief .ab-body { padding: 22px 26px 26px; }
+.agent-brief h4 {
+  font-family: 'Lora', serif; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--ink-faded); margin: 16px 0 6px;
+}
+.agent-brief h4:first-child { margin-top: 0; }
+.prompt-block {
+  background: var(--bg-deep); padding: 16px 20px; margin: 8px 0;
+  font-family: 'Lora', serif; font-size: 14px; line-height: 1.55;
+  font-style: italic; border-left: 2px solid var(--gold);
+}
+
+/* TREE */
+.tree {
+  background: var(--paper); border: 1px solid var(--rule);
+  padding: 22px 26px; margin: 22px 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+  line-height: 1.65; white-space: pre; overflow-x: auto;
+}
+
+/* PHASE CARD */
+.phase {
+  border: 1px solid var(--rule); background: var(--paper);
+  padding: 24px 28px; margin: 22px 0; border-left: 4px solid var(--indigo);
+}
+.phase .ph-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--indigo);
+  font-weight: 700; margin-bottom: 4px;
+}
+.phase .ph-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 24px;
+  font-weight: 600; margin-bottom: 4px;
+}
+.phase .ph-meta {
+  font-style: italic; font-size: 13px; color: var(--ink-faded); margin-bottom: 12px;
+}
+
+/* FOOTER */
+footer {
+  margin-top: 100px; padding-top: 38px; border-top: 1px solid var(--rule);
+  text-align: center; font-size: 13px; color: var(--ink-faded);
+}
+footer .glyph { font-size: 20px; color: var(--gold); margin-bottom: 8px; }
+footer p { margin: 6px auto; max-width: none; }
+
+::selection { background: var(--gold-light); color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============== COVER ============== -->
+<header class="cover">
+  <div class="eyebrow">Implementation Bible · Companion to v2 (Strategy) and v3 (Story)</div>
+  <h1 class="title">MIRROR<span class="accent">The Executable Plan</span></h1>
+  <div class="subtitle">Exact tech stack, exact commands, exact agent prompts. Designed so an AI coding agent can execute against any section without ambiguity. Designed so you start building Stage 0 within 48 hours of reading.</div>
+  <div class="meta">
+    <span>Stack v1.0</span>
+    <span>Free-tier throughout</span>
+    <span>PWA-first</span>
+    <span>May 2026</span>
+  </div>
+</header>
+
+<!-- ============== QUICKSTART ============== -->
+<div class="quickstart">
+<div class="qs-label">Saturday Morning · The First 90 Minutes</div>
+<h2>Run these commands before reading the rest of this document.</h2>
+<p>The value of this document is measured by whether code is running by Sunday night. The rest of the document explains and extends what these commands set up. Start here.</p>
+
+<div class="step"><span class="num">1</span><span>Install Node 20 LTS if you do not have it: <code>nvm install 20 &amp;&amp; nvm use 20</code></span></div>
+<div class="step"><span class="num">2</span><span>Scaffold the PWA: <code>npm create vite@latest mirror-pwa -- --template react-ts</code></span></div>
+<div class="step"><span class="num">3</span><span><code>cd mirror-pwa &amp;&amp; npm install</code></span></div>
+<div class="step"><span class="num">4</span><span>Install runtime dependencies: <code>npm install chess.js react-chessboard stockfish.js@10.0.2 idb zustand</code></span></div>
+<div class="step"><span class="num">5</span><span>Install PWA + dev: <code>npm install -D vite-plugin-pwa workbox-window @types/node</code></span></div>
+<div class="step"><span class="num">6</span><span>Initialize git, create GitHub repo, push: <code>git init &amp;&amp; git add . &amp;&amp; git commit -m "scaffold" &amp;&amp; gh repo create mirror-pwa --public --source=. --push</code></span></div>
+<div class="step"><span class="num">7</span><span>Run dev server: <code>npm run dev</code> — you should see Vite default page on <code>localhost:5173</code></span></div>
+<div class="step"><span class="num">8</span><span>Open Cursor or Claude Code in this folder. Hand the agent Section 7 of this document. Tell it: <em>"Build the Agent A scope. Push commits as you go."</em></span></div>
+
+<p style="margin-top:18px;font-style:italic;color:var(--ink-soft);">If these eight steps take more than 90 minutes, something is wrong with the environment, not the plan. Stop and fix that before continuing.</p>
+</div>
+
+<!-- ============== TOC ============== -->
+<nav class="toc">
+<h2>Contents</h2>
+<ol>
+<li><a href="#sec-1">The Stack — Exact Versions, Why Each Choice</a></li>
+<li><a href="#sec-2">Cloud Accounts — Setup Order, Free-Tier Limits, Configuration</a></li>
+<li><a href="#sec-3">Repository Structure — Every Folder, Every File</a></li>
+<li><a href="#sec-4">Git Workflow — Branching, Commits, CI/CD</a></li>
+<li><a href="#sec-5">Database — Schema, Migrations, Row-Level Security</a></li>
+<li><a href="#sec-6">Engine Integration — Stockfish &amp; Maia in Web Workers</a></li>
+<li><a href="#sec-7">AI Coding Agent Briefs — Eight Agents, Copy-Paste Prompts</a></li>
+<li><a href="#sec-8">Visual Assets — Stage 1 Workflow (AI Art + SVG)</a></li>
+<li><a href="#sec-9">Blender Pipeline — Stage 2 Procedural Generation</a></li>
+<li><a href="#sec-10">Coach Implementation — Gemini Prompts, Puzzle Selection</a></li>
+<li><a href="#sec-11">Mirror Generator — Layer-by-Layer Code</a></li>
+<li><a href="#sec-12">Deployment &amp; Observability — Cloudflare Pages, Analytics</a></li>
+<li><a href="#sec-13">Twelve-Week Build Calendar — Day-by-Day</a></li>
+<li><a href="#sec-14">Versioning, Releases, Beta Channels</a></li>
+</ol>
+</nav>
+
+<!-- ============== SECTION 1: THE STACK ============== -->
+<section class="major" id="sec-1">
+<span class="section-num">Section One</span>
+<h1>The Stack<span class="sub">Exact versions. Every choice justified in one sentence. No room for "what should we use" questions when agents are working.</span></h1>
+<p class="lede">Every package version below is pinned. Every choice has one sentence of justification so an agent never has to ask "why this and not that." When in doubt, an agent reads the justification and proceeds.</p>
+
+<h2 class="sub">Frontend runtime</h2>
+<table>
+<thead><tr><th>Tool</th><th>Version</th><th>Why this one</th></tr></thead>
+<tbody>
+<tr><td>Node.js</td><td>20.x LTS</td><td>Stable through 2026, broad ecosystem support.</td></tr>
+<tr><td>Vite</td><td>^5.4.0</td><td>Fastest dev server, native ESM, smallest learning curve for agents.</td></tr>
+<tr><td>React</td><td>^18.3.0</td><td>Largest ecosystem, agents have most training data on it.</td></tr>
+<tr><td>TypeScript</td><td>^5.4.0</td><td>Type safety reduces agent hallucination of method signatures.</td></tr>
+<tr><td>vite-plugin-pwa</td><td>^0.20.0</td><td>One-line PWA enablement with Workbox built-in.</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">Chess</h2>
+<table>
+<thead><tr><th>Tool</th><th>Version</th><th>Why this one</th></tr></thead>
+<tbody>
+<tr><td>chess.js</td><td>^1.0.0</td><td>De facto standard chess move validation in JavaScript.</td></tr>
+<tr><td>react-chessboard</td><td>^4.7.0</td><td>Accepts custom piece components, mobile-friendly, MIT-licensed.</td></tr>
+<tr><td>stockfish.js</td><td>10.0.2 (NNUE WASM build)</td><td>Stable WASM build with NNUE network. Smaller than 16/17 builds. Works in Workers.</td></tr>
+<tr><td>Maia weights</td><td>1100/1300/1500/1700/1900 from CSSLab</td><td>The only published human-style chess engine. Required for the Mirror's Layer 1.</td></tr>
+<tr><td>lc0-wasm</td><td>v0.30.x WASM build</td><td>Runs Maia weights in browser. ~3MB engine + ~50MB per weight file, cached in service worker.</td></tr>
+</tbody>
+</table>
+
+<div class="callout warn">
+<span class="label">Engine note</span>
+<p>Stockfish 16/17/18 have WASM builds but they are larger and slower in browsers. Stockfish 10 NNUE (the version Lichess used in production for years) is the practical sweet spot. If an agent suggests upgrading to a newer build, the response is: profile first, only upgrade if first-token latency improves measurably.</p>
+</div>
+
+<h2 class="sub">State, storage, sync</h2>
+<table>
+<thead><tr><th>Tool</th><th>Version</th><th>Why this one</th></tr></thead>
+<tbody>
+<tr><td>Zustand</td><td>^4.5.0</td><td>Simplest React state manager. No boilerplate, no provider wrapping, no learning curve for agents.</td></tr>
+<tr><td>idb</td><td>^8.0.0</td><td>Promise-based wrapper over IndexedDB. Agents write less buggy code than against raw IDB.</td></tr>
+<tr><td>@supabase/supabase-js</td><td>^2.45.0</td><td>Postgres + auth + realtime + storage from one client. Free tier ample for Stage 1.</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">Backend (Supabase)</h2>
+<table>
+<thead><tr><th>Tool</th><th>Version</th><th>Why this one</th></tr></thead>
+<tbody>
+<tr><td>Supabase Postgres</td><td>15.x (managed)</td><td>Free tier: 500 MB, 50K MAU, unlimited API requests.</td></tr>
+<tr><td>Supabase Edge Functions</td><td>Deno runtime</td><td>For Coach API calls and nightly batch jobs. Free tier 500K invocations/month.</td></tr>
+<tr><td>Supabase CLI</td><td>^1.200.0</td><td>For migrations, local dev, type generation.</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">AI services</h2>
+<table>
+<thead><tr><th>Service</th><th>Free tier</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td>Google Gemini 1.5 Flash</td><td>1,500 req/day, 15 RPM, 1M tokens/min</td><td>Coach dialogue, character voice generation.</td></tr>
+<tr><td>Cursor or Claude Code</td><td>User has subscriptions</td><td>Implementation agent for code generation.</td></tr>
+<tr><td>Midjourney / DALL-E / Flux</td><td>Free credits or low-cost tier</td><td>Character portraits, scene backgrounds (Stage 1).</td></tr>
+<tr><td>Suno / Udio</td><td>Free generations</td><td>Music (Stage 2 only — skipped in Stage 0 and Stage 1).</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">Hosting and CDN</h2>
+<table>
+<thead><tr><th>Service</th><th>Free tier</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td>Cloudflare Pages</td><td>Unlimited bandwidth, 500 builds/month</td><td>Static PWA hosting.</td></tr>
+<tr><td>Cloudflare R2</td><td>10 GB storage, zero egress</td><td>Asset storage (portraits, backgrounds, audio).</td></tr>
+<tr><td>Cloudflare Workers</td><td>100K req/day</td><td>Optional API proxy for hiding Gemini keys.</td></tr>
+<tr><td>Cloudflare Analytics</td><td>Free, privacy-respecting</td><td>Traffic and basic engagement metrics.</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">Development tools</h2>
+<table>
+<thead><tr><th>Tool</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>ESLint + Prettier</td><td>Style consistency. Agent code is more diff-able when normalized.</td></tr>
+<tr><td>Vitest</td><td>Built into Vite. Fast unit tests for chess logic and style vector functions.</td></tr>
+<tr><td>Playwright</td><td>End-to-end tests of critical flows (calibration, Mirror match, share screen).</td></tr>
+<tr><td>GitHub Actions</td><td>CI/CD: lint, test, build, deploy on push to main.</td></tr>
+<tr><td>Husky + lint-staged</td><td>Pre-commit hooks prevent broken pushes.</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">Total annual recurring cost at Stage 1 scale</h2>
+<dl class="spec">
+<dt>Hosting</dt><dd>$0 (Cloudflare Pages free)</dd>
+<dt>Database</dt><dd>$0 (Supabase free tier)</dd>
+<dt>AI APIs</dt><dd>$0 (Gemini free tier)</dd>
+<dt>Domain</dt><dd>~$12/year (Namecheap or Cloudflare Registrar)</dd>
+<dt>Dev tools</dt><dd>$0 (user already has Cursor/Claude Code)</dd>
+<dt><strong>Total</strong></dt><dd><strong>~$12/year</strong> for the domain. Everything else free.</dd>
+</dl>
+
+</section>
+
+<!-- ============== SECTION 2: CLOUD ACCOUNTS ============== -->
+<section class="major" id="sec-2">
+<span class="section-num">Section Two</span>
+<h1>Cloud Accounts<span class="sub">In setup order. With exact configuration steps and the limits you will hit and when.</span></h1>
+<p class="lede">Set these up in this order, in one sitting if possible. Each account takes 5–15 minutes. The whole setup is under 90 minutes. Do not skip any — every one is needed before Stage 0 ships.</p>
+
+<h3 class="minor">1 · GitHub account &amp; CLI</h3>
+<p>You probably already have one. Install <code>gh</code> if you do not: <code>brew install gh</code> (macOS) or follow the Linux/Windows docs. Authenticate: <code>gh auth login</code>. Create a new private repo first to keep prototype iterations off the public feed: <code>gh repo create mirror-pwa --private</code>. Make it public when you post the Stage 0 prototype.</p>
+
+<h3 class="minor">2 · Cloudflare account</h3>
+<dl class="spec">
+<dt>Sign up</dt><dd>cloudflare.com — free</dd>
+<dt>Pages project</dt><dd>Dashboard → Workers &amp; Pages → Create → Pages → Connect to Git. Connect your GitHub repo. Set build command: <code>npm run build</code>. Build output directory: <code>dist</code>. Root directory: <code>/</code>. Node version: 20.</dd>
+<dt>R2 bucket</dt><dd>Dashboard → R2 → Create bucket → name <code>mirror-assets</code>. Enable public access for the assets domain only.</dd>
+<dt>Wrangler CLI</dt><dd>Install: <code>npm install -g wrangler</code>. Authenticate: <code>wrangler login</code>.</dd>
+<dt>Limit you will hit first</dt><dd>500 builds/month if you push to main aggressively. Mitigation: use feature branches and only merge to main when ready to deploy.</dd>
+</dl>
+
+<h3 class="minor">3 · Supabase project</h3>
+<dl class="spec">
+<dt>Sign up</dt><dd>supabase.com — free tier project</dd>
+<dt>Project name</dt><dd><code>mirror-mvp</code></dd>
+<dt>Region</dt><dd>Closest to your majority audience. For US/EU primary: <code>us-east-1</code>. For India primary: <code>ap-south-1</code>.</dd>
+<dt>Database password</dt><dd>Generate, store in 1Password or similar. You will need it for migrations and direct psql access.</dd>
+<dt>Anon key &amp; Service key</dt><dd>Settings → API. Anon key goes in <code>.env</code>. Service key NEVER in client code — only in Edge Functions or local migrations.</dd>
+<dt>Auth settings</dt><dd>Authentication → Providers → Enable Email (magic link). Disable signups by default if you want to gate Stage 0 to invited testers.</dd>
+<dt>Local CLI</dt><dd><code>npm install -g supabase</code>. Then <code>supabase login</code> and <code>supabase link --project-ref &lt;your-ref&gt;</code>.</dd>
+<dt>Limit you will hit first</dt><dd>500 MB database. At Stage 1 scale of 1,000 users × 50 games each × 40 moves = 2M move rows × ~200 bytes = ~400 MB. Plan for archiving or compression by 5K users.</dd>
+</dl>
+
+<h3 class="minor">4 · Google Cloud + Gemini API</h3>
+<dl class="spec">
+<dt>Sign up</dt><dd>console.cloud.google.com — Google account</dd>
+<dt>Create project</dt><dd><code>mirror-coach</code></dd>
+<dt>Enable Gemini API</dt><dd>APIs &amp; Services → Library → search "Generative Language API" → Enable</dd>
+<dt>API key</dt><dd>Credentials → Create credentials → API key. Restrict to Generative Language API.</dd>
+<dt>Free-tier model</dt><dd><code>gemini-1.5-flash-002</code> — 1,500 requests/day, 15 RPM</dd>
+<dt>Key storage</dt><dd>Never in client. Store in Supabase Edge Function environment variables OR Cloudflare Worker secret.</dd>
+<dt>Limit you will hit first</dt><dd>1,500 req/day. At Stage 1 with 500 daily active users × 1 Coach call each = 500 req/day, comfortable. At 1,500+ DAU, switch to a paid Gemini tier (~$0.10 per 1M input tokens, ~$0.40 per 1M output tokens — cheap for chess commentary).</dd>
+</dl>
+
+<h3 class="minor">5 · Domain (optional but recommended)</h3>
+<dl class="spec">
+<dt>Registrar</dt><dd>Cloudflare Registrar (cheapest, ~$10/year for .com)</dd>
+<dt>Suggested names</dt><dd><code>mirrorchess.app</code>, <code>playyourmirror.com</code>, <code>themirror.chess</code> (.chess TLD is restricted; use .app or .com)</dd>
+<dt>DNS</dt><dd>Cloudflare DNS automatically configured if registered via Cloudflare. Point to Pages project.</dd>
+</dl>
+
+<h3 class="minor">6 · AI image generation account (Stage 1)</h3>
+<p>For character portraits and scene backgrounds in Stage 1. Choose one:</p>
+<ul>
+<li><strong>Midjourney</strong> — best quality for stylized art. Discord-based. ~$10/month basic plan. Worth it for consistent portrait style.</li>
+<li><strong>Flux Schnell via fal.ai or Replicate</strong> — free tier credits, then ~$0.003 per image. Cheaper for iteration.</li>
+<li><strong>OpenAI DALL-E 3 via API</strong> — ~$0.04 per image at 1024x1024. Best for one-shot prompts.</li>
+</ul>
+<p>Pick one and stay with it for the whole project. Consistency of style is more important than which tool.</p>
+
+<h3 class="minor">7 · Beta tester management</h3>
+<dl class="spec">
+<dt>Email list</dt><dd>Resend free tier — 3,000 emails/month. Sign up at resend.com.</dd>
+<dt>Feedback collection</dt><dd>Tally.so free tier OR a simple Supabase table with anonymous submissions.</dd>
+<dt>Beta invites</dt><dd>Plain Supabase email_allowlist table. Manually add emails from Stage 0 cohort.</dd>
+</dl>
+
+</section>
+
+<!-- ============== SECTION 3: REPO STRUCTURE ============== -->
+<section class="major" id="sec-3">
+<span class="section-num">Section Three</span>
+<h1>Repository Structure<span class="sub">Every folder, every file. Designed so an agent navigating to any location understands what belongs there.</span></h1>
+<p class="lede">A coding agent that opens an unfamiliar folder wastes time inferring conventions. This structure is opinionated and consistent — same naming pattern in every layer, same import discipline, same place for tests.</p>
+
+<div class="tree">mirror-pwa/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                    <span class="c-com"># lint, typecheck, test on PR</span>
+│       └── deploy.yml                <span class="c-com"># build + deploy to Cloudflare Pages on main</span>
+│
+├── public/
+│   ├── manifest.webmanifest          <span class="c-com"># PWA manifest</span>
+│   ├── icons/                        <span class="c-com"># 192/512 px PWA icons</span>
+│   ├── engines/
+│   │   ├── stockfish/                <span class="c-com"># stockfish.wasm + worker.js + NOTICE</span>
+│   │   └── maia/                     <span class="c-com"># lc0.wasm + weights/*.gz + LICENSE</span>
+│   └── assets/
+│       ├── pieces/                   <span class="c-com"># SVG sprites (Stage 1)</span>
+│       │   ├── standard/             <span class="c-com"># Staunton set</span>
+│       │   └── mahabharata/          <span class="c-com"># Ratha/Gaja/Ashva/etc.</span>
+│       ├── characters/               <span class="c-com"># PNG portraits, AI-generated</span>
+│       │   ├── vyasa/                <span class="c-com"># neutral, smiling, sad, focused</span>
+│       │   ├── yudhishthira/
+│       │   ├── bhima/
+│       │   ├── arjuna/
+│       │   ├── karna/
+│       │   ├── duryodhana/
+│       │   ├── shakuni/
+│       │   ├── bhishma/
+│       │   ├── drona/
+│       │   ├── krishna/
+│       │   ├── vidura/
+│       │   ├── nakula_sahadeva/
+│       │   ├── draupadi/
+│       │   └── mirror/               <span class="c-com"># faceless silhouette variants</span>
+│       └── backgrounds/              <span class="c-com"># scene art per chapter</span>
+│
+├── src/
+│   ├── main.tsx                      <span class="c-com"># React entry</span>
+│   ├── App.tsx                       <span class="c-com"># Router + theme provider</span>
+│   ├── routes/
+│   │   ├── Home.tsx                  <span class="c-com"># Landing</span>
+│   │   ├── Calibration.tsx           <span class="c-com"># Vyasa's Test 8-task flow</span>
+│   │   ├── Story.tsx                 <span class="c-com"># Chapter player</span>
+│   │   ├── Mirror.tsx                <span class="c-com"># Mirror match standalone</span>
+│   │   ├── DailyMirror.tsx
+│   │   ├── Coach.tsx                 <span class="c-com"># Drill UI</span>
+│   │   ├── Profile.tsx               <span class="c-com"># Style vector, theme toggle</span>
+│   │   └── About.tsx                 <span class="c-com"># GPL notices, credits</span>
+│   ├── components/
+│   │   ├── Board/
+│   │   │   ├── Board.tsx
+│   │   │   ├── PandavaPieces.tsx     <span class="c-com"># Mahabharata theme renderer</span>
+│   │   │   ├── KauravaPieces.tsx
+│   │   │   ├── StandardPieces.tsx
+│   │   │   └── Board.test.ts
+│   │   ├── Character/
+│   │   │   ├── Portrait.tsx          <span class="c-com"># Character + emotion variant</span>
+│   │   │   ├── Dialogue.tsx          <span class="c-com"># VN-style dialogue box</span>
+│   │   │   └── SceneBackground.tsx
+│   │   ├── Analysis/
+│   │   │   ├── VyasaReview.tsx       <span class="c-com"># Post-game character commentary</span>
+│   │   │   ├── EvalGraph.tsx         <span class="c-com"># Centipawn loss chart</span>
+│   │   │   └── DharmaScore.tsx
+│   │   ├── Mirror/
+│   │   │   ├── StyleVectorRadar.tsx  <span class="c-com"># Editable axis radar</span>
+│   │   │   ├── SelfRecognitionTest.tsx
+│   │   │   └── ShareCard.tsx         <span class="c-com"># PNG export for sharing</span>
+│   │   ├── Coach/
+│   │   │   ├── PuzzleCard.tsx
+│   │   │   ├── DronaSpeaks.tsx       <span class="c-com"># Coach dialogue overlay</span>
+│   │   │   └── DrillSummary.tsx
+│   │   └── UI/                       <span class="c-com"># Button, Card, Modal — design system primitives</span>
+│   ├── engine/
+│   │   ├── stockfish.worker.ts       <span class="c-com"># UCI bridge</span>
+│   │   ├── maia.worker.ts            <span class="c-com"># lc0+Maia bridge</span>
+│   │   ├── mirror.ts                 <span class="c-com"># Three-layer hybrid policy</span>
+│   │   ├── motifClassifier.ts        <span class="c-com"># Tag forks/pins/skewers</span>
+│   │   └── engine.test.ts
+│   ├── ml/
+│   │   ├── styleVector.ts            <span class="c-com"># Compute 8-dim vector from games</span>
+│   │   ├── perturbPolicy.ts          <span class="c-com"># Layer 2 reranking</span>
+│   │   ├── weaknessExploit.ts        <span class="c-com"># Layer 3 motif targeting</span>
+│   │   └── ml.test.ts
+│   ├── data/
+│   │   ├── db.ts                     <span class="c-com"># IndexedDB schema (idb wrapper)</span>
+│   │   ├── supabase.ts               <span class="c-com"># Client + typed queries</span>
+│   │   ├── sync.ts                   <span class="c-com"># Local→cloud reconciliation</span>
+│   │   └── puzzles.json              <span class="c-com"># Lichess puzzle subset</span>
+│   ├── story/
+│   │   ├── chapters/
+│   │   │   ├── ch01_calibration.json
+│   │   │   ├── ch02_hastinapura.json
+│   │   │   ├── ch03_yudhishthira.json
+│   │   │   ├── ... (one per chapter)
+│   │   │   └── ch19_finalMirror.json
+│   │   ├── characters.json           <span class="c-com"># Character config (Maia base, constraint)</span>
+│   │   └── chapterLoader.ts
+│   ├── state/
+│   │   ├── playerStore.ts            <span class="c-com"># Zustand: player profile, progress</span>
+│   │   ├── gameStore.ts              <span class="c-com"># Zustand: current match state</span>
+│   │   └── settingsStore.ts          <span class="c-com"># Theme, audio, etc.</span>
+│   ├── lib/
+│   │   ├── chessUtils.ts             <span class="c-com"># FEN helpers, eval conversion</span>
+│   │   ├── pgnExport.ts
+│   │   └── analytics.ts
+│   ├── styles/
+│   │   ├── tokens.css                <span class="c-com"># Design tokens (palette, fonts)</span>
+│   │   ├── themes.css                <span class="c-com"># Standard vs Mahabharata themes</span>
+│   │   └── global.css
+│   └── vite-env.d.ts
+│
+├── supabase/
+│   ├── migrations/
+│   │   ├── 001_init.sql              <span class="c-com"># Tables: players, games, moves, feedback</span>
+│   │   ├── 002_rls.sql               <span class="c-com"># Row-level security</span>
+│   │   └── 003_functions.sql         <span class="c-com"># Edge function definitions</span>
+│   ├── functions/
+│   │   ├── coach-prompt/             <span class="c-com"># Gemini caller</span>
+│   │   │   ├── index.ts
+│   │   │   └── prompts.ts
+│   │   ├── recompute-style/          <span class="c-com"># Nightly batch</span>
+│   │   │   └── index.ts
+│   │   └── _shared/
+│   │       └── cors.ts
+│   └── seed/
+│       ├── characters.sql            <span class="c-com"># Initial character config rows</span>
+│       └── puzzles.sql               <span class="c-com"># Lichess puzzle subset</span>
+│
+├── blender/                          <span class="c-com"># Stage 2 — procedural asset generation</span>
+│   ├── pieces/
+│   │   ├── generate_ratha_pandava.py
+│   │   ├── generate_gaja_pandava.py
+│   │   ├── ... (one per piece type per faction)
+│   │   └── _materials.py
+│   ├── characters/
+│   │   ├── _base_rig.py              <span class="c-com"># Shared human rig</span>
+│   │   ├── vyasa.py
+│   │   ├── yudhishthira.py
+│   │   └── ... (one per character)
+│   ├── backgrounds/
+│   │   ├── pavilion_indraprastha.py
+│   │   ├── practice_yard.py
+│   │   └── ... (one per scene)
+│   ├── _palette.py                   <span class="c-com"># Shared color tokens</span>
+│   └── render_all.py                 <span class="c-com"># Master render driver</span>
+│
+├── docs/
+│   ├── v2_strategy.html              <span class="c-com"># v2 doc archived</span>
+│   ├── v3_story.html                 <span class="c-com"># v3 story bible archived</span>
+│   ├── v4_implementation.html        <span class="c-com"># This document archived</span>
+│   ├── agent_briefs/                 <span class="c-com"># Per-agent task specs (markdown)</span>
+│   │   ├── agent_a_pwa_shell.md
+│   │   ├── agent_b_calibration.md
+│   │   ├── agent_c_mirror.md
+│   │   ├── agent_d_assets.md
+│   │   ├── agent_e_story.md
+│   │   ├── agent_f_coach.md
+│   │   ├── agent_g_backend.md
+│   │   └── agent_h_polish.md
+│   ├── gpl_notices.md                <span class="c-com"># Required GPL attributions</span>
+│   ├── architecture.md
+│   └── decisions/                    <span class="c-com"># ADRs — Architecture Decision Records</span>
+│       ├── 001-pwa-over-native.md
+│       ├── 002-stockfish-version.md
+│       └── ...
+│
+├── scripts/
+│   ├── seed_puzzles.ts               <span class="c-com"># Download Lichess CC0 puzzle DB subset</span>
+│   ├── generate_types.sh             <span class="c-com"># supabase gen types</span>
+│   └── deploy_functions.sh
+│
+├── tests/
+│   ├── e2e/                          <span class="c-com"># Playwright</span>
+│   │   ├── calibration.spec.ts
+│   │   ├── mirror_match.spec.ts
+│   │   └── share_card.spec.ts
+│   └── fixtures/
+│
+├── .env.example                      <span class="c-com"># Template for env vars</span>
+├── .gitignore
+├── .eslintrc.cjs
+├── .prettierrc
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── README.md                         <span class="c-com"># Quickstart, agent index, links to docs</span>
+</div>
+
+<p>This structure is the contract between the human director and the AI agents. Agents are told: <em>"Work only in your assigned folder. Read briefs in /docs/agent_briefs. Read architecture decisions in /docs/decisions. Write ADRs when you make architectural choices."</em> The structure prevents agents from rewriting each other's code unintentionally.</p>
+
+</section>
+
+<!-- ============== SECTION 4: GIT WORKFLOW ============== -->
+<section class="major" id="sec-4">
+<span class="section-num">Section Four</span>
+<h1>Git Workflow<span class="sub">Branching, commits, releases. Designed for solo + AI agents, not for a team of ten.</span></h1>
+<p class="lede">A small project does not need GitFlow. It needs: main is always deployable, agents work on feature branches, commits are atomic enough that revertible, releases are tagged.</p>
+
+<h2 class="sub">Branch model</h2>
+<ul>
+<li><code>main</code> — always deployable. Cloudflare Pages auto-deploys from this on every push.</li>
+<li><code>feature/agent-a-board</code> etc. — one branch per agent task, named for the brief.</li>
+<li><code>release/v0.1.0-stage0</code> — release branches at milestone tags.</li>
+<li>No <code>develop</code> branch. No staging branch. Cloudflare Pages preview URLs handle preview deploys per PR automatically.</li>
+</ul>
+
+<h2 class="sub">Commit convention</h2>
+<p>Conventional Commits format. Agents are instructed to use it.</p>
+<pre><code><span class="c-fn">feat</span>(board): drag-to-move with chess.js move validation
+<span class="c-fn">fix</span>(mirror): style vector NaN when player has no white games
+<span class="c-fn">refactor</span>(engine): extract motif classifier to standalone module
+<span class="c-fn">docs</span>: add ADR-004 on Gemini vs OpenAI for Coach
+<span class="c-fn">test</span>(calibration): cover task 4 puzzle race timeout
+<span class="c-fn">chore</span>(deps): bump react-chessboard 4.7.0 → 4.7.2</code></pre>
+
+<h2 class="sub">Pre-commit hook (Husky + lint-staged)</h2>
+<span class="code-label">.husky/pre-commit</span>
+<pre><code>#!/usr/bin/env sh
+. <span class="c-str">"$(dirname -- <span class="c-str">"$0"</span>)/_/husky.sh"</span>
+npx lint-staged
+npm run typecheck</code></pre>
+
+<span class="code-label">package.json lint-staged config</span>
+<pre><code><span class="c-str">"lint-staged"</span>: {
+  <span class="c-str">"*.{ts,tsx}"</span>: [<span class="c-str">"eslint --fix"</span>, <span class="c-str">"prettier --write"</span>],
+  <span class="c-str">"*.{json,md,css}"</span>: [<span class="c-str">"prettier --write"</span>]
+}</code></pre>
+
+<h2 class="sub">CI: .github/workflows/ci.yml</h2>
+<pre><code><span class="c-key">name</span>: CI
+<span class="c-key">on</span>:
+  <span class="c-key">pull_request</span>:
+  <span class="c-key">push</span>: { <span class="c-key">branches</span>: [main] }
+<span class="c-key">jobs</span>:
+  <span class="c-key">test</span>:
+    <span class="c-key">runs-on</span>: ubuntu-latest
+    <span class="c-key">steps</span>:
+      - <span class="c-key">uses</span>: actions/checkout@v4
+      - <span class="c-key">uses</span>: actions/setup-node@v4
+        <span class="c-key">with</span>: { <span class="c-key">node-version</span>: <span class="c-str">'20'</span>, <span class="c-key">cache</span>: <span class="c-str">'npm'</span> }
+      - <span class="c-key">run</span>: npm ci
+      - <span class="c-key">run</span>: npm run lint
+      - <span class="c-key">run</span>: npm run typecheck
+      - <span class="c-key">run</span>: npm test
+      - <span class="c-key">run</span>: npm run build</code></pre>
+
+<h2 class="sub">Deploy: .github/workflows/deploy.yml</h2>
+<p>Cloudflare Pages handles this automatically when connected to the repo — no explicit deploy workflow needed unless you want extra steps like Supabase migration on deploy.</p>
+
+<h2 class="sub">Versioning</h2>
+<table>
+<thead><tr><th>Tag</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>v0.1.0-stage0</td><td>Stage 0 prototype — Mirror only, no story</td></tr>
+<tr><td>v0.2.0-stage1-beta</td><td>Stage 1 closed beta — calibration + 3 chapters + Coach</td></tr>
+<tr><td>v0.3.0-stage1-public</td><td>Stage 1 public beta</td></tr>
+<tr><td>v1.0.0</td><td>Stage 2 complete Mode 1 launch</td></tr>
+<tr><td>v1.1.0, v1.2.0...</td><td>Post-launch patches</td></tr>
+<tr><td>v2.0.0-mode2</td><td>Mode 2 release (future)</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ============== SECTION 5: DATABASE ============== -->
+<section class="major" id="sec-5">
+<span class="section-num">Section Five</span>
+<h1>Database<span class="sub">Schema, migrations, row-level security. The exact SQL an agent needs to run.</span></h1>
+<p class="lede">Six tables. Strict RLS so players can only see their own data. Anonymous play supported through an optional account upgrade path.</p>
+
+<h2 class="sub">Migration 001 — initial schema</h2>
+<span class="code-label">supabase/migrations/001_init.sql</span>
+<pre><code><span class="c-com">-- Players: created anonymously, optionally promoted to email account</span>
+<span class="c-key">create table</span> players (
+  id <span class="c-key">uuid primary key default</span> gen_random_uuid(),
+  created_at <span class="c-key">timestamptz default</span> now(),
+  updated_at <span class="c-key">timestamptz default</span> now(),
+  auth_user_id <span class="c-key">uuid references</span> auth.users(id),  <span class="c-com">-- null until they sign up</span>
+  display_name <span class="c-key">text</span>,
+  elo_band <span class="c-key">text check</span> (elo_band <span class="c-key">in</span> (<span class="c-str">'apprentice'</span>,<span class="c-str">'initiate'</span>,<span class="c-str">'adept'</span>,<span class="c-str">'master'</span>)),
+  detected_elo <span class="c-key">integer</span>,
+  style_vector <span class="c-key">jsonb</span>,
+  story_progress <span class="c-key">jsonb default</span> <span class="c-str">'{}'::jsonb</span>,
+  theme <span class="c-key">text default</span> <span class="c-str">'standard'</span>,
+  coach_motif_weakness <span class="c-key">jsonb default</span> <span class="c-str">'{}'::jsonb</span>,
+  last_active_at <span class="c-key">timestamptz default</span> now()
+);
+<span class="c-key">create index</span> idx_players_auth <span class="c-key">on</span> players(auth_user_id);
+<span class="c-key">create index</span> idx_players_active <span class="c-key">on</span> players(last_active_at <span class="c-key">desc</span>);
+
+<span class="c-com">-- Games: every match the player has played, any mode</span>
+<span class="c-key">create table</span> games (
+  id <span class="c-key">uuid primary key default</span> gen_random_uuid(),
+  player_id <span class="c-key">uuid references</span> players(id) <span class="c-key">on delete cascade</span>,
+  played_at <span class="c-key">timestamptz default</span> now(),
+  mode <span class="c-key">text check</span> (mode <span class="c-key">in</span>
+    (<span class="c-str">'calibration'</span>,<span class="c-str">'story'</span>,<span class="c-str">'mirror'</span>,<span class="c-str">'daily_mirror'</span>,<span class="c-str">'practice'</span>,<span class="c-str">'multiplayer'</span>,<span class="c-str">'coach_puzzle'</span>)),
+  opponent <span class="c-key">text</span>,                          <span class="c-com">-- 'yudhishthira' | 'mirror_v1' | etc.</span>
+  chapter_id <span class="c-key">text</span>,                        <span class="c-com">-- 'ch03' for story matches</span>
+  result <span class="c-key">text check</span> (result <span class="c-key">in</span> (<span class="c-str">'win'</span>,<span class="c-str">'loss'</span>,<span class="c-str">'draw'</span>,<span class="c-str">'abandoned'</span>)),
+  pgn <span class="c-key">text not null</span>,
+  player_color <span class="c-key">text check</span> (player_color <span class="c-key">in</span> (<span class="c-str">'white'</span>,<span class="c-str">'black'</span>)),
+  time_control <span class="c-key">text</span>,                    <span class="c-com">-- '10+0' | '5+3' | etc.</span>
+  avg_cp_loss <span class="c-key">numeric</span>,
+  dharma_tier <span class="c-key">text</span>,                    <span class="c-com">-- 'drifting'..'unwavering'</span>
+  blunders <span class="c-key">integer default</span> 0,
+  mistakes <span class="c-key">integer default</span> 0,
+  inaccuracies <span class="c-key">integer default</span> 0,
+  mirror_version <span class="c-key">integer</span>,             <span class="c-com">-- 1, 2, 3 for Mirror matches</span>
+  duration_seconds <span class="c-key">integer</span>
+);
+<span class="c-key">create index</span> idx_games_player <span class="c-key">on</span> games(player_id, played_at <span class="c-key">desc</span>);
+<span class="c-key">create index</span> idx_games_mode <span class="c-key">on</span> games(mode);
+
+<span class="c-com">-- Moves: per-move telemetry used by the style vector builder</span>
+<span class="c-key">create table</span> moves (
+  id <span class="c-key">uuid primary key default</span> gen_random_uuid(),
+  game_id <span class="c-key">uuid references</span> games(id) <span class="c-key">on delete cascade</span>,
+  ply <span class="c-key">integer not null</span>,
+  fen_before <span class="c-key">text not null</span>,
+  move_san <span class="c-key">text not null</span>,
+  move_uci <span class="c-key">text not null</span>,
+  time_taken_ms <span class="c-key">integer</span>,
+  time_remaining_ms <span class="c-key">integer</span>,
+  eval_before_cp <span class="c-key">integer</span>,            <span class="c-com">-- centipawns from white's view</span>
+  eval_after_cp <span class="c-key">integer</span>,
+  cp_loss <span class="c-key">integer</span>,                    <span class="c-com">-- positive = bad move for the mover</span>
+  classification <span class="c-key">text</span>,              <span class="c-com">-- 'best'|'good'|'inaccuracy'|'mistake'|'blunder'|'brilliant'</span>
+  motif_missed <span class="c-key">text</span>                  <span class="c-com">-- 'fork'|'pin'|'skewer'|'hang'|'mate'|null</span>
+);
+<span class="c-key">create index</span> idx_moves_game <span class="c-key">on</span> moves(game_id, ply);
+
+<span class="c-com">-- Feedback: post-Mirror "felt like me" surveys</span>
+<span class="c-key">create table</span> feedback (
+  id <span class="c-key">uuid primary key default</span> gen_random_uuid(),
+  player_id <span class="c-key">uuid references</span> players(id) <span class="c-key">on delete cascade</span>,
+  game_id <span class="c-key">uuid references</span> games(id),
+  created_at <span class="c-key">timestamptz default</span> now(),
+  felt_like_me <span class="c-key">boolean</span>,
+  self_recognition_correct <span class="c-key">boolean</span>,
+  self_recognition_choice <span class="c-key">integer</span>,       <span class="c-com">-- 1, 2, or 3</span>
+  free_text <span class="c-key">text</span>
+);
+
+<span class="c-com">-- Coach interventions: track what we have said to whom</span>
+<span class="c-key">create table</span> coach_sessions (
+  id <span class="c-key">uuid primary key default</span> gen_random_uuid(),
+  player_id <span class="c-key">uuid references</span> players(id) <span class="c-key">on delete cascade</span>,
+  game_id <span class="c-key">uuid references</span> games(id),
+  created_at <span class="c-key">timestamptz default</span> now(),
+  motif_focus <span class="c-key">text</span>,                       <span class="c-com">-- 'fork'|'pin'|...</span>
+  coach_text <span class="c-key">text</span>,                         <span class="c-com">-- Gemini-generated dialogue</span>
+  puzzles_offered <span class="c-key">jsonb</span>,                   <span class="c-com">-- [{id, motif, rating, accepted, solved}]</span>
+  completed <span class="c-key">boolean default false</span>
+);
+<span class="c-key">create index</span> idx_coach_player <span class="c-key">on</span> coach_sessions(player_id, created_at <span class="c-key">desc</span>);
+
+<span class="c-com">-- Mirror snapshots: archive of style vectors at the time of each Mirror match</span>
+<span class="c-key">create table</span> mirror_snapshots (
+  id <span class="c-key">uuid primary key default</span> gen_random_uuid(),
+  player_id <span class="c-key">uuid references</span> players(id) <span class="c-key">on delete cascade</span>,
+  game_id <span class="c-key">uuid references</span> games(id),
+  created_at <span class="c-key">timestamptz default</span> now(),
+  mirror_version <span class="c-key">integer</span>,
+  style_vector_snapshot <span class="c-key">jsonb</span>,
+  data_points_used <span class="c-key">integer</span>
+);</code></pre>
+
+<h2 class="sub">Migration 002 — row-level security</h2>
+<span class="code-label">supabase/migrations/002_rls.sql</span>
+<pre><code><span class="c-key">alter table</span> players <span class="c-key">enable row level security</span>;
+<span class="c-key">alter table</span> games <span class="c-key">enable row level security</span>;
+<span class="c-key">alter table</span> moves <span class="c-key">enable row level security</span>;
+<span class="c-key">alter table</span> feedback <span class="c-key">enable row level security</span>;
+<span class="c-key">alter table</span> coach_sessions <span class="c-key">enable row level security</span>;
+<span class="c-key">alter table</span> mirror_snapshots <span class="c-key">enable row level security</span>;
+
+<span class="c-com">-- Players can only read and update their own row</span>
+<span class="c-key">create policy</span> <span class="c-str">"players_self_read"</span> <span class="c-key">on</span> players
+  <span class="c-key">for select using</span> (auth.uid() = auth_user_id);
+<span class="c-key">create policy</span> <span class="c-str">"players_self_update"</span> <span class="c-key">on</span> players
+  <span class="c-key">for update using</span> (auth.uid() = auth_user_id);
+<span class="c-key">create policy</span> <span class="c-str">"players_self_insert"</span> <span class="c-key">on</span> players
+  <span class="c-key">for insert with check</span> (auth.uid() = auth_user_id);
+
+<span class="c-com">-- Games: read/write only your own</span>
+<span class="c-key">create policy</span> <span class="c-str">"games_owner_only"</span> <span class="c-key">on</span> games
+  <span class="c-key">for all using</span> (
+    player_id <span class="c-key">in</span> (<span class="c-key">select</span> id <span class="c-key">from</span> players <span class="c-key">where</span> auth_user_id = auth.uid())
+  );
+
+<span class="c-com">-- Moves: same</span>
+<span class="c-key">create policy</span> <span class="c-str">"moves_owner_only"</span> <span class="c-key">on</span> moves
+  <span class="c-key">for all using</span> (
+    game_id <span class="c-key">in</span> (
+      <span class="c-key">select</span> id <span class="c-key">from</span> games <span class="c-key">where</span> player_id <span class="c-key">in</span>
+      (<span class="c-key">select</span> id <span class="c-key">from</span> players <span class="c-key">where</span> auth_user_id = auth.uid())
+    )
+  );
+
+<span class="c-com">-- Feedback, coach, snapshots: same pattern</span>
+<span class="c-com">-- (analogous policies — see full migration in repo)</span>
+
+<span class="c-com">-- Anonymous play: a Supabase anon session gets a synthetic player row</span>
+<span class="c-com">-- via an edge function. The anon JWT carries the synthetic uuid.</span></code></pre>
+
+<h2 class="sub">Type generation</h2>
+<p>After running migrations, generate TypeScript types from the schema:</p>
+<pre><code>supabase gen types typescript --linked &gt; src/data/database.types.ts</code></pre>
+<p>The Supabase client is then strongly typed and agents cannot invent table or column names.</p>
+
+</section>
+
+<!-- ============== SECTION 6: ENGINE INTEGRATION ============== -->
+<section class="major" id="sec-6">
+<span class="section-num">Section Six</span>
+<h1>Engine Integration<span class="sub">Stockfish &amp; Maia in Web Workers. The trickiest part of the build, fully spelled out.</span></h1>
+<p class="lede">Browser chess engines need three things: bundled WASM in <code>/public/engines/</code>, a Web Worker wrapper that speaks UCI, and a React-side bridge that exposes a typed promise-based API. Below is each layer.</p>
+
+<h2 class="sub">Stockfish worker</h2>
+<span class="code-label">src/engine/stockfish.worker.ts</span>
+<pre><code><span class="c-com">/// &lt;reference lib="webworker" /&gt;</span>
+<span class="c-com">// Web Worker that hosts stockfish.wasm and speaks UCI protocol.</span>
+<span class="c-com">// Messages from main thread:  { cmd: 'eval' | 'go' | 'stop', fen?, depth? }</span>
+<span class="c-com">// Messages to main thread:    { type: 'bestmove' | 'info' | 'ready', ... }</span>
+
+<span class="c-key">let</span> sf: <span class="c-key">any</span> = <span class="c-key">null</span>;
+
+<span class="c-key">async function</span> init() {
+  <span class="c-key">const</span> Stockfish = (<span class="c-key">await import</span>(<span class="c-str">"stockfish.js"</span>)).<span class="c-key">default</span>;
+  sf = <span class="c-key">await</span> Stockfish();
+  sf.addMessageListener(handleEngineLine);
+  sf.postMessage(<span class="c-str">"uci"</span>);
+  sf.postMessage(<span class="c-str">"isready"</span>);
+}
+
+<span class="c-key">function</span> handleEngineLine(line: <span class="c-key">string</span>) {
+  <span class="c-key">if</span> (line === <span class="c-str">"readyok"</span>) {
+    self.postMessage({ type: <span class="c-str">"ready"</span> });
+  } <span class="c-key">else if</span> (line.startsWith(<span class="c-str">"bestmove"</span>)) {
+    <span class="c-key">const</span> parts = line.split(<span class="c-str">" "</span>);
+    self.postMessage({ type: <span class="c-str">"bestmove"</span>, move: parts[<span class="c-key">1</span>] });
+  } <span class="c-key">else if</span> (line.startsWith(<span class="c-str">"info"</span>) &amp;&amp; line.includes(<span class="c-str">"score"</span>)) {
+    <span class="c-com">// Parse "info depth N score cp X pv ..." for eval-only requests</span>
+    <span class="c-key">const</span> cpMatch = line.match(/score cp (<span class="c-key">-</span>?\d+)/);
+    <span class="c-key">const</span> mateMatch = line.match(/score mate (<span class="c-key">-</span>?\d+)/);
+    self.postMessage({
+      type: <span class="c-str">"info"</span>,
+      cp: cpMatch ? parseInt(cpMatch[<span class="c-key">1</span>], <span class="c-key">10</span>) : <span class="c-key">null</span>,
+      mate: mateMatch ? parseInt(mateMatch[<span class="c-key">1</span>], <span class="c-key">10</span>) : <span class="c-key">null</span>,
+      raw: line,
+    });
+  }
+}
+
+self.onmessage = (e: MessageEvent) =&gt; {
+  <span class="c-key">if</span> (!sf) <span class="c-key">return</span>;
+  <span class="c-key">const</span> { cmd, fen, depth } = e.data;
+  <span class="c-key">if</span> (cmd === <span class="c-str">"go"</span>) {
+    sf.postMessage(<span class="c-str">`position fen </span>${fen}<span class="c-str">`</span>);
+    sf.postMessage(<span class="c-str">`go depth </span>${depth ?? <span class="c-key">12</span>}<span class="c-str">`</span>);
+  } <span class="c-key">else if</span> (cmd === <span class="c-str">"eval"</span>) {
+    sf.postMessage(<span class="c-str">`position fen </span>${fen}<span class="c-str">`</span>);
+    sf.postMessage(<span class="c-str">`go depth </span>${depth ?? <span class="c-key">14</span>}<span class="c-str">`</span>);
+  } <span class="c-key">else if</span> (cmd === <span class="c-str">"stop"</span>) {
+    sf.postMessage(<span class="c-str">"stop"</span>);
+  }
+};
+
+init();</code></pre>
+
+<h2 class="sub">Stockfish bridge (main thread)</h2>
+<span class="code-label">src/engine/stockfishBridge.ts</span>
+<pre><code><span class="c-com">// Promise-based facade over the Stockfish worker.</span>
+<span class="c-com">// One worker instance reused across the session.</span>
+
+<span class="c-key">let</span> worker: Worker | <span class="c-key">null</span> = <span class="c-key">null</span>;
+<span class="c-key">let</span> ready = <span class="c-key">false</span>;
+<span class="c-key">const</span> readyWaiters: Array&lt;() =&gt; <span class="c-key">void</span>&gt; = [];
+
+<span class="c-key">function</span> getWorker(): Worker {
+  <span class="c-key">if</span> (!worker) {
+    worker = <span class="c-key">new</span> Worker(<span class="c-key">new</span> URL(<span class="c-str">"./stockfish.worker.ts"</span>, <span class="c-key">import</span>.meta.url), { type: <span class="c-str">"module"</span> });
+    worker.onmessage = (e) =&gt; {
+      <span class="c-key">if</span> (e.data.type === <span class="c-str">"ready"</span>) {
+        ready = <span class="c-key">true</span>;
+        readyWaiters.forEach((r) =&gt; r());
+        readyWaiters.length = <span class="c-key">0</span>;
+      }
+    };
+  }
+  <span class="c-key">return</span> worker;
+}
+
+<span class="c-key">export async function</span> waitForEngine(): <span class="c-key">Promise</span>&lt;<span class="c-key">void</span>&gt; {
+  <span class="c-key">if</span> (ready) <span class="c-key">return</span>;
+  getWorker();
+  <span class="c-key">return new Promise</span>((resolve) =&gt; readyWaiters.push(resolve));
+}
+
+<span class="c-key">export async function</span> getBestMove(fen: <span class="c-key">string</span>, depth = <span class="c-key">12</span>): <span class="c-key">Promise</span>&lt;<span class="c-key">string</span>&gt; {
+  <span class="c-key">await</span> waitForEngine();
+  <span class="c-key">const</span> w = getWorker();
+  <span class="c-key">return new Promise</span>((resolve) =&gt; {
+    <span class="c-key">const</span> handler = (e: MessageEvent) =&gt; {
+      <span class="c-key">if</span> (e.data.type === <span class="c-str">"bestmove"</span>) {
+        w.removeEventListener(<span class="c-str">"message"</span>, handler);
+        resolve(e.data.move);
+      }
+    };
+    w.addEventListener(<span class="c-str">"message"</span>, handler);
+    w.postMessage({ cmd: <span class="c-str">"go"</span>, fen, depth });
+  });
+}
+
+<span class="c-key">export async function</span> evaluatePosition(fen: <span class="c-key">string</span>, depth = <span class="c-key">14</span>): <span class="c-key">Promise</span>&lt;{ cp: <span class="c-key">number</span> | <span class="c-key">null</span>; mate: <span class="c-key">number</span> | <span class="c-key">null</span> }&gt; {
+  <span class="c-key">await</span> waitForEngine();
+  <span class="c-key">const</span> w = getWorker();
+  <span class="c-key">return new Promise</span>((resolve) =&gt; {
+    <span class="c-key">let</span> last = { cp: <span class="c-key">null</span> <span class="c-key">as number</span> | <span class="c-key">null</span>, mate: <span class="c-key">null</span> <span class="c-key">as number</span> | <span class="c-key">null</span> };
+    <span class="c-key">const</span> handler = (e: MessageEvent) =&gt; {
+      <span class="c-key">if</span> (e.data.type === <span class="c-str">"info"</span>) last = { cp: e.data.cp, mate: e.data.mate };
+      <span class="c-key">if</span> (e.data.type === <span class="c-str">"bestmove"</span>) {
+        w.removeEventListener(<span class="c-str">"message"</span>, handler);
+        resolve(last);
+      }
+    };
+    w.addEventListener(<span class="c-str">"message"</span>, handler);
+    w.postMessage({ cmd: <span class="c-str">"eval"</span>, fen, depth });
+  });
+}</code></pre>
+
+<h2 class="sub">Maia integration</h2>
+<p>Maia weights are loaded into lc0.wasm. The pattern is identical to Stockfish — one worker per engine, UCI protocol, promise bridge. The differences: weight files are large (~50MB each), and we lazy-load only the Elo band the player needs.</p>
+
+<span class="code-label">src/engine/maia.worker.ts (sketch)</span>
+<pre><code><span class="c-com">/// &lt;reference lib="webworker" /&gt;</span>
+<span class="c-com">// Load lc0.wasm + Maia weight file matching the player's Elo band.</span>
+
+<span class="c-key">let</span> engine: <span class="c-key">any</span> = <span class="c-key">null</span>;
+
+self.onmessage = <span class="c-key">async</span> (e: MessageEvent) =&gt; {
+  <span class="c-key">if</span> (e.data.cmd === <span class="c-str">"init"</span>) {
+    <span class="c-key">const</span> elo = e.data.elo;                  <span class="c-com">// 1100, 1300, 1500, 1700, 1900</span>
+    <span class="c-key">const</span> Lc0 = (<span class="c-key">await import</span>(<span class="c-str">"lc0-wasm"</span>)).<span class="c-key">default</span>;
+    engine = <span class="c-key">await</span> Lc0({
+      weightsPath: <span class="c-str">`/engines/maia/maia-</span>${elo}<span class="c-str">.gz`</span>,
+    });
+    self.postMessage({ type: <span class="c-str">"ready"</span> });
+  } <span class="c-key">else if</span> (e.data.cmd === <span class="c-str">"go"</span>) {
+    <span class="c-com">// Maia plays nodes=1 (immediate policy output) per the original paper</span>
+    engine.postMessage(<span class="c-str">`position fen </span>${e.data.fen}<span class="c-str">`</span>);
+    engine.postMessage(<span class="c-str">"go nodes 1"</span>);
+    <span class="c-com">// Listener emits bestmove + the move probability distribution</span>
+  }
+};</code></pre>
+
+<div class="callout info">
+<span class="label">Note on Maia in browser</span>
+<p>Maia is published as Leela Chess Zero weights. Running lc0 in WASM is possible but the WASM build is not as polished as Stockfish's. As of v1.0 of this implementation, if lc0-wasm is too unstable, fallback option: host Maia as a Supabase Edge Function that returns a move given a FEN + Elo. Adds 100-200ms latency over local execution. Decide based on which proves more reliable in Agent A's testing.</p>
+</div>
+
+<h2 class="sub">Loading order in the PWA</h2>
+<ol>
+<li>App opens. <code>main.tsx</code> mounts.</li>
+<li>Service worker registers and caches the app shell.</li>
+<li>Service worker pre-caches <code>/engines/stockfish/*</code> in background.</li>
+<li>When player starts calibration, Stockfish worker initializes. First eval takes ~1-2 seconds (one-time load cost).</li>
+<li>When player's Elo band is detected post-calibration, the appropriate Maia weight file is fetched in background.</li>
+<li>When player faces a character match, Maia worker is initialized with the right weights if not already loaded.</li>
+</ol>
+
+</section>
+
+<!-- ============== SECTION 7: AGENT BRIEFS ============== -->
+<section class="major" id="sec-7">
+<span class="section-num">Section Seven</span>
+<h1>AI Coding Agent Briefs<span class="sub">Eight agents. Copy-pasteable prompts. Each brief is everything an agent needs to start working without asking questions.</span></h1>
+<p class="lede">Each brief follows the same shape: scope, dependencies, files to create, acceptance criteria, the exact prompt to give the agent. The agent's first task is always to read the relevant sections of v2, v3, and this document, then write a one-page plan, then start coding.</p>
+
+<!-- AGENT A -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent A — PWA Shell &amp; Chess Board</div>
+<div class="ab-meta">Stage 0 · 3–4 days · No dependencies</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Vite + React + TypeScript scaffold. PWA manifest and service worker. Chess board with drag-to-move using react-chessboard and chess.js. Stockfish WASM integrated as a Web Worker. Manual play against the engine works end-to-end. Deployed to Cloudflare Pages.</p>
+
+<h4>Files to create</h4>
+<ul>
+<li><code>vite.config.ts</code> — with vite-plugin-pwa configured</li>
+<li><code>public/manifest.webmanifest</code> — PWA manifest with name, icons, theme color</li>
+<li><code>src/main.tsx</code>, <code>src/App.tsx</code> — entry and root</li>
+<li><code>src/routes/Home.tsx</code>, <code>src/routes/Play.tsx</code></li>
+<li><code>src/components/Board/Board.tsx</code> + <code>Board.test.ts</code></li>
+<li><code>src/engine/stockfish.worker.ts</code>, <code>src/engine/stockfishBridge.ts</code> (see §6)</li>
+<li><code>src/state/gameStore.ts</code> — Zustand store for current match</li>
+<li><code>src/styles/tokens.css</code>, <code>src/styles/global.css</code></li>
+<li><code>.env.example</code> with placeholder Supabase keys</li>
+<li><code>.github/workflows/ci.yml</code></li>
+</ul>
+
+<h4>Acceptance criteria</h4>
+<ol>
+<li><code>npm run dev</code> serves the app at localhost:5173 with no console errors.</li>
+<li>User can open the deployed PWA and see a chess board.</li>
+<li>User can drag a piece. Illegal moves snap back. Legal moves animate to the destination.</li>
+<li>After the user's move, Stockfish at depth 10 responds within 500ms.</li>
+<li>PGN of the completed game is downloadable.</li>
+<li>All chess rules pass — castling kingside and queenside, en passant, promotion, threefold repetition detection, stalemate, insufficient material.</li>
+<li>Lighthouse PWA score ≥ 90.</li>
+<li>Cloudflare Pages deployment is live at a custom subdomain.</li>
+</ol>
+
+<h4>The exact prompt to give the agent</h4>
+<div class="prompt-block">
+You are Agent A on the MIRROR project. Your scope is the PWA shell and chess board.<br><br>
+Read these documents in order before writing any code:<br>
+1. <code>/docs/v2_strategy.html</code> — understand the Stage 0 / Stage 1 / Stage 2 framing<br>
+2. <code>/docs/v3_story.html</code> — understand the world this fits into<br>
+3. <code>/docs/v4_implementation.html</code> §1 (stack), §3 (repo structure), §6 (engine integration), §7 (this brief)<br><br>
+Then write a one-page plan as <code>/docs/agent_a_plan.md</code> covering: file list with one-line purpose each, key technical decisions you will make, the order in which you will build, and any open questions for the human director.<br><br>
+After the plan is reviewed, begin building. Use Conventional Commits. Push to a feature branch. Open a PR when acceptance criteria 1-5 pass.<br><br>
+Do not touch any folder outside <code>/src/{routes,components/Board,engine,state,styles,lib}</code> and <code>/public</code>. If you need something that lives in another folder, raise it in the PR description; another agent will handle it.
+</div>
+
+</div>
+</div>
+
+<!-- AGENT B -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent B — Calibration &amp; Style Vector</div>
+<div class="ab-meta">Stage 0 · 4–5 days · Depends on Agent A</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Vyasa's Test eight-task calibration flow. Style vector extraction (eight dimensions). IndexedDB persistence with idb. Radar chart visualization with editable axes. Elo band detection.</p>
+
+<h4>Files to create</h4>
+<ul>
+<li><code>src/routes/Calibration.tsx</code> — 8-task router</li>
+<li><code>src/components/Calibration/Task1Tactical.tsx</code> through <code>Task8VyasaMatch.tsx</code></li>
+<li><code>src/components/Calibration/Progress.tsx</code> — "Task 3 of 8"</li>
+<li><code>src/ml/styleVector.ts</code> — computes 8-dim vector from calibration data</li>
+<li><code>src/ml/styleVector.test.ts</code> — unit tests with mock calibration outputs</li>
+<li><code>src/components/Mirror/StyleVectorRadar.tsx</code> — editable radar chart</li>
+<li><code>src/data/db.ts</code> — IndexedDB schema via idb</li>
+<li><code>src/lib/eloDetect.ts</code> — maps style vector to apprentice|initiate|adept|master</li>
+<li>Sample tactical/endgame positions in <code>src/data/calibrationPositions.json</code></li>
+</ul>
+
+<h4>The exact prompt to give the agent</h4>
+<div class="prompt-block">
+You are Agent B on the MIRROR project. Your scope is the calibration flow and style vector.<br><br>
+Read <code>/docs/v3_story.html</code> §3 chapter I for the narrative framing, <code>/docs/v4_implementation.html</code> §7 (this brief), and the v2 strategy document §2 Stage 0 spec.<br><br>
+Critical constraints:<br>
+- The full calibration must complete in ≤18 minutes. If your design exceeds this, cut tasks.<br>
+- Every task must be narratively framed as Vyasa testing the apprentice. Use original dialogue, ≤2 lines per task.<br>
+- The style vector must produce non-NaN values from any valid calibration data including edge cases (player times out on every puzzle, player resigns Vyasa match in 3 moves).<br>
+- The radar chart must be editable — the player can drag any axis up or down. Edits regenerate the style vector and persist immediately.<br><br>
+Write <code>/docs/agent_b_plan.md</code> first. Build only after the plan is approved.
+</div>
+
+</div>
+</div>
+
+<!-- AGENT C -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent C — Mirror Generator</div>
+<div class="ab-meta">Stage 0 · 6–8 days · Depends on Agents A &amp; B</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>The three-layer hybrid Mirror engine. Self-recognition triangulation test. Share card generator.</p>
+
+<h4>Files to create</h4>
+<ul>
+<li><code>src/engine/mirror.ts</code> — orchestrates Maia + perturbation + Stockfish exploitation</li>
+<li><code>src/ml/perturbPolicy.ts</code> — Layer 2 reranking function (see §11)</li>
+<li><code>src/ml/weaknessExploit.ts</code> — Layer 3 motif-targeted Stockfish lines</li>
+<li><code>src/engine/motifClassifier.ts</code> — detect forks/pins/skewers in a position</li>
+<li><code>src/components/Mirror/SelfRecognitionTest.tsx</code> — 3-profile picker</li>
+<li><code>src/components/Mirror/ShareCard.tsx</code> — generate sharable PNG via html2canvas</li>
+<li><code>src/routes/Mirror.tsx</code> — full Mirror match flow</li>
+</ul>
+
+<h4>Acceptance criteria</h4>
+<ol>
+<li>Two test profiles with different calibration results produce noticeably different Mirror opponents (measurable: ≥30% different move choices in the same 20 test positions).</li>
+<li>Self-recognition test renders three unlabeled radars and accepts a click on one.</li>
+<li>After the Mirror match, a share card PNG is generated showing the final position, the player's style vector summary, and a one-line result.</li>
+<li>Internal team of 5 testers passes the self-recognition test ≥3 of 5 times.</li>
+</ol>
+
+<h4>The exact prompt</h4>
+<div class="prompt-block">
+You are Agent C, building the central differentiating mechanic of the entire game.<br><br>
+Read <code>/docs/v4_implementation.html</code> §11 carefully — it contains the layer-by-layer code spec. Read §6 to understand the engine integration. Read v3 §4 for the narrative framing of the Mirror.<br><br>
+The acceptance criterion that matters most is #4: ≥3 of 5 internal testers correctly identify which Mirror is theirs from a 3-card triangulation. If you cannot achieve this with the eight-dimension style vector and the three-layer hybrid as designed, document the failure mode in <code>/docs/decisions/ADR-mirror-failure.md</code> rather than papering over it. We need to know if Stage 0's central test will fail before we ship it.<br><br>
+Write <code>/docs/agent_c_plan.md</code> first, including a planned A/B test of perturbation strengths.
+</div>
+
+</div>
+</div>
+
+<!-- AGENT D -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent D — Visual Assets (Stage 1)</div>
+<div class="ab-meta">Stage 1 · 6–8 days · No code dependency</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Generate Stage 1 visual assets using AI image generation (Midjourney/Flux/DALL-E 3). SVG chess pieces. Character portraits for the three characters in Stage 1 (Vyasa, Yudhishthira, the Mirror). Background scenes for three chapters.</p>
+
+<h4>Deliverables</h4>
+<ul>
+<li><code>public/assets/pieces/standard/*.svg</code> — 6 piece types × 2 colors = 12 SVGs</li>
+<li><code>public/assets/pieces/mahabharata/*.svg</code> — same 12 in Pandava and Kaurava styles</li>
+<li><code>public/assets/characters/vyasa/{neutral,smiling,sad,focused}.png</code> at 1024×1280px</li>
+<li>Same for Yudhishthira and the Mirror (faceless silhouette)</li>
+<li><code>public/assets/backgrounds/{vyasa_chamber,indraprastha_pavilion,riverbank_dusk}.jpg</code> at 2560×1440px</li>
+<li><code>docs/asset_brief_log.md</code> — every prompt used, attribution of which tool generated which asset</li>
+</ul>
+
+<h4>Style guide (non-negotiable)</h4>
+<dl class="spec">
+<dt>Reference style</dt><dd>Hand-painted, like Hades or Sea of Stars. Not photoreal. Not anime. Painterly with strong silhouettes.</dd>
+<dt>Color discipline</dt><dd>Each character's portrait uses palette from §8 of v3 bible. Vyasa: saffron and warm browns. Yudhishthira: indigo and white. Mirror: pure faceless silhouette in indigo.</dd>
+<dt>Background lighting</dt><dd>Per v3 §1 — oil-lamp warm for indoor, dawn cool for Arjuna scenes, dusk orange for battlefield. No midday.</dd>
+<dt>Consistency</dt><dd>One AI tool for all portraits. Same base prompt template with character-specific variations. Style consistency &gt; individual portrait quality.</dd>
+</dl>
+
+</div>
+</div>
+
+<!-- AGENT E -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent E — Story System &amp; Theme Toggle</div>
+<div class="ab-meta">Stage 1 · 6–8 days · Depends on Agents A &amp; D</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Chapter loader reading JSON scripts. Dialogue scene renderer (VN-style box, portrait, scene background). Character system. Mahabharata vs Standard theme toggle persisting to player profile.</p>
+
+<h4>Files to create</h4>
+<ul>
+<li><code>src/story/chapterLoader.ts</code> — load and play chapter scripts</li>
+<li><code>src/story/chapters/ch01_calibration.json</code> through <code>ch03_yudhishthira.json</code> — actual chapter scripts (AI-written, human-reviewed)</li>
+<li><code>src/story/characters.json</code> — character config (Maia base, constraint, portrait paths)</li>
+<li><code>src/components/Character/Portrait.tsx</code>, <code>Dialogue.tsx</code>, <code>SceneBackground.tsx</code></li>
+<li><code>src/routes/Story.tsx</code> — chapter player</li>
+<li><code>src/state/settingsStore.ts</code> — theme toggle</li>
+</ul>
+
+<h4>Chapter JSON schema</h4>
+<pre><code>{
+  <span class="c-str">"id"</span>: <span class="c-str">"ch03_yudhishthira"</span>,
+  <span class="c-str">"title"</span>: <span class="c-str">"Indraprastha"</span>,
+  <span class="c-str">"act"</span>: <span class="c-key">1</span>,
+  <span class="c-str">"scenes"</span>: [
+    {
+      <span class="c-str">"type"</span>: <span class="c-str">"dialogue"</span>,
+      <span class="c-str">"background"</span>: <span class="c-str">"indraprastha_pavilion"</span>,
+      <span class="c-str">"lines"</span>: [
+        { <span class="c-str">"speaker"</span>: <span class="c-str">"vyasa"</span>, <span class="c-str">"emotion"</span>: <span class="c-str">"neutral"</span>, <span class="c-str">"text"</span>: <span class="c-str">"This is Yudhishthira. He is..."</span> },
+        { <span class="c-str">"speaker"</span>: <span class="c-str">"yudhishthira"</span>, <span class="c-str">"emotion"</span>: <span class="c-str">"neutral"</span>, <span class="c-str">"text"</span>: <span class="c-str">"My uncle Vidura said you would come."</span> }
+      ]
+    },
+    {
+      <span class="c-str">"type"</span>: <span class="c-str">"match"</span>,
+      <span class="c-str">"opponent"</span>: <span class="c-str">"yudhishthira"</span>,
+      <span class="c-str">"time_control"</span>: <span class="c-str">"10+0"</span>,
+      <span class="c-str">"player_color"</span>: <span class="c-str">"random"</span>
+    },
+    {
+      <span class="c-str">"type"</span>: <span class="c-str">"dialogue"</span>,
+      <span class="c-str">"conditional"</span>: {
+        <span class="c-str">"on_win"</span>: [{ <span class="c-str">"speaker"</span>: <span class="c-str">"yudhishthira"</span>, <span class="c-str">"emotion"</span>: <span class="c-str">"focused"</span>, <span class="c-str">"text"</span>: <span class="c-str">"You won. I am glad. I will need to think tonight about how."</span> }],
+        <span class="c-str">"on_loss"</span>: [{ <span class="c-str">"speaker"</span>: <span class="c-str">"yudhishthira"</span>, <span class="c-str">"emotion"</span>: <span class="c-str">"sad"</span>, <span class="c-str">"text"</span>: <span class="c-str">"You did not lose. The position was even at move twenty-eight..."</span> }]
+      }
+    }
+  ]
+}</code></pre>
+
+</div>
+</div>
+
+<!-- AGENT F -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent F — Coach Agent &amp; Puzzle Bank</div>
+<div class="ab-meta">Stage 1 · 6–8 days · Depends on Agents A &amp; G</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Post-game Coach intervention. Gemini API integration via Supabase Edge Function. Motif tagging from Stockfish analysis. Puzzle bank from Lichess open database. Personalized drill UI. Daily Mirror loop.</p>
+
+<h4>Files to create</h4>
+<ul>
+<li><code>supabase/functions/coach-prompt/index.ts</code> — Gemini caller</li>
+<li><code>supabase/functions/coach-prompt/prompts.ts</code> — prompt templates per motif</li>
+<li><code>src/components/Coach/DronaSpeaks.tsx</code> — overlay UI</li>
+<li><code>src/components/Coach/PuzzleCard.tsx</code> — individual puzzle</li>
+<li><code>src/components/Coach/DrillSummary.tsx</code> — end-of-drill recap</li>
+<li><code>src/routes/Coach.tsx</code> — drill flow</li>
+<li><code>scripts/seed_puzzles.ts</code> — Lichess CC0 puzzle DB import</li>
+<li><code>src/routes/DailyMirror.tsx</code></li>
+</ul>
+
+<h4>Coach prompt template (Gemini)</h4>
+<p>Full prompts in §10. The Coach is given the FEN before a key blunder, the move played, the best move, the motif, the player's history with that motif, and instructions to respond in Drona's voice in 60-100 words.</p>
+
+</div>
+</div>
+
+<!-- AGENT G -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent G — Supabase Backend &amp; Sync</div>
+<div class="ab-meta">Stage 1 · 4–6 days · No code dependency</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Supabase project setup. Migrations from §5. Auth (email magic link). Local-to-cloud sync of game data. Edge Functions: coach-prompt, recompute-style (nightly). Anonymous play with optional account upgrade.</p>
+
+<h4>Files to create</h4>
+<ul>
+<li><code>supabase/migrations/001_init.sql</code> through <code>003_functions.sql</code></li>
+<li><code>src/data/supabase.ts</code> — typed client</li>
+<li><code>src/data/sync.ts</code> — local IndexedDB → Supabase reconciliation</li>
+<li><code>src/data/database.types.ts</code> — generated from Supabase</li>
+<li><code>supabase/functions/recompute-style/index.ts</code> — nightly batch recomputation</li>
+</ul>
+
+</div>
+</div>
+
+<!-- AGENT H -->
+<div class="agent-brief">
+<div class="ab-head">
+<div class="ab-name">Agent H — Polish, Onboarding, Beta, Launch</div>
+<div class="ab-meta">Stage 1 → Stage 2 · 10–14 days · Depends on all</div>
+</div>
+<div class="ab-body">
+
+<h4>Scope</h4>
+<p>Onboarding flow. Accessibility audit (keyboard navigation, screen readers). Settings screen. Privacy policy and terms. GPL notices. Beta tester management. Store listing copy. Launch press kit.</p>
+
+<h4>Deliverables</h4>
+<ul>
+<li>Onboarding tutorial (skippable, 60 seconds)</li>
+<li>Accessibility: keyboard play works end-to-end, ARIA labels on all interactive elements</li>
+<li><code>/about</code> route with full GPL notices, source links, credits</li>
+<li>Privacy policy and terms (template + legal review if monetizing later)</li>
+<li>Beta channel via Cloudflare Pages preview URL with allowlist gate</li>
+<li>Press kit: screenshots, video, copy</li>
+<li>Launch post drafts for r/chess, Hacker News, chess Twitter, ProductHunt</li>
+</ul>
+
+</div>
+</div>
+
+</section>
+
+<!-- ============== SECTION 8: VISUAL ASSETS (STAGE 1) ============== -->
+<section class="major" id="sec-8">
+<span class="section-num">Section Eight</span>
+<h1>Visual Assets — Stage 1 Workflow<span class="sub">AI image generation + SVG. Practical, fast, free. Blender is Stage 2.</span></h1>
+<p class="lede">Stage 1 ships in three months. Procedural Blender is overkill for three months. AI image generation and hand-edited SVG are the right tools for Stage 1.</p>
+
+<h2 class="sub">Chess pieces — SVG</h2>
+<p>Both themes (Standard and Mahabharata) ship as inline SVG. Standard set: free public-domain Staunton SVG available from Wikimedia Commons. Mahabharata set: commission from a single illustrator (~$500-1000 for the full set of 12) or generate with AI and trace to SVG in Figma.</p>
+
+<h2 class="sub">Character portraits — AI generation</h2>
+<p>One AI image tool for all portraits. Consistency &gt; per-image quality. Recommended workflow:</p>
+<ol>
+<li><strong>Reference sheet first.</strong> Generate one canonical portrait per character. Get it right. Save as the seed.</li>
+<li><strong>Emotion variants from canonical.</strong> Use image-to-image with the canonical portrait as input. Prompt: <em>"same character, same outfit, same setting, expression: smiling/sad/focused."</em></li>
+<li><strong>Same prompt template across all characters.</strong> Vary only the character-specific fields.</li>
+</ol>
+
+<h3 class="minor">Portrait prompt template (Midjourney v6 / Flux)</h3>
+<pre><code>painterly digital illustration, [CHARACTER DESCRIPTION], 
+[SETTING DESCRIPTION], [LIGHTING DESCRIPTION], 
+mood: contemplative, art style: similar to Hades video game and Sea of Stars, 
+strong silhouette, warm color palette, oil-painting texture, 
+3/4 angle portrait, head and shoulders, neutral background, 
+no text, no logos, ::style raw, --ar 4:5 --v 6</code></pre>
+
+<h3 class="minor">Per-character substitutions</h3>
+<table>
+<thead><tr><th>Character</th><th>Description</th><th>Setting</th><th>Lighting</th></tr></thead>
+<tbody>
+<tr><td>Vyasa</td><td>elderly Indian sage, white beard reaching chest, saffron-ochre robes, ink-stained fingers, sharp dark eyes, seated cross-legged</td><td>low wooden platform, oil lamp at his side, palm-leaf manuscripts</td><td>warm oil-lamp glow from below-side, long shadows behind</td></tr>
+<tr><td>Yudhishthira</td><td>tall Indian man early 30s, light brown skin, dark trimmed beard, hair tied back, white and gold silks with indigo sash, gold circlet, calm sad eyes</td><td>marble pavilion at Indraprastha, open sides showing gardens</td><td>warm afternoon golden hour, soft</td></tr>
+<tr><td>Bhima</td><td>massive Indian wrestler late 30s, deep brown skin, thick black beard, bare chest, dhoti in bronze and indigo, wrestler's belt, bronze armbands, wide grin</td><td>dusty practice yard, weights and wrestling pits in background, mace propped against chair</td><td>bright morning sun, dust motes</td></tr>
+<tr><td>Arjuna</td><td>slender Indian man late 20s, focused, athletic, hair in single tight braid, hunter's white tunic with indigo trim, leather quiver and bow at his back, single silver earring</td><td>archery field at dawn, wooden targets in background, mist on ground</td><td>cool grey-blue dawn light, long shadows</td></tr>
+<tr><td>Karna</td><td>powerful Indian man late 20s, melancholy expression, bronze skin, beard trimmed close, hair loose, dented gold armor over crimson tunic, bowstring across chest, diagonal scar on left cheek</td><td>forest clearing at midday OR battlefield at twilight</td><td>dappled sunlight through trees OR dusty orange twilight</td></tr>
+<tr><td>Shakuni</td><td>old Indian man 60s, lean, slightly twisted, pale brown skin with sun spots, thin grey beard, oiled hair pulled back, dark crimson and indigo robes with many gold ornaments, three bone dice in left hand</td><td>oil-lamp lit chamber, claustrophobic</td><td>single oil lamp, deep shadows</td></tr>
+<tr><td>Krishna</td><td>medium height Indian man mid-30s, deep indigo blue skin (not bright blue — dyed cloth tone), peacock feather in dark hair, yellow-gold dhoti, garland of forest flowers, bare chest, conch shell at waist</td><td>riverbank at night, stars above, low cooking fire</td><td>warm fire light, soft moonlight on water</td></tr>
+<tr><td>The Mirror</td><td>faceless humanoid silhouette, indigo-and-gold robes identical to the player avatar, no face features</td><td>misty riverbank at dusk OR battlefield at dusk OR pure black void</td><td>twilight, cool blue, mysterious</td></tr>
+</tbody>
+</table>
+
+<h2 class="sub">Backgrounds</h2>
+<p>Ten scenes for full Mode 1 (Stage 2). Stage 1 needs three: Vyasa's chamber, the Indraprastha pavilion, the riverbank at dusk. Same prompt strategy — establish the canonical version, then iterate variations.</p>
+
+<h2 class="sub">Quality acceptance</h2>
+<p>Before any portrait is shipped: stand all four emotion variants of one character side by side. If they look like four different characters, the consistency failed. Regenerate. The bar is that a six-year-old would identify them as the same person.</p>
+
+</section>
+
+<!-- ============== SECTION 9: BLENDER PIPELINE ============== -->
+<section class="major" id="sec-9">
+<span class="section-num">Section Nine</span>
+<h1>Blender Pipeline — Stage 2<span class="sub">Procedural generation for chess pieces, characters, and environments. Deferred until Stage 1 ships.</span></h1>
+<p class="lede">Procedural Blender is the right tool when you have proven product-market fit and need to scale art production cost-effectively. Until then, Stage 1's AI image generation is the right tool. This section is here so Stage 2 can begin immediately when triggered.</p>
+
+<h2 class="sub">Why procedural Blender for Stage 2 (not Stage 1)</h2>
+<ul>
+<li>Stage 1 needs 3 characters × 4 emotions + 3 backgrounds = 15 hero assets. AI generation handles this in a weekend.</li>
+<li>Stage 2 needs 15 characters × 4 emotions + 10 backgrounds + 24 piece variants = 94+ hero assets, plus animations, plus character variants for cutscenes. Procedural generation is cheaper than 94 manual AI iterations.</li>
+<li>Blender procedural pipelines give consistency that AI image generation does not. Stage 2 quality bar is higher.</li>
+</ul>
+
+<h2 class="sub">Setup</h2>
+<dl class="spec">
+<dt>Blender version</dt><dd>4.2 LTS (latest LTS as of mid-2026)</dd>
+<dt>Python version</dt><dd>3.11 (matches Blender 4.2 embedded Python)</dd>
+<dt>Render engine</dt><dd>Cycles for portraits and hero shots (slower, photorealistic). Eevee for piece sprites (faster, stylized).</dd>
+<dt>GPU</dt><dd>Any modern GPU. RTX 3060 or better recommended for overnight render of full Mode 1 asset library.</dd>
+<dt>Output format</dt><dd>PNG with alpha for sprites, PNG without alpha for backgrounds, 1024×1024 for pieces, 1024×1280 for portraits, 2560×1440 for backgrounds.</dd>
+</dl>
+
+<h2 class="sub">Shared palette module</h2>
+<span class="code-label">blender/_palette.py</span>
+<pre><code><span class="c-com"># Shared color tokens — same hex values as the web design system</span>
+
+PANDAVA = {
+    <span class="c-str">"primary"</span>:    (<span class="c-key">0.118</span>, <span class="c-key">0.227</span>, <span class="c-key">0.373</span>, <span class="c-key">1.0</span>),   <span class="c-com"># #1e3a5f</span>
+    <span class="c-str">"indigo"</span>:     (<span class="c-key">0.173</span>, <span class="c-key">0.302</span>, <span class="c-key">0.478</span>, <span class="c-key">1.0</span>),   <span class="c-com"># #2c4d7a</span>
+    <span class="c-str">"accent"</span>:     (<span class="c-key">0.722</span>, <span class="c-key">0.573</span>, <span class="c-key">0.227</span>, <span class="c-key">1.0</span>),   <span class="c-com"># #b8923a gold</span>
+    <span class="c-str">"accent_light"</span>: (<span class="c-key">0.831</span>, <span class="c-key">0.694</span>, <span class="c-key">0.361</span>, <span class="c-key">1.0</span>),  <span class="c-com"># #d4b15c</span>
+}
+
+KAURAVA = {
+    <span class="c-str">"primary"</span>:    (<span class="c-key">0.545</span>, <span class="c-key">0.149</span>, <span class="c-key">0.208</span>, <span class="c-key">1.0</span>),   <span class="c-com"># #8b2635</span>
+    <span class="c-str">"deep"</span>:       (<span class="c-key">0.420</span>, <span class="c-key">0.094</span>, <span class="c-key">0.157</span>, <span class="c-key">1.0</span>),   <span class="c-com"># #6b1828</span>
+    <span class="c-str">"obsidian"</span>:   (<span class="c-key">0.110</span>, <span class="c-key">0.094</span>, <span class="c-key">0.078</span>, <span class="c-key">1.0</span>),   <span class="c-com"># #1c1814</span>
+    <span class="c-str">"accent"</span>:     (<span class="c-key">0.722</span>, <span class="c-key">0.573</span>, <span class="c-key">0.227</span>, <span class="c-key">1.0</span>),
+}
+
+NEUTRAL = {
+    <span class="c-str">"wood"</span>:       (<span class="c-key">0.361</span>, <span class="c-key">0.243</span>, <span class="c-key">0.165</span>, <span class="c-key">1.0</span>),
+    <span class="c-str">"bone"</span>:       (<span class="c-key">0.910</span>, <span class="c-key">0.863</span>, <span class="c-key">0.769</span>, <span class="c-key">1.0</span>),
+    <span class="c-str">"ink"</span>:        (<span class="c-key">0.122</span>, <span class="c-key">0.106</span>, <span class="c-key">0.086</span>, <span class="c-key">1.0</span>),
+}</code></pre>
+
+<h2 class="sub">Piece generator pattern</h2>
+<span class="code-label">blender/pieces/generate_ratha_pandava.py</span>
+<pre><code><span class="c-key">import</span> bpy, math, sys, os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+<span class="c-key">from</span> _palette <span class="c-key">import</span> PANDAVA, NEUTRAL
+
+<span class="c-key">def</span> <span class="c-fn">clear_scene</span>():
+    bpy.ops.object.select_all(action=<span class="c-str">"SELECT"</span>)
+    bpy.ops.object.delete()
+
+<span class="c-key">def</span> <span class="c-fn">make_material</span>(name, color, metallic=<span class="c-key">0.0</span>, roughness=<span class="c-key">0.5</span>):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = <span class="c-key">True</span>
+    bsdf = mat.node_tree.nodes[<span class="c-str">"Principled BSDF"</span>]
+    bsdf.inputs[<span class="c-str">"Base Color"</span>].default_value = color
+    bsdf.inputs[<span class="c-str">"Metallic"</span>].default_value = metallic
+    bsdf.inputs[<span class="c-str">"Roughness"</span>].default_value = roughness
+    <span class="c-key">return</span> mat
+
+<span class="c-key">def</span> <span class="c-fn">build_chariot</span>():
+    clear_scene()
+    
+    <span class="c-com"># Cart body — rounded box</span>
+    bpy.ops.mesh.primitive_cube_add(size=<span class="c-key">1.0</span>, location=(<span class="c-key">0</span>, <span class="c-key">0</span>, <span class="c-key">0.5</span>))
+    body = bpy.context.active_object
+    body.scale = (<span class="c-key">0.9</span>, <span class="c-key">0.5</span>, <span class="c-key">0.4</span>)
+    bpy.ops.object.modifier_add(type=<span class="c-str">"BEVEL"</span>)
+    body.modifiers[<span class="c-str">"Bevel"</span>].width = <span class="c-key">0.05</span>
+    body.modifiers[<span class="c-str">"Bevel"</span>].segments = <span class="c-key">3</span>
+    
+    <span class="c-com"># Two wheels — spoked</span>
+    <span class="c-key">for</span> y_offset <span class="c-key">in</span> [<span class="c-key">0.45</span>, <span class="c-key">-0.45</span>]:
+        bpy.ops.mesh.primitive_torus_add(
+            major_radius=<span class="c-key">0.4</span>, minor_radius=<span class="c-key">0.04</span>,
+            location=(<span class="c-key">0</span>, y_offset, <span class="c-key">0.3</span>),
+            rotation=(math.radians(<span class="c-key">90</span>), <span class="c-key">0</span>, <span class="c-key">0</span>)
+        )
+        <span class="c-com"># Spokes</span>
+        <span class="c-key">for</span> angle <span class="c-key">in</span> [<span class="c-key">0</span>, math.pi/<span class="c-key">3</span>, <span class="c-key">2</span>*math.pi/<span class="c-key">3</span>]:
+            bpy.ops.mesh.primitive_cylinder_add(
+                radius=<span class="c-key">0.015</span>, depth=<span class="c-key">0.8</span>,
+                location=(<span class="c-key">0</span>, y_offset, <span class="c-key">0.3</span>),
+                rotation=(<span class="c-key">0</span>, angle, <span class="c-key">0</span>)
+            )
+    
+    <span class="c-com"># Banner pole</span>
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=<span class="c-key">0.04</span>, depth=<span class="c-key">1.6</span>,
+        location=(<span class="c-key">-0.3</span>, <span class="c-key">0</span>, <span class="c-key">1.3</span>)
+    )
+    
+    <span class="c-com"># Banner cloth — slightly curved plane</span>
+    bpy.ops.mesh.primitive_plane_add(size=<span class="c-key">0.7</span>, location=(<span class="c-key">-0.3</span>, <span class="c-key">0</span>, <span class="c-key">1.7</span>))
+    banner = bpy.context.active_object
+    banner.scale = (<span class="c-key">0.5</span>, <span class="c-key">0.01</span>, <span class="c-key">0.6</span>)
+    <span class="c-com"># Subdivide and add slight wave</span>
+    bpy.ops.object.modifier_add(type=<span class="c-str">"SUBSURF"</span>)
+    bpy.ops.object.modifier_add(type=<span class="c-str">"WAVE"</span>)
+    banner.modifiers[<span class="c-str">"Wave"</span>].height = <span class="c-key">0.03</span>
+
+<span class="c-key">def</span> <span class="c-fn">apply_materials</span>():
+    wood = make_material(<span class="c-str">"wood"</span>, NEUTRAL[<span class="c-str">"wood"</span>], roughness=<span class="c-key">0.7</span>)
+    gold = make_material(<span class="c-str">"gold"</span>, PANDAVA[<span class="c-str">"accent"</span>], metallic=<span class="c-key">0.85</span>, roughness=<span class="c-key">0.25</span>)
+    indigo = make_material(<span class="c-str">"indigo"</span>, PANDAVA[<span class="c-str">"primary"</span>], roughness=<span class="c-key">0.5</span>)
+    
+    <span class="c-key">for</span> obj <span class="c-key">in</span> bpy.data.objects:
+        <span class="c-key">if</span> obj.type != <span class="c-str">"MESH"</span>: <span class="c-key">continue</span>
+        <span class="c-key">if</span> <span class="c-str">"banner"</span> <span class="c-key">in</span> obj.name.lower():
+            obj.data.materials.append(indigo)
+        <span class="c-key">elif</span> <span class="c-str">"pole"</span> <span class="c-key">in</span> obj.name.lower() <span class="c-key">or</span> <span class="c-str">"cylinder"</span> <span class="c-key">in</span> obj.name.lower():
+            obj.data.materials.append(gold)
+        <span class="c-key">else</span>:
+            obj.data.materials.append(wood)
+
+<span class="c-key">def</span> <span class="c-fn">setup_render</span>(out_path, w=<span class="c-key">1024</span>, h=<span class="c-key">1024</span>):
+    scene = bpy.context.scene
+    scene.render.engine = <span class="c-str">"CYCLES"</span>
+    scene.cycles.samples = <span class="c-key">128</span>
+    scene.render.resolution_x = w
+    scene.render.resolution_y = h
+    scene.render.film_transparent = <span class="c-key">True</span>
+    scene.render.image_settings.file_format = <span class="c-str">"PNG"</span>
+    scene.render.image_settings.color_mode = <span class="c-str">"RGBA"</span>
+    scene.render.filepath = out_path
+    
+    bpy.ops.object.camera_add(
+        location=(<span class="c-key">2.5</span>, <span class="c-key">-2.5</span>, <span class="c-key">2.2</span>),
+        rotation=(math.radians(<span class="c-key">60</span>), <span class="c-key">0</span>, math.radians(<span class="c-key">45</span>))
+    )
+    scene.camera = bpy.context.active_object
+    
+    bpy.ops.object.light_add(type=<span class="c-str">"AREA"</span>, location=(<span class="c-key">2</span>, <span class="c-key">-2</span>, <span class="c-key">4</span>))
+    bpy.context.active_object.data.energy = <span class="c-key">600</span>
+    bpy.context.active_object.data.size = <span class="c-key">3.5</span>
+
+<span class="c-key">if</span> __name__ == <span class="c-str">"__main__"</span>:
+    <span class="c-key">import</span> argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(<span class="c-str">"--out"</span>, required=<span class="c-key">True</span>)
+    args = parser.parse_args(sys.argv[sys.argv.index(<span class="c-str">"--"</span>)+<span class="c-key">1</span>:])
+    
+    build_chariot()
+    apply_materials()
+    setup_render(args.out)
+    bpy.ops.render.render(write_still=<span class="c-key">True</span>)</code></pre>
+
+<h2 class="sub">Master render driver</h2>
+<span class="code-label">blender/render_all.py</span>
+<pre><code><span class="c-key">import</span> subprocess, os
+
+BLENDER = <span class="c-str">"/Applications/Blender.app/Contents/MacOS/Blender"</span>   <span class="c-com"># adjust per OS</span>
+OUT_DIR = <span class="c-str">"../public/assets/pieces"</span>
+
+PIECES = [
+    (<span class="c-str">"ratha_pandava"</span>, <span class="c-str">"pieces/generate_ratha_pandava.py"</span>),
+    (<span class="c-str">"ratha_kaurava"</span>, <span class="c-str">"pieces/generate_ratha_kaurava.py"</span>),
+    (<span class="c-str">"gaja_pandava"</span>,  <span class="c-str">"pieces/generate_gaja_pandava.py"</span>),
+    <span class="c-com"># ... etc</span>
+]
+
+<span class="c-key">for</span> name, script <span class="c-key">in</span> PIECES:
+    out = f<span class="c-str">"{OUT_DIR}/mahabharata/{name}.png"</span>
+    os.makedirs(os.path.dirname(out), exist_ok=<span class="c-key">True</span>)
+    print(f<span class="c-str">"Rendering {name}..."</span>)
+    subprocess.run([
+        BLENDER, <span class="c-str">"--background"</span>, <span class="c-str">"--python"</span>, script,
+        <span class="c-str">"--"</span>, <span class="c-str">"--out"</span>, out
+    ], check=<span class="c-key">True</span>)
+print(<span class="c-str">"Done. All pieces rendered."</span>)</code></pre>
+
+<h2 class="sub">Character generator pattern</h2>
+<p>Each character is one Python file that calls a shared base-rig builder with character-specific parameters. The agent for Stage 2 character generation will read the v3 bible character codex and produce one generator per character. Rendering all 15 characters × 4 emotions = 60 portraits takes ~6 hours of overnight render on a single RTX 4080-class GPU.</p>
+
+</section>
+
+<!-- ============== SECTION 10: COACH ============== -->
+<section class="major" id="sec-10">
+<span class="section-num">Section Ten</span>
+<h1>Coach Implementation<span class="sub">Gemini prompts, puzzle selection algorithm, daily rate limiting. The retention mechanic in full.</span></h1>
+<p class="lede">After every game, Stockfish finds the highest-cp-loss blunder. A motif classifier tags it. Gemini writes 60-100 words of Drona dialogue about it. The Lichess puzzle database serves a personalized drill. The whole interaction takes 6-8 minutes.</p>
+
+<h2 class="sub">Coach Edge Function — Gemini caller</h2>
+<span class="code-label">supabase/functions/coach-prompt/index.ts</span>
+<pre><code><span class="c-key">import</span> { serve } <span class="c-key">from</span> <span class="c-str">"https://deno.land/std@0.200.0/http/server.ts"</span>;
+<span class="c-key">import</span> { GoogleGenerativeAI } <span class="c-key">from</span> <span class="c-str">"npm:@google/generative-ai"</span>;
+<span class="c-key">import</span> { buildPrompt } <span class="c-key">from</span> <span class="c-str">"./prompts.ts"</span>;
+
+<span class="c-key">const</span> GEMINI_KEY = Deno.env.get(<span class="c-str">"GEMINI_API_KEY"</span>)!;
+<span class="c-key">const</span> genAI = <span class="c-key">new</span> GoogleGenerativeAI(GEMINI_KEY);
+<span class="c-key">const</span> model = genAI.getGenerativeModel({ model: <span class="c-str">"gemini-1.5-flash-002"</span> });
+
+serve(<span class="c-key">async</span> (req) =&gt; {
+  <span class="c-key">if</span> (req.method === <span class="c-str">"OPTIONS"</span>) <span class="c-key">return new</span> Response(<span class="c-key">null</span>, { headers: corsHeaders });
+  
+  <span class="c-key">const</span> { fen, movePlayed, bestMove, motif, history, theme } = <span class="c-key">await</span> req.json();
+  
+  <span class="c-key">const</span> prompt = buildPrompt({
+    character: theme === <span class="c-str">"mahabharata"</span> ? <span class="c-str">"drona"</span> : <span class="c-str">"coach"</span>,
+    fen, movePlayed, bestMove, motif, history,
+  });
+  
+  <span class="c-key">try</span> {
+    <span class="c-key">const</span> result = <span class="c-key">await</span> model.generateContent(prompt);
+    <span class="c-key">const</span> text = result.response.text();
+    
+    <span class="c-key">return new</span> Response(JSON.stringify({ text, motif }), {
+      headers: { ...corsHeaders, <span class="c-str">"Content-Type"</span>: <span class="c-str">"application/json"</span> },
+    });
+  } <span class="c-key">catch</span> (e) {
+    <span class="c-key">return new</span> Response(JSON.stringify({ error: e.message }), {
+      status: <span class="c-key">500</span>, headers: corsHeaders
+    });
+  }
+});</code></pre>
+
+<h2 class="sub">Prompt template</h2>
+<span class="code-label">supabase/functions/coach-prompt/prompts.ts</span>
+<pre><code><span class="c-key">interface</span> PromptInput {
+  character: <span class="c-str">"drona"</span> | <span class="c-str">"coach"</span>;
+  fen: <span class="c-key">string</span>;
+  movePlayed: <span class="c-key">string</span>;
+  bestMove: <span class="c-key">string</span>;
+  motif: <span class="c-key">string</span>;
+  history: { motif: <span class="c-key">string</span>; count_last_10_games: <span class="c-key">number</span> };
+}
+
+<span class="c-key">const</span> DRONA_VOICE = <span class="c-str">`
+You are Drona, the brahmin teacher from the Mahabharata, speaking to a chess
+apprentice after their game. Voice characteristics:
+- Severe but fair. Spare with praise.
+- Speaks in lessons. Uses metaphor sparingly.
+- Refers to past games when relevant ("the third time this week...").
+- Never modern slang. Never modern references.
+- 60-100 words exactly. Stop at the period.
+- Never quote any religious text.
+- Address the apprentice directly. Second person.
+`</span>;
+
+<span class="c-key">const</span> COACH_VOICE = <span class="c-str">`
+You are a chess coach speaking to a student after their game. Voice:
+- Warm but direct. No padding.
+- Reference specific moves and positions.
+- 60-100 words. Stop at the period.
+- Address the student in second person.
+`</span>;
+
+<span class="c-key">export function</span> buildPrompt(input: PromptInput): <span class="c-key">string</span> {
+  <span class="c-key">const</span> voice = input.character === <span class="c-str">"drona"</span> ? DRONA_VOICE : COACH_VOICE;
+  
+  <span class="c-key">return</span> <span class="c-str">`</span>${voice}<span class="c-str">
+
+CONTEXT:
+- Position before the move: </span>${input.fen}<span class="c-str">
+- Move played by student: </span>${input.movePlayed}<span class="c-str">
+- Best move (Stockfish): </span>${input.bestMove}<span class="c-str">
+- Tactical motif missed: </span>${input.motif}<span class="c-str">
+- This student has missed </span>${input.motif}<span class="c-str"> tactics </span>${input.history.count_last_10_games}<span class="c-str"> times in their last 10 games.
+
+TASK: Speak to the student about this specific moment. Reference the position briefly,
+the missed motif by name, and the pattern across games if relevant. End with a single
+instructive sentence about the principle behind the motif.
+`</span>;
+}</code></pre>
+
+<h2 class="sub">Daily rate limiting</h2>
+<p>Free Gemini tier is 1,500 req/day across the entire app. At Stage 1 (500 DAU × 1 Coach call each), we use 33% of the daily quota. To stay safe:</p>
+<ol>
+<li>Hard cap: 5 Coach interactions per player per day. Soft-prompt the player to rest beyond that.</li>
+<li>Cache Coach responses by (motif, history_band, position_class) — many players will hit similar Coach moments and the response can be reused with minor variation. ~40% cache hit rate expected at 1K+ DAU.</li>
+<li>Pre-generate 200 "canonical" Coach responses for the 10 most common motifs at three player levels. Use them as fallback if Gemini quota exhausted.</li>
+</ol>
+
+<h2 class="sub">Puzzle selection</h2>
+<p>Lichess publishes its puzzle database under CC0. ~4M puzzles, each tagged with motifs, themes, ratings. We import a subset (~200K puzzles covering the 20 most common motifs across ratings 800-2200) into Supabase Storage as a static JSON file.</p>
+
+<span class="code-label">src/components/Coach/selectPuzzles.ts</span>
+<pre><code><span class="c-key">export function</span> selectDrillPuzzles(
+  motif: <span class="c-key">string</span>,
+  playerRating: <span class="c-key">number</span>,
+  count = <span class="c-key">5</span>
+): Puzzle[] {
+  <span class="c-key">const</span> ratingMin = playerRating - <span class="c-key">100</span>;
+  <span class="c-key">const</span> ratingMax = playerRating + <span class="c-key">300</span>;          <span class="c-com">// Lean slightly harder for stretch</span>
+  
+  <span class="c-key">const</span> candidates = PUZZLE_BANK.filter(p =&gt;
+    p.motifs.includes(motif) &amp;&amp;
+    p.rating &gt;= ratingMin &amp;&amp; p.rating &lt;= ratingMax
+  );
+  
+  <span class="c-com">// Shuffle, then take count</span>
+  candidates.sort(() =&gt; Math.random() - <span class="c-key">0.5</span>);
+  <span class="c-key">return</span> candidates.slice(<span class="c-key">0</span>, count);
+}</code></pre>
+
+</section>
+
+<!-- ============== SECTION 11: MIRROR GENERATOR ============== -->
+<section class="major" id="sec-11">
+<span class="section-num">Section Eleven</span>
+<h1>Mirror Generator<span class="sub">Layer by layer. The exact code shape Agent C produces.</span></h1>
+<p class="lede">Three layers: Maia base, style reranking, opportunistic Stockfish exploitation. The whole module is ~200 lines including tests.</p>
+
+<h2 class="sub">Orchestrator</h2>
+<span class="code-label">src/engine/mirror.ts</span>
+<pre><code><span class="c-key">import</span> { StyleVector } <span class="c-key">from</span> <span class="c-str">"../ml/styleVector"</span>;
+<span class="c-key">import</span> { getMaiaPolicy } <span class="c-key">from</span> <span class="c-str">"./maiaBridge"</span>;
+<span class="c-key">import</span> { getBestMove, evaluatePosition } <span class="c-key">from</span> <span class="c-str">"./stockfishBridge"</span>;
+<span class="c-key">import</span> { detectMotifInPosition, MOTIF_THRESHOLD } <span class="c-key">from</span> <span class="c-str">"./motifClassifier"</span>;
+<span class="c-key">import</span> { perturbPolicy } <span class="c-key">from</span> <span class="c-str">"../ml/perturbPolicy"</span>;
+
+<span class="c-key">export interface</span> MirrorConfig {
+  styleVector: StyleVector;
+  playerElo: <span class="c-key">number</span>;
+  exploitationRate: <span class="c-key">number</span>;     <span class="c-com">// 0.20 in production</span>
+  perturbationStrength: <span class="c-key">number</span>;   <span class="c-com">// 0.5 default, tunable</span>
+}
+
+<span class="c-key">export async function</span> getMirrorMove(fen: <span class="c-key">string</span>, cfg: MirrorConfig): <span class="c-key">Promise</span>&lt;<span class="c-key">string</span>&gt; {
+  <span class="c-key">const</span> maiaElo = nearestMaiaElo(cfg.playerElo);
+  <span class="c-key">const</span> motif = detectMotifInPosition(fen, cfg.styleVector);
+  
+  <span class="c-com">// Layer 3: Opportunistic Stockfish exploitation</span>
+  <span class="c-key">if</span> (motif &amp;&amp; motif.confidence &gt; MOTIF_THRESHOLD &amp;&amp; Math.random() &lt; cfg.exploitationRate) {
+    <span class="c-key">const</span> exploitMove = <span class="c-key">await</span> getExploitMove(fen, motif, cfg.styleVector);
+    <span class="c-key">if</span> (exploitMove) <span class="c-key">return</span> exploitMove;
+  }
+  
+  <span class="c-com">// Layer 1 + 2: Maia base + style reranking</span>
+  <span class="c-key">const</span> maiaPolicy = <span class="c-key">await</span> getMaiaPolicy(fen, maiaElo);
+  <span class="c-key">const</span> rerankedPolicy = perturbPolicy(maiaPolicy, cfg.styleVector, fen, cfg.perturbationStrength);
+  
+  <span class="c-key">return</span> sampleFromPolicy(rerankedPolicy);
+}
+
+<span class="c-key">function</span> nearestMaiaElo(playerElo: <span class="c-key">number</span>): <span class="c-key">number</span> {
+  <span class="c-key">const</span> bands = [<span class="c-key">1100</span>, <span class="c-key">1300</span>, <span class="c-key">1500</span>, <span class="c-key">1700</span>, <span class="c-key">1900</span>];
+  <span class="c-key">return</span> bands.reduce((nearest, b) =&gt; Math.abs(b - playerElo) &lt; Math.abs(nearest - playerElo) ? b : nearest, bands[<span class="c-key">0</span>]);
+}
+
+<span class="c-key">function</span> sampleFromPolicy(policy: { move: <span class="c-key">string</span>; prob: <span class="c-key">number</span> }[]): <span class="c-key">string</span> {
+  <span class="c-key">const</span> total = policy.reduce((s, p) =&gt; s + p.prob, <span class="c-key">0</span>);
+  <span class="c-key">let</span> r = Math.random() * total;
+  <span class="c-key">for</span> (<span class="c-key">const</span> p <span class="c-key">of</span> policy) {
+    r -= p.prob;
+    <span class="c-key">if</span> (r &lt;= <span class="c-key">0</span>) <span class="c-key">return</span> p.move;
+  }
+  <span class="c-key">return</span> policy[<span class="c-key">0</span>].move;
+}
+
+<span class="c-key">async function</span> getExploitMove(
+  fen: <span class="c-key">string</span>,
+  motif: { type: <span class="c-key">string</span>; confidence: <span class="c-key">number</span> },
+  vec: StyleVector
+): <span class="c-key">Promise</span>&lt;<span class="c-key">string</span> | <span class="c-key">null</span>&gt; {
+  <span class="c-com">// Only use Stockfish exploitation if the player is historically weak on this motif</span>
+  <span class="c-key">const</span> playerWeakness = vec.motif_blindness[motif.type <span class="c-key">as keyof typeof</span> vec.motif_blindness];
+  <span class="c-key">if</span> (playerWeakness &lt; <span class="c-key">0.3</span>) <span class="c-key">return null</span>;  <span class="c-com">// not weak enough — skip</span>
+  
+  <span class="c-com">// Get Stockfish's strongest move, which likely creates/exploits the motif</span>
+  <span class="c-key">return await</span> getBestMove(fen, <span class="c-key">12</span>);
+}</code></pre>
+
+<h2 class="sub">Perturbation function (Layer 2)</h2>
+<span class="code-label">src/ml/perturbPolicy.ts</span>
+<pre><code><span class="c-key">import</span> { StyleVector } <span class="c-key">from</span> <span class="c-str">"./styleVector"</span>;
+<span class="c-key">import</span> { Chess } <span class="c-key">from</span> <span class="c-str">"chess.js"</span>;
+
+<span class="c-key">export interface</span> MovePolicy {
+  move: <span class="c-key">string</span>;       <span class="c-com">// UCI notation: "e2e4"</span>
+  prob: <span class="c-key">number</span>;
+}
+
+<span class="c-key">export function</span> perturbPolicy(
+  maiaPolicy: MovePolicy[],
+  vec: StyleVector,
+  fen: <span class="c-key">string</span>,
+  strength: <span class="c-key">number</span> = <span class="c-key">0.5</span>
+): MovePolicy[] {
+  <span class="c-key">const</span> game = <span class="c-key">new</span> Chess(fen);
+  <span class="c-key">const</span> phase = detectPhase(game);   <span class="c-com">// 'opening' | 'middlegame' | 'endgame'</span>
+  
+  <span class="c-key">const</span> perturbed = maiaPolicy.map((entry) =&gt; {
+    <span class="c-key">let</span> bonus = <span class="c-key">1.0</span>;
+    <span class="c-key">const</span> move = parseMoveSan(game, entry.move);
+    <span class="c-key">if</span> (!move) <span class="c-key">return</span> entry;
+    
+    <span class="c-com">// Opening repertoire bias</span>
+    <span class="c-key">if</span> (phase === <span class="c-str">"opening"</span>) {
+      <span class="c-key">const</span> openingMatch = matchesPlayerRepertoire(game, move, vec);
+      <span class="c-key">if</span> (openingMatch) bonus *= <span class="c-key">1</span> + (<span class="c-key">0.4</span> * strength);
+    }
+    
+    <span class="c-com">// Exchange willingness</span>
+    <span class="c-key">if</span> (isEqualExchange(game, move)) {
+      <span class="c-key">if</span> (vec.exchange_willingness &gt; <span class="c-key">0.6</span>) bonus *= <span class="c-key">1</span> + (<span class="c-key">0.25</span> * strength);
+      <span class="c-key">else if</span> (vec.exchange_willingness &lt; <span class="c-key">0.4</span>) bonus *= <span class="c-key">1</span> - (<span class="c-key">0.25</span> * strength);
+    }
+    
+    <span class="c-com">// Preferred minor piece</span>
+    <span class="c-key">if</span> (move.piece === <span class="c-str">"n"</span> &amp;&amp; vec.preferred_minor === <span class="c-str">"knight"</span>) bonus *= <span class="c-key">1</span> + (<span class="c-key">0.15</span> * strength);
+    <span class="c-key">if</span> (move.piece === <span class="c-str">"b"</span> &amp;&amp; vec.preferred_minor === <span class="c-str">"bishop"</span>) bonus *= <span class="c-key">1</span> + (<span class="c-key">0.15</span> * strength);
+    
+    <span class="c-com">// King safety priority (early castling)</span>
+    <span class="c-key">if</span> (isCastlingMove(move) &amp;&amp; vec.king_safety_priority &gt; <span class="c-key">0.7</span> &amp;&amp; game.moveNumber() &lt; <span class="c-key">12</span>) {
+      bonus *= <span class="c-key">1</span> + (<span class="c-key">0.3</span> * strength);
+    }
+    
+    <span class="c-key">return</span> { move: entry.move, prob: entry.prob * bonus };
+  });
+  
+  <span class="c-com">// Renormalize</span>
+  <span class="c-key">const</span> total = perturbed.reduce((s, p) =&gt; s + p.prob, <span class="c-key">0</span>);
+  <span class="c-key">return</span> perturbed.map((p) =&gt; ({ move: p.move, prob: p.prob / total }));
+}
+
+<span class="c-key">function</span> detectPhase(game: Chess): <span class="c-str">"opening"</span> | <span class="c-str">"middlegame"</span> | <span class="c-str">"endgame"</span> {
+  <span class="c-key">const</span> moveNum = game.moveNumber();
+  <span class="c-key">if</span> (moveNum &lt;= <span class="c-key">12</span>) <span class="c-key">return</span> <span class="c-str">"opening"</span>;
+  <span class="c-key">const</span> material = countMaterial(game);
+  <span class="c-key">if</span> (material &lt;= <span class="c-key">14</span>) <span class="c-key">return</span> <span class="c-str">"endgame"</span>;
+  <span class="c-key">return</span> <span class="c-str">"middlegame"</span>;
+}
+
+<span class="c-com">// Helper functions: parseMoveSan, matchesPlayerRepertoire, isEqualExchange,</span>
+<span class="c-com">// isCastlingMove, countMaterial — all standard chess.js operations.</span>
+<span class="c-com">// Full implementations in the repo.</span></code></pre>
+
+<h2 class="sub">Acceptance test for the Mirror</h2>
+<span class="code-label">src/engine/mirror.test.ts</span>
+<pre><code><span class="c-key">import</span> { describe, it, expect } <span class="c-key">from</span> <span class="c-str">"vitest"</span>;
+<span class="c-key">import</span> { getMirrorMove } <span class="c-key">from</span> <span class="c-str">"./mirror"</span>;
+<span class="c-key">import</span> { aggressivePlayerVector, defensivePlayerVector } <span class="c-key">from</span> <span class="c-str">"./_testFixtures"</span>;
+
+describe(<span class="c-str">"Mirror differentiates between style vectors"</span>, () =&gt; {
+  it(<span class="c-str">"two different vectors produce different moves in &gt;=30% of test positions"</span>, <span class="c-key">async</span> () =&gt; {
+    <span class="c-key">const</span> testPositions = loadTestPositions();   <span class="c-com">// 20 mid-game positions</span>
+    <span class="c-key">let</span> differences = <span class="c-key">0</span>;
+    
+    <span class="c-key">for</span> (<span class="c-key">const</span> fen <span class="c-key">of</span> testPositions) {
+      <span class="c-key">const</span> moveA = <span class="c-key">await</span> getMirrorMove(fen, { styleVector: aggressivePlayerVector, playerElo: <span class="c-key">1500</span>, exploitationRate: <span class="c-key">0</span>, perturbationStrength: <span class="c-key">1.0</span> });
+      <span class="c-key">const</span> moveB = <span class="c-key">await</span> getMirrorMove(fen, { styleVector: defensivePlayerVector, playerElo: <span class="c-key">1500</span>, exploitationRate: <span class="c-key">0</span>, perturbationStrength: <span class="c-key">1.0</span> });
+      <span class="c-key">if</span> (moveA !== moveB) differences++;
+    }
+    
+    expect(differences / testPositions.length).toBeGreaterThanOrEqual(<span class="c-key">0.3</span>);
+  });
+});</code></pre>
+
+</section>
+
+<!-- ============== SECTION 12: DEPLOYMENT ============== -->
+<section class="major" id="sec-12">
+<span class="section-num">Section Twelve</span>
+<h1>Deployment &amp; Observability<span class="sub">Cloudflare Pages, custom domain, error tracking, analytics. The day-1 production setup.</span></h1>
+<p class="lede">A PWA that crashes silently is worse than a PWA that does not exist. Observability is not optional even at zero users.</p>
+
+<h2 class="sub">Cloudflare Pages — automatic deploy</h2>
+<ol>
+<li>Connect GitHub repo to Pages in the Cloudflare dashboard.</li>
+<li>Build command: <code>npm run build</code></li>
+<li>Build output directory: <code>dist</code></li>
+<li>Node version (in Pages environment vars): <code>NODE_VERSION=20</code></li>
+<li>Environment variables (production):
+  <ul>
+  <li><code>VITE_SUPABASE_URL</code></li>
+  <li><code>VITE_SUPABASE_ANON_KEY</code></li>
+  <li>(Gemini key NEVER here — only in Supabase Edge Function env)</li>
+  </ul>
+</li>
+<li>Custom domain: add via Pages dashboard, DNS auto-configures if domain is on Cloudflare.</li>
+<li>Preview deployments: enabled by default — every PR gets a preview URL like <code>pr-42.mirror-pwa.pages.dev</code>.</li>
+</ol>
+
+<h2 class="sub">Error tracking</h2>
+<p>Sentry free tier (5K errors/month) is plenty for Stage 0 and Stage 1.</p>
+<span class="code-label">src/main.tsx</span>
+<pre><code><span class="c-key">import</span> * <span class="c-key">as</span> Sentry <span class="c-key">from</span> <span class="c-str">"@sentry/react"</span>;
+
+Sentry.init({
+  dsn: <span class="c-key">import</span>.meta.env.VITE_SENTRY_DSN,
+  environment: <span class="c-key">import</span>.meta.env.MODE,
+  tracesSampleRate: <span class="c-key">0.1</span>,
+  beforeSend(event) {
+    <span class="c-com">// Strip any FEN or game data — privacy</span>
+    <span class="c-key">if</span> (event.extra?.fen) <span class="c-key">delete</span> event.extra.fen;
+    <span class="c-key">return</span> event;
+  },
+});</code></pre>
+
+<h2 class="sub">Analytics</h2>
+<p>Cloudflare Web Analytics — free, privacy-respecting, no cookies. Tracks page views, top routes, geographic distribution. No setup beyond adding the snippet.</p>
+<p>Custom events go through Supabase: every "mirror_match_completed" and "self_recognition_test_submitted" becomes a row in a <code>events</code> table.</p>
+<span class="code-label">src/lib/analytics.ts</span>
+<pre><code><span class="c-key">import</span> { supabase } <span class="c-key">from</span> <span class="c-str">"../data/supabase"</span>;
+
+<span class="c-key">export async function</span> trackEvent(name: <span class="c-key">string</span>, props: Record&lt;<span class="c-key">string</span>, <span class="c-key">any</span>&gt; = {}) {
+  <span class="c-key">await</span> supabase.from(<span class="c-str">"events"</span>).insert({
+    event_name: name,
+    properties: props,
+    occurred_at: <span class="c-key">new</span> Date().toISOString(),
+  });
+}</code></pre>
+
+<h2 class="sub">Key dashboards to build in Supabase Studio</h2>
+<ul>
+<li><strong>Funnel:</strong> Landing → calibration started → calibration completed → first match → Mirror match → second session within 24h.</li>
+<li><strong>Self-recognition success rate</strong> — the core Stage 0 metric.</li>
+<li><strong>"Felt like me" rate</strong> — Stage 0 secondary metric.</li>
+<li><strong>Coach engagement</strong> — % of games followed by puzzle drill engagement.</li>
+<li><strong>D1, D7 retention</strong> by cohort.</li>
+</ul>
+
+</section>
+
+<!-- ============== SECTION 13: BUILD CALENDAR ============== -->
+<section class="major" id="sec-13">
+<span class="section-num">Section Thirteen</span>
+<h1>Twelve-Week Build Calendar<span class="sub">Day by day. Designed so an agent looking at the calendar today knows exactly what is expected.</span></h1>
+<p class="lede">Three phases. Each phase has a gate. If a gate fails, the next phase does not begin until the failure is addressed. The calendar assumes a solo founder with 4–5 AI coding agents working in parallel where dependencies allow.</p>
+
+<div class="phase">
+<div class="ph-num">Phase 01 · Weeks 1–3 · Stage 0 build &amp; launch</div>
+<div class="ph-title">Mirror Prototype</div>
+<div class="ph-meta">Goal: a deployed prototype that answers "does the Mirror feel like the player?"</div>
+
+<h4>Week 1</h4>
+<ul>
+<li>Days 1-2 (weekend): Run the Saturday Morning quickstart. Cloud accounts created. Repo scaffolded. Cloudflare Pages live. CI passing.</li>
+<li>Days 3-5: Agent A finishes the PWA shell, chess board, Stockfish worker. Manual play against engine works.</li>
+<li>Days 6-7 (weekend): Agent B starts calibration. Tasks 1-4 implemented.</li>
+</ul>
+
+<h4>Week 2</h4>
+<ul>
+<li>Days 8-10: Agent B completes calibration (all 8 tasks). Style vector computation done. Radar chart editable.</li>
+<li>Days 11-12: Agent C begins. Maia worker + bridge. First Mirror generation prototype.</li>
+<li>Days 13-14: Agent C completes self-recognition test + share card.</li>
+</ul>
+
+<h4>Week 3</h4>
+<ul>
+<li>Days 15-17: Polish. Internal QA with 3-5 friends. Fix the worst bugs.</li>
+<li>Day 18: Tag <code>v0.1.0-stage0</code>. Deploy.</li>
+<li>Day 19: Post to r/chess, Hacker News, chess Twitter. Reply to every comment.</li>
+<li>Days 20-21: Read incoming feedback. Tabulate self-recognition results.</li>
+</ul>
+</div>
+
+<div class="phase">
+<div class="ph-num">Phase 02 · Weeks 4–10 · Stage 1 build (gated by Stage 0 pass)</div>
+<div class="ph-title">The Hook Test</div>
+<div class="ph-meta">Goal: a 3-chapter beta with Coach, Daily Mirror, and theme toggle.</div>
+
+<h4>Week 4 — pivot or proceed</h4>
+<ul>
+<li>If Stage 0 failed: kill or pivot. End of project.</li>
+<li>If Stage 0 passed: agents D, E, F, G, H all begin Stage 1 work in parallel.</li>
+</ul>
+
+<h4>Weeks 5–7</h4>
+<ul>
+<li>Agent D: visual assets for Stage 1 (Vyasa, Yudhishthira, Mirror portraits; 3 backgrounds; SVG pieces).</li>
+<li>Agent E: chapter loader, scene renderer, theme toggle. Three chapter scripts written (AI-drafted, founder-reviewed).</li>
+<li>Agent F: Coach edge function, prompts, Lichess puzzle import, drill UI.</li>
+<li>Agent G: Supabase migrations, RLS, sync.</li>
+</ul>
+
+<h4>Weeks 8–9</h4>
+<ul>
+<li>Integration: everything plugs together. Three chapters playable end-to-end with characters, Coach, Mirror match, share card.</li>
+<li>Closed beta opens. 200-500 invited from the Stage 0 cohort. Daily Mirror loop tested.</li>
+</ul>
+
+<h4>Week 10</h4>
+<ul>
+<li>Iterate on feedback. Fix critical bugs. Re-test acceptance criteria.</li>
+<li>Tag <code>v0.3.0-stage1-public</code>. Public beta announcement to chess community.</li>
+</ul>
+</div>
+
+<div class="phase">
+<div class="ph-num">Phase 03 · Weeks 11–24 · Stage 2 (gated by Stage 1 pass)</div>
+<div class="ph-title">Complete Mode 1</div>
+<div class="ph-meta">Goal: ship the full 19-chapter game with all 15 characters, multiplayer, full analysis suite.</div>
+
+<h4>Months 3–4</h4>
+<ul>
+<li>Blender pipeline build-out. Procedural piece generators. Character generators per v3 codex.</li>
+<li>Remaining 16 chapter scripts written and reviewed.</li>
+<li>Chapter XII (Krishna) script reviewed by 5 practicing Hindu chess players. Iterate.</li>
+<li>Multiplayer infrastructure: realtime channels, matchmaking edge function, Pandava-Kaurava perception rendering.</li>
+</ul>
+
+<h4>Month 5</h4>
+<ul>
+<li>Music and audio. AI-generated single-instrument tracks per chapter. Sound effects.</li>
+<li>Accessibility audit. Localization prep (Hindi first, then Tamil/Telugu).</li>
+<li>Tag <code>v1.0.0</code>. Launch.</li>
+</ul>
+</div>
+
+</section>
+
+<!-- ============== SECTION 14: VERSIONING ============== -->
+<section class="major" id="sec-14">
+<span class="section-num">Section Fourteen</span>
+<h1>Versioning &amp; Releases<span class="sub">Semantic versioning. Tagged releases. Beta channels. Rollback procedures.</span></h1>
+<p class="lede">Every release is tagged in git, has a GitHub release with changelog, and is deployable. Beta channels run from preview URLs; production runs from main.</p>
+
+<h2 class="sub">Version policy</h2>
+<dl class="spec">
+<dt>Major version</dt><dd>Bumped for Mode releases (Mode 1 → 2.0, Mode 2 → 3.0)</dd>
+<dt>Minor version</dt><dd>Bumped for new chapters or significant features</dd>
+<dt>Patch version</dt><dd>Bumped for bug fixes</dd>
+<dt>Pre-release labels</dt><dd>-stage0, -stage1-beta, -stage1-public, -rc.1</dd>
+</dl>
+
+<h2 class="sub">Beta channels</h2>
+<dl class="spec">
+<dt>Stage 0 public</dt><dd>main branch, on the main domain. Public.</dd>
+<dt>Stage 1 closed beta</dt><dd>release/stage1 branch. Cloudflare Pages preview URL. Email allowlist gating in Supabase auth.</dd>
+<dt>Stage 1 public beta</dt><dd>main branch after Stage 1 merge.</dd>
+<dt>Stage 2 RC</dt><dd>release/v1.0 branch. Preview URL. Wider invite list.</dd>
+<dt>Stage 2 production</dt><dd>main with v1.0.0 tag.</dd>
+</dl>
+
+<h2 class="sub">Rollback procedure</h2>
+<p>Cloudflare Pages keeps the last 100 deployments. To roll back: dashboard → Pages → mirror-pwa → Deployments → click previous deployment → "Rollback to this deployment." Takes 30 seconds. The bad commit can be reverted in git afterward.</p>
+
+<h2 class="sub">Changelog discipline</h2>
+<p>Every release has a CHANGELOG.md entry. Use Keep a Changelog format. Agents are instructed to update CHANGELOG.md with their PR.</p>
+
+<h2 class="sub">Communication channels</h2>
+<ul>
+<li>GitHub Discussions: technical discussion and beta feedback collection.</li>
+<li>Discord server: community, ongoing discussion, beta channels (one Discord channel per beta cohort).</li>
+<li>Email: announcements only. Resend free tier.</li>
+<li>Twitter: launch and milestone announcements.</li>
+</ul>
+
+</section>
+
+<!-- ============== CLOSING ============== -->
+<hr style="border:none;height:1px;background:var(--rule);margin:80px auto 50px;max-width:200px;position:relative;">
+
+<div class="callout good">
+<span class="label">The only thing that matters</span>
+<p style="font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;margin-bottom:8px;">This document is detailed enough that an AI coding agent can build Stage 0 without asking another question. The value of the document is measured by one variable: <strong>did you run the Saturday Morning quickstart on Saturday morning?</strong></p>
+<p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;margin-bottom:0;">If yes, this document worked. If no, no further iteration of design documents will change the outcome. The next step is the terminal, not another section.</p>
+</div>
+
+<footer>
+<div class="glyph">✦</div>
+<p><strong>MIRROR · Implementation Bible</strong></p>
+<p>The executable companion to v2 (Strategy) and v3 (Story).</p>
+<p>Saturday morning. <code>npm create vite@latest mirror-pwa</code>. Begin.</p>
+<p style="margin-top:18px;">Maneesh Reddy Duddukunta · May 2026</p>
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll('.toc a').forEach(a => {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>

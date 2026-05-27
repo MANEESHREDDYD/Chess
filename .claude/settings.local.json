@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Set-Location 'C:\\\\Users\\\\md200\\\\OneDrive\\\\Desktop\\\\Chess\\\\Product'; \"=== stage kept theme assets ===\"; git add public/themes/; git diff --cached --name-only; \"total: $\\(\\(git diff --cached --name-only | Measure-Object -Line\\).Lines\\)\"; \"=== commit ===\"; git commit -m \"chore\\(assets\\): track kept Kurukshetra theme runtime assets\" 2>&1 | Select-Object -Last 6; \"COMMIT_EXIT=$LASTEXITCODE\"; \"=== gates ===\"; npm run typecheck 2>&1 | Select-Object -Last 4; \"TC=$LASTEXITCODE\"; npm test 2>&1 | Select-Object -Last 6; \"TEST=$LASTEXITCODE\")"
+    ]
+  }
+}

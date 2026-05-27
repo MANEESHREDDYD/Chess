@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "stockfish_verification": {
+    "cli_version": "Stockfish 18",
+    "depth": 14,
+    "tactical_min_cp_gap": 150,
+    "exchange_max_cp_difference": 50
+  },
+  "task_opening_lines": {
+    "task1": "Show me what you see. Three moves are possible - only one of them is honest.",
+    "task2": "Begin a game in the way that pleases you. There are six doors. Walk through one.",
+    "task3": "An old position. The pawn wishes to become a queen - the black rook is unwilling to allow it. Convince it.",
+    "task4": "The same kind of question, but less time. A player under pressure shows you what they are.",
+    "task5": "Two paths to the same destination. One is long and certain. The other is short, and depends on your opponent erring. Choose.",
+    "task6": "You play the second hand now. White has spoken first - twice with the king's pawn, twice with the queen's. Choose how you answer each.",
+    "task7": "Trades are offered. Some players accept everything that looks equal. Some refuse on principle. Which are you today?",
+    "task8": "Enough exercises. Sit with me for one game, and do not hurry your hand."
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "kind": "tactical_sight",
+      "positions": [
+        {
+          "id": "t1-fork-003Tx",
+          "motif": "fork",
+          "fen": "2r5/pR5p/5p1k/4p3/4R3/B4nPP/PP3P2/1K6 b - - 0 27",
+          "expected_best_move": "f3d2",
+          "candidate_moves": ["f3d2", "f6f5", "c8d8"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "003Tx",
+          "source_opponent_move": "e1e4",
+          "source_rating": 1516,
+          "source_themes": ["backRankMate", "endgame", "fork", "mate", "mateIn2", "short"],
+          "verification": { "depth": 14, "best_score_cp": 99998, "second_score_cp": -474, "cp_gap": 100472 }
+        },
+        {
+          "id": "t1-pin-005Bm",
+          "motif": "pin",
+          "fen": "4rk2/p4q2/1p3Q1b/8/1p5N/2P1p3/P3P3/2K5 w - - 1 44",
+          "expected_best_move": "h4g6",
+          "candidate_moves": ["h4g6", "f6h6", "f6d6"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "005Bm",
+          "source_opponent_move": "c7f7",
+          "source_rating": 1204,
+          "source_themes": ["endgame", "mate", "mateIn2", "pin", "short"],
+          "verification": { "depth": 14, "best_score_cp": 99998, "second_score_cp": -173, "cp_gap": 100171 }
+        },
+        {
+          "id": "t1-skewer-0KCeN",
+          "motif": "skewer",
+          "fen": "6k1/pr3r2/1p2QBp1/2p1P2P/3P4/2P1q3/PP4KP/8 w - - 0 31",
+          "expected_best_move": "e6e8",
+          "candidate_moves": ["e6e8", "e6c8", "h5g6"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "0KCeN",
+          "source_opponent_move": "b8b7",
+          "source_rating": 1221,
+          "source_themes": ["endgame", "exposedKing", "long", "mate", "mateIn3", "skewer"],
+          "verification": { "depth": 14, "best_score_cp": 99997, "second_score_cp": 0, "cp_gap": 99997 }
+        },
+        {
+          "id": "t1-removing-defender-009zR",
+          "motif": "removing_the_defender",
+          "fen": "3Q4/p1p2ppp/4k3/8/5P2/4P3/Prqn2PP/3R1RK1 b - - 0 22",
+          "expected_best_move": "d2f3",
+          "candidate_moves": ["d2f3", "f7f5", "f7f6"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "009zR",
+          "source_opponent_move": "g5d8",
+          "source_rating": 1620,
+          "source_themes": ["discoveredAttack", "endgame", "mate", "mateIn2", "short"],
+          "verification": { "depth": 14, "best_score_cp": 99998, "second_score_cp": -170, "cp_gap": 100168 }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "opening_choice",
+      "fen": "startpos",
+      "choices": ["e2e4", "d2d4", "c2c4", "g1f3", "b2b3", "f2f4"],
+      "verification": { "type": "none", "reason": "Opening choice tests repertoire preference, not move quality." }
+    },
+    {
+      "id": 3,
+      "kind": "endgame_technique",
+      "fen": "1K6/1P1k4/8/8/8/8/r7/2R5 w - - 0 1",
+      "source": "Manual construction from the Lucena Position",
+      "success": "Promote the pawn or deliver mate within 25 player moves.",
+      "partial": "Pawn reaches the seventh rank but is later captured."
+    },
+    {
+      "id": 4,
+      "kind": "tactical_race",
+      "positions": [
+        {
+          "id": "t4-fork-00rw0",
+          "motif": "fork",
+          "fen": "r2q3k/5P2/2n3Bp/3p2pP/pp1b2Q1/6B1/1PP5/6K1 w - - 0 40",
+          "expected_best_move": "g4d4",
+          "candidate_moves": ["g4d4", "g1h2", "g1g2"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "00rw0",
+          "source_opponent_move": "g7d4",
+          "source_rating": 1733,
+          "source_themes": ["exposedKing", "fork", "long", "mate", "mateIn3", "middlegame", "sacrifice"],
+          "verification": { "depth": 14, "best_score_cp": 99997, "second_score_cp": -298, "cp_gap": 100295 }
+        },
+        {
+          "id": "t4-pin-006pe",
+          "motif": "pin",
+          "fen": "r4r2/2q1Nb2/5Qpk/2n4p/pp5P/8/1PP2PP1/2KR3R w - - 0 29",
+          "expected_best_move": "e7f5",
+          "candidate_moves": ["e7f5", "d1d6", "d1d8"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "006pe",
+          "source_opponent_move": "e6f7",
+          "source_rating": 1585,
+          "source_themes": ["master", "mate", "mateIn2", "middlegame", "pin", "short"],
+          "verification": { "depth": 14, "best_score_cp": 99998, "second_score_cp": 0, "cp_gap": 99998 }
+        },
+        {
+          "id": "t4-skewer-1F20U",
+          "motif": "skewer",
+          "fen": "k2r4/pp1q3r/7p/3QPpp1/5P2/1R6/2P5/1K1R4 w - - 0 37",
+          "expected_best_move": "d5b7",
+          "candidate_moves": ["d5b7", "c2c4", "b3d3"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "1F20U",
+          "source_opponent_move": "a4d7",
+          "source_rating": 1526,
+          "source_themes": ["deflection", "discoveredAttack", "endgame", "long", "mate", "mateIn3", "sacrifice", "skewer"],
+          "verification": { "depth": 14, "best_score_cp": 99997, "second_score_cp": -5, "cp_gap": 100002 }
+        },
+        {
+          "id": "t4-removing-defender-00Lh9",
+          "motif": "removing_the_defender",
+          "fen": "4r3/7P/1p4Q1/1b4B1/1k4n1/8/1P2n1P1/4R2K b - - 3 41",
+          "expected_best_move": "e2g3",
+          "candidate_moves": ["e2g3", "g4f2", "b4b3"],
+          "source": "Lichess CC0 puzzle database",
+          "source_lichess_puzzle_id": "00Lh9",
+          "source_opponent_move": "h2h1",
+          "source_rating": 1324,
+          "source_themes": ["discoveredAttack", "mate", "mateIn2", "middlegame", "short"],
+          "verification": { "depth": 14, "best_score_cp": 99998, "second_score_cp": -470, "cp_gap": 100468 }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "moral_chess",
+      "fen": "1nb3n1/rpqkp2r/7p/3pb1pP/pP2Np2/3PPPP1/P1P1B1R1/R1KQ2N1 w - - 1 21",
+      "source": "Sampled via scripts/find_task5_candidates.mjs",
+      "choices": [
+        { "id": "principled", "move": "e4c5", "label": "Patient conversion", "depth14_cp": 152 },
+        { "id": "swindle", "move": "d3d4", "label": "Seek complication", "depth14_cp": -207 }
+      ],
+      "swindle_line": ["d3d4", "e5h8", "g3f4" ]
+    },
+    {
+      "id": 6,
+      "kind": "black_repertoire",
+      "positions": [
+        { "after_white": "e2e4", "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1", "choices": ["e7e5", "c7c5", "e7e6", "c7c6"] },
+        { "after_white": "d2d4", "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1", "choices": ["d7d5", "g8f6", "f7f5", "e7e6"] }
+      ],
+      "verification": { "type": "none", "reason": "Black repertoire tests preference, not move quality." }
+    },
+    {
+      "id": 7,
+      "kind": "exchange_willingness",
+      "positions": [
+        { "id": "exchange-spanish-bishop-knight", "fen": "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4", "accept": "b5c6", "decline": "b5a4", "accept_cp": 8, "decline_cp": 49, "kept_minor_accept": "knight", "kept_minor_decline": "bishop" },
+        { "id": "exchange-qgd-bishop-knight", "fen": "rnbqk2r/ppp1bppp/4pn2/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR w KQkq - 4 5", "accept": "g5f6", "decline": "g5h4", "accept_cp": -13, "decline_cp": -45, "kept_minor_accept": "knight", "kept_minor_decline": "bishop" },
+        { "id": "exchange-nimzo-bishop-knight", "fen": "r1bq1rk1/pp3ppp/2n1pn2/2pp4/1bPP4/P1NBPN2/1P3PPP/R1BQ1RK1 b - - 0 8", "accept": "b4c3", "decline": "b4a5", "accept_cp": -20, "decline_cp": -44, "kept_minor_accept": "bishop", "kept_minor_decline": "knight" },
+        { "id": "exchange-french-bishop-knight", "fen": "rnbqk1nr/pp3ppp/4p3/2ppP3/1b1P4/P1N5/1PP2PPP/R1BQKBNR b KQkq - 0 5", "accept": "b4c3", "decline": "b4a5", "accept_cp": -79, "decline_cp": -65, "kept_minor_accept": "bishop", "kept_minor_decline": "knight" }
+      ]
+    },
+    {
+      "id": 8,
+      "kind": "vyasa_match",
+      "fen": "startpos",
+      "engine": { "skill_level": 8, "depth": 6, "time_control": "5+3" }
+    }
+  ],
+  "vyasa_lines": [
+    { "trigger": "ahead_in_material", "line": "You are ahead. This is when most apprentices throw the game away." },
+    { "trigger": "behind_in_material", "line": "Material is against you. The position need not be." },
+    { "trigger": "balanced", "line": "Even, still. We are honest with each other today." },
+    { "trigger": "winning_endgame", "line": "You have arrived. Do not stumble at the door." },
+    { "trigger": "losing_endgame", "line": "I am ahead now. I will not show mercy out of politeness." },
+    { "trigger": "time_pressure", "line": "Your clock runs faster than your thinking. Slow the one, or the other will." },
+    { "trigger": "after_blunder", "line": "An expensive move. We learn from these, or we are condemned to repeat them." },
+    { "trigger": "after_brilliancy", "line": "That, I did not see. I will need to think tonight about how." },
+    { "trigger": "opening_phase", "line": "We are still arranging our houses. The fight comes later." },
+    { "trigger": "middlegame_opening", "line": "Now you tell me what kind of game we are playing." },
+    { "trigger": "queens_exchanged", "line": "Without the queens, the position breathes differently. Or it suffocates. We shall see." },
+    { "trigger": "match_end", "line": "Enough. Close the board." }
+  ]
+}

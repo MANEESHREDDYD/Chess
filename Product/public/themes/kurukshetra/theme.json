@@ -1,0 +1,30 @@
+{
+  "id": "kurukshetra",
+  "name": "Kurukshetra",
+  "pieces": {
+    "wP": "pieces/pandava-pawn-512.png",
+    "wR": "pieces/pandava-rook-512.png",
+    "wN": "pieces/pandava-knight-512.png",
+    "wB": "pieces/pandava-bishop-512.png",
+    "wQ": "pieces/pandava-queen-512.png",
+    "wK": "pieces/pandava-king-512.png",
+    "bP": "pieces/kaurava-pawn-512.png",
+    "bR": "pieces/kaurava-rook-512.png",
+    "bN": "pieces/kaurava-knight-512.png",
+    "bB": "pieces/kaurava-bishop-512.png",
+    "bQ": "pieces/kaurava-queen-512.png",
+    "bK": "pieces/kaurava-king-512.png"
+  },
+  "board": {
+    "lightSquare": "#d8c5a0",
+    "darkSquare": "#8a6240",
+    "background": "board/earth.png"
+  },
+  "fx": {
+    "capture": {
+      "dir": "fx/dissolve/",
+      "frames": 16,
+      "fps": 24
+    }
+  }
+}
