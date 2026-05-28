@@ -18,6 +18,10 @@ type BoardViewProps = {
   themeError?: string | null;
 };
 
+type CustomPieceRendererProps = {
+  squareWidth?: number;
+};
+
 export function BoardView({
   fen,
   playerColor,
@@ -53,18 +57,20 @@ export function BoardView({
     return Object.fromEntries(
       Object.entries(themeManifest.pieces).map(([pieceKey, assetPath]) => [
         pieceKey,
-        <img
-          alt=""
-          draggable={false}
-          src={getThemeAssetUrl(themeManifest.id, assetPath)}
-          style={{
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            userSelect: 'none',
-            objectFit: 'contain',
-          }}
-        />,
+        ({ squareWidth }: CustomPieceRendererProps) => (
+          <img
+            alt=""
+            draggable={false}
+            src={getThemeAssetUrl(themeManifest.id, assetPath)}
+            style={{
+              width: squareWidth ? `${squareWidth}px` : '100%',
+              height: squareWidth ? `${squareWidth}px` : '100%',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              objectFit: 'contain',
+            }}
+          />
+        ),
       ])
     );
   }, [themeManifest]);
