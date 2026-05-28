@@ -334,6 +334,19 @@ body {
   line-height: 1.35;
 }
 
+.mirror-share {
+  display: grid;
+  gap: 8px;
+}
+
+.mirror-share__preview {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  display: block;
+  max-width: 100%;
+  width: 220px;
+}
+
 /* ---------- Calibration ---------- */
 
 .calibration-flow {

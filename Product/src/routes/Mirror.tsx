@@ -6,9 +6,16 @@ import {
   buildSelfRecognitionChallenge,
   type SelfRecognitionChallenge,
 } from '../components/Mirror/selfRecognition';
+import {
+  renderScoutingCardPng,
+  scoutingCardShareText,
+  summarizeMirrorRecord,
+  type MirrorRecordSummary,
+} from '../components/Mirror/scoutingCard';
 import { generateSummary } from '../components/Mirror/styleSummary';
 import {
   getLatestStyleVectorRecord,
+  getMirrorMatchesForPlayer,
   logAnonymousEvent,
   mergeMirrorMatchMetadata,
   putMirrorMatchRecord,
@@ -41,6 +48,7 @@ type StoredMirrorTrace = MirrorDecisionTrace & {
 };
 
 const LOCAL_PLAYER_ID = 'local-player';
+const FEEDBACK_FORM_URL = import.meta.env.VITE_FEEDBACK_FORM_URL?.trim() ?? '';
 
 export default function Mirror() {
   const activeTheme = useSettingsStore((state) => state.activeTheme);
@@ -80,6 +88,13 @@ export default function Mirror() {
     correct: boolean;
   } | null>(null);
   const [evolvingLine, setEvolvingLine] = useState<string | null>(null);
+  const [mirrorRecord, setMirrorRecord] = useState<MirrorRecordSummary>({
+    playerWins: 0,
+    mirrorWins: 0,
+    draws: 0,
+  });
+  const [scoutingCardUrl, setScoutingCardUrl] = useState<string | null>(null);
+  const [scoutingCardStatus, setScoutingCardStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -95,6 +110,8 @@ export default function Mirror() {
 
         setStyleRecord(row);
         if (row) {
+          const matches = await getMirrorMatchesForPlayer(row.player_id);
+          if (!cancelled) setMirrorRecord(summarizeMirrorRecord(matches));
           opponentRef.current?.dispose?.();
           opponentRef.current = createMirrorOpponent(row.vector);
           stopThinking();
@@ -115,6 +132,11 @@ export default function Mirror() {
           setSelfRecognitionChallenge(null);
           setSelfRecognitionResult(null);
           setEvolvingLine(null);
+          setScoutingCardUrl((currentUrl) => {
+            if (currentUrl) URL.revokeObjectURL(currentUrl);
+            return null;
+          });
+          setScoutingCardStatus(null);
           setSaveStatus(null);
         } else {
           setStatus('idle');
@@ -225,6 +247,8 @@ export default function Mirror() {
           },
         });
         await logAnonymousEvent('mirror_played', { mirror_match_id: matchId }).catch(() => undefined);
+        const matches = await getMirrorMatchesForPlayer(styleRecord.player_id);
+        setMirrorRecord(summarizeMirrorRecord(matches));
 
         const evolving = sharpenMirrorVector({
           vector: styleRecord.vector,
@@ -381,6 +405,11 @@ export default function Mirror() {
     setSelfRecognitionChallenge(null);
     setSelfRecognitionResult(null);
     setEvolvingLine(null);
+    setScoutingCardUrl((currentUrl) => {
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      return null;
+    });
+    setScoutingCardStatus(null);
     setSaveStatus(null);
   }, [styleRecord]);
 
@@ -448,6 +477,42 @@ export default function Mirror() {
       await logAnonymousEvent('self_recognition_correct', {
         mirror_match_id: currentMatchId,
       }).catch(() => undefined);
+    }
+  };
+
+  const handleGenerateScoutingCard = async () => {
+    if (!styleRecord || !explanation) return;
+
+    setScoutingCardStatus('Generating scouting card...');
+    try {
+      const input = {
+        vector: styleRecord.vector,
+        record: mirrorRecord,
+        line: explanation,
+      };
+      const blob = await renderScoutingCardPng(input);
+      const file = new File([blob], 'mirror-scouting-card.png', { type: 'image/png' });
+      setScoutingCardUrl((currentUrl) => {
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        return URL.createObjectURL(blob);
+      });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: 'MIRROR scouting card',
+          text: scoutingCardShareText(input),
+          files: [file],
+        });
+        setScoutingCardStatus('Scouting card shared.');
+        return;
+      }
+
+      await navigator.clipboard?.writeText(scoutingCardShareText(input));
+      setScoutingCardStatus('Scouting card generated. Share text copied.');
+    } catch (error) {
+      setScoutingCardStatus(
+        error instanceof Error ? `Could not generate scouting card: ${error.message}` : 'Could not generate scouting card.'
+      );
     }
   };
 
@@ -583,6 +648,33 @@ export default function Mirror() {
             ) : null}
           </section>
         ) : null}
+
+        {explanation ? (
+          <section className="mirror-panel mirror-share">
+            <h3>Scouting card</h3>
+            <p>
+              Record: {mirrorRecord.playerWins}-{mirrorRecord.mirrorWins}-{mirrorRecord.draws}
+            </p>
+            <button className="btn btn-primary" type="button" onClick={() => void handleGenerateScoutingCard()}>
+              Generate PNG
+            </button>
+            {scoutingCardStatus ? <p className="play-note">{scoutingCardStatus}</p> : null}
+            {scoutingCardUrl ? (
+              <img className="mirror-share__preview" alt="Generated MIRROR scouting card" src={scoutingCardUrl} />
+            ) : null}
+          </section>
+        ) : null}
+
+        <section className="mirror-panel">
+          <h3>Feedback</h3>
+          {FEEDBACK_FORM_URL ? (
+            <a className="btn btn-ghost" href={FEEDBACK_FORM_URL} target="_blank" rel="noreferrer">
+              Send feedback
+            </a>
+          ) : (
+            <p>Feedback form link pending human URL.</p>
+          )}
+        </section>
 
         {saveStatus ? <p className="play-note">{saveStatus}</p> : null}
       </aside>
