@@ -292,6 +292,48 @@ body {
   border-color: var(--pandava-gold);
 }
 
+.mirror-panel--evolving {
+  border-color: var(--pandava-deep);
+}
+
+.mirror-self-test__options {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mirror-self-test__option {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.mirror-self-test__option:hover:not(:disabled),
+.mirror-self-test__option[aria-pressed='true'] {
+  border-color: var(--pandava-gold);
+  background: var(--paper-warm);
+}
+
+.mirror-self-test__option:disabled {
+  cursor: default;
+}
+
+.mirror-self-test__option strong {
+  font-size: 13px;
+}
+
+.mirror-self-test__option span {
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 /* ---------- Calibration ---------- */
 
 .calibration-flow {

@@ -2,10 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Chess } from 'chess.js';
 import { BoardView } from '../components/Board/BoardView';
+import {
+  buildSelfRecognitionChallenge,
+  type SelfRecognitionChallenge,
+} from '../components/Mirror/selfRecognition';
 import { generateSummary } from '../components/Mirror/styleSummary';
 import {
   getLatestStyleVectorRecord,
+  logAnonymousEvent,
+  mergeMirrorMatchMetadata,
   putMirrorMatchRecord,
+  putStyleVectorRecord,
+  setCurrentStyleVector,
   type StyleVectorRecord,
 } from '../data/db';
 import {
@@ -18,6 +26,7 @@ import {
 } from '../engine/mirrorOpponent';
 import { stopThinking } from '../engine/stockfishBridge';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
+import { sharpenMirrorVector } from '../ml/evolvingMirror';
 import { useSettingsStore } from '../state/settingsStore';
 
 type GameStatus = 'idle' | 'playing' | 'game-over';
@@ -63,6 +72,14 @@ export default function Mirror() {
     overrideRate: 0,
     overridesByDimension: {},
   });
+  const [currentMatchId, setCurrentMatchId] = useState<string | null>(null);
+  const [selfRecognitionChallenge, setSelfRecognitionChallenge] =
+    useState<SelfRecognitionChallenge | null>(null);
+  const [selfRecognitionResult, setSelfRecognitionResult] = useState<{
+    selectedOptionId: string;
+    correct: boolean;
+  } | null>(null);
+  const [evolvingLine, setEvolvingLine] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -94,6 +111,10 @@ export default function Mirror() {
           setExplanation(null);
           setLastMirrorLine(null);
           setRerankSummary(summarizeMirrorReranks([]));
+          setCurrentMatchId(null);
+          setSelfRecognitionChallenge(null);
+          setSelfRecognitionResult(null);
+          setEvolvingLine(null);
           setSaveStatus(null);
         } else {
           setStatus('idle');
@@ -184,8 +205,10 @@ export default function Mirror() {
       );
 
       try {
+        const matchId = makeId('mirror-match');
+        const challenge = buildSelfRecognitionChallenge(styleRecord.vector, traces, matchId);
         await putMirrorMatchRecord({
-          id: makeId('mirror-match'),
+          id: matchId,
           player_id: styleRecord.player_id,
           started_at: startedAtRef.current,
           completed_at: completedAt,
@@ -196,10 +219,46 @@ export default function Mirror() {
             explanation: explanationText,
             mirror_moves: traces,
             rerank_summary: summary,
+            self_recognition_options: challenge.options,
+            self_recognition_correct_option_id: challenge.correctOptionId,
             mirror_base: 'stockfish-limit-strength',
           },
         });
-        setSaveStatus('Match saved on this device.');
+        await logAnonymousEvent('mirror_played', { mirror_match_id: matchId }).catch(() => undefined);
+
+        const evolving = sharpenMirrorVector({
+          vector: styleRecord.vector,
+          result: resultLabel,
+          traces,
+        });
+        const tunedRecord: StyleVectorRecord = {
+          id: makeId('style-vector'),
+          player_id: styleRecord.player_id,
+          source: 'tuned',
+          previous_vector_id: styleRecord.id,
+          vector: evolving.vector,
+          computed_at: new Date(Date.now() + 1).toISOString(),
+        };
+        await putStyleVectorRecord(tunedRecord);
+        await setCurrentStyleVector(styleRecord.player_id, tunedRecord);
+        await mergeMirrorMatchMetadata(matchId, {
+          tuned_style_vector_id: tunedRecord.id,
+          evolving_mirror: {
+            previous_style_vector_id: styleRecord.id,
+            tuned_style_vector_id: tunedRecord.id,
+            dimension: evolving.dimension,
+            delta_line: evolving.deltaLine,
+          },
+        });
+
+        opponentRef.current?.dispose?.();
+        opponentRef.current = createMirrorOpponent(tunedRecord.vector);
+        setStyleRecord(tunedRecord);
+        setCurrentMatchId(matchId);
+        setSelfRecognitionChallenge(challenge);
+        setSelfRecognitionResult(null);
+        setEvolvingLine(evolving.deltaLine);
+        setSaveStatus('Match saved. Your Mirror has been sharpened for the next game.');
       } catch (error) {
         setSaveStatus(
           error instanceof Error ? `Match finished, but save failed: ${error.message}` : 'Match finished, but save failed.'
@@ -318,6 +377,10 @@ export default function Mirror() {
     setExplanation(null);
     setLastMirrorLine(null);
     setRerankSummary(summarizeMirrorReranks([]));
+    setCurrentMatchId(null);
+    setSelfRecognitionChallenge(null);
+    setSelfRecognitionResult(null);
+    setEvolvingLine(null);
     setSaveStatus(null);
   }, [styleRecord]);
 
@@ -363,6 +426,29 @@ export default function Mirror() {
     a.click();
     a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+
+  const handleSelfRecognitionSelect = async (optionId: string) => {
+    if (!selfRecognitionChallenge || !currentMatchId || selfRecognitionResult) return;
+
+    const correct = optionId === selfRecognitionChallenge.correctOptionId;
+    const resultPayload = {
+      selected_option_id: optionId,
+      correct_option_id: selfRecognitionChallenge.correctOptionId,
+      correct,
+      selected_at: new Date().toISOString(),
+    };
+    setSelfRecognitionResult({ selectedOptionId: optionId, correct });
+
+    await mergeMirrorMatchMetadata(currentMatchId, {
+      self_recognition: resultPayload,
+    }).catch(() => undefined);
+
+    if (correct) {
+      await logAnonymousEvent('self_recognition_correct', {
+        mirror_match_id: currentMatchId,
+      }).catch(() => undefined);
+    }
   };
 
   const statusLabel = useMemo(() => {
@@ -457,6 +543,44 @@ export default function Mirror() {
           <section className="mirror-panel mirror-panel--power">
             <h3>Mirror line</h3>
             <p>{explanation}</p>
+          </section>
+        ) : null}
+
+        {evolvingLine ? (
+          <section className="mirror-panel mirror-panel--evolving">
+            <h3>Evolving Mirror</h3>
+            <p>{evolvingLine}</p>
+          </section>
+        ) : null}
+
+        {selfRecognitionChallenge ? (
+          <section className="mirror-panel mirror-self-test">
+            <h3>Which line feels like yours?</h3>
+            <p>One of these came from this Mirror game. Two are decoys from perturbed style vectors.</p>
+            <div className="mirror-self-test__options">
+              {selfRecognitionChallenge.options.map((option) => (
+                <button
+                  key={option.id}
+                  className="mirror-self-test__option"
+                  type="button"
+                  aria-pressed={selfRecognitionResult?.selectedOptionId === option.id}
+                  disabled={Boolean(selfRecognitionResult)}
+                  onClick={() => void handleSelfRecognitionSelect(option.id)}
+                >
+                  <strong>{option.label}</strong>
+                  {option.lines.map((line) => (
+                    <span key={line}>{line}</span>
+                  ))}
+                </button>
+              ))}
+            </div>
+            {selfRecognitionResult ? (
+              <p className="play-note">
+                {selfRecognitionResult.correct
+                  ? 'Recorded: you recognized your Mirror.'
+                  : 'Recorded: this one did not feel like you.'}
+              </p>
+            ) : null}
           </section>
         ) : null}
 

@@ -10,6 +10,7 @@ import { Task7Exchange } from '../components/Calibration/Task7Exchange';
 import { Task8VyasaMatch } from '../components/Calibration/Task8VyasaMatch';
 import { getTacticalTaskPositions } from '../components/Calibration/taskData';
 import { generateSummary } from '../components/Mirror/styleSummary';
+import { logAnonymousEvent } from '../data/db';
 import { useCalibrationStore } from '../state/calibrationStore';
 
 export default function Calibration() {
@@ -126,6 +127,7 @@ export default function Calibration() {
                 avg_move_time_ms: result.avg_move_time_ms,
               });
               await completeRun();
+              await logAnonymousEvent('calibration_completed').catch(() => undefined);
             }}
           />
         );
