@@ -586,3 +586,11 @@ This is an engineering recommendation. The human decides; this is advice.
 2. **Does the Mirror need access to `mirror_matches` for self-tuning?** If yes, the GameMode that produces the match should write to `mirror_matches`, and the Mirror's reranker should read from it.
 3. **Where does `feedback` go?** Local store today, but the whole point is that it reaches Anthropic. A flat-file export is sufficient for the beta cohort; a real submit pipeline is the storage seam's first server-side surface.
 4. **Should `settingsStore` migrate from localStorage to IndexedDB?** Today it persists one key. If presentation modes add many keys, the IndexedDB stores are nicer to migrate. Defer until there is a second setting.
+
+---
+
+## G · M1 Maia decision
+
+The M1 Maia spike was DEGRADED: Maia 1500 was fast on Chrome desktop through Zerofish, but iOS Safari was not verified and the resident memory footprint was high enough to be a mobile-PWA risk. The MVP Mirror therefore uses Stockfish `UCI_LimitStrength` / `UCI_Elo` as its base layer, plus style reranking and opportunistic weakness probing.
+
+Maia is deferred, not dropped. It is a post-MVP base-layer upgrade gated on a real iOS Safari on-device pass: first nodes=1 move <800ms warm, no Safari tab kill, and COOP/COEP isolation holding on the deployed host. If that gate passes, Maia swaps in behind `OpponentProvider`; the Mirror match logic, style reranker, weakness probes, persistence, and explanation layer should not need rework.
