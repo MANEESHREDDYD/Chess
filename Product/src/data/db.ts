@@ -154,6 +154,88 @@ export async function putMirrorMatchRecord(
   await db.put('mirror_matches', record);
 }
 
+export async function getMirrorMatchRecord(
+  matchId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<MirrorMatchRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  return db.get('mirror_matches', matchId);
+}
+
+export async function getMirrorMatchesForPlayer(
+  playerId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<MirrorMatchRecord[]> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAll('mirror_matches');
+  return rows.filter((row) => row.player_id === playerId && row.completed_at);
+}
+
+export async function mergeMirrorMatchMetadata(
+  matchId: string,
+  metadata: Record<string, unknown>,
+  dbName = MIRROR_DB_NAME
+): Promise<MirrorMatchRecord | null> {
+  const db = await openMirrorDb(dbName);
+  const existing = await db.get('mirror_matches', matchId);
+  if (!existing) return null;
+
+  const updated: MirrorMatchRecord = {
+    ...existing,
+    metadata: {
+      ...(existing.metadata ?? {}),
+      ...metadata,
+    },
+  };
+  await db.put('mirror_matches', updated);
+  return updated;
+}
+
+export async function putStyleVectorRecord(
+  record: StyleVectorRecord,
+  dbName = MIRROR_DB_NAME
+): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('style_vectors', record);
+}
+
+export async function setCurrentStyleVector(
+  playerId: string,
+  styleVector: StyleVectorRecord,
+  dbName = MIRROR_DB_NAME
+): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  const now = new Date().toISOString();
+  const existing = await db.get('players', playerId);
+  await db.put('players', {
+    id: playerId,
+    created_at: existing?.created_at ?? now,
+    updated_at: now,
+    ...existing,
+    current_style_vector_id: styleVector.id,
+    detected_elo: styleVector.vector.detected_elo,
+    elo_band: styleVector.vector.elo_band,
+  });
+}
+
+export async function logAnonymousEvent(
+  eventType: 'calibration_completed' | 'mirror_played' | 'self_recognition_correct',
+  metadata: Record<string, unknown> = {},
+  dbName = MIRROR_DB_NAME
+): Promise<FeedbackRecord> {
+  const db = await openMirrorDb(dbName);
+  const event: FeedbackRecord = {
+    id: makeId('event'),
+    created_at: new Date().toISOString(),
+    metadata: {
+      event_type: eventType,
+      ...metadata,
+    },
+  };
+  await db.put('feedback', event);
+  return event;
+}
+
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
   db.createObjectStore('players', { keyPath: 'id' });
 
@@ -165,4 +247,12 @@ function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
 
   db.createObjectStore('mirror_matches', { keyPath: 'id' });
   db.createObjectStore('feedback', { keyPath: 'id' });
+}
+
+function makeId(prefix: string): string {
+  const randomId =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${prefix}-${randomId}`;
 }

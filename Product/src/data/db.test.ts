@@ -5,8 +5,14 @@ import {
   closeMirrorDb,
   deleteMirrorDb,
   getLatestStyleVectorRecord,
+  getMirrorMatchRecord,
+  getMirrorMatchesForPlayer,
+  logAnonymousEvent,
+  mergeMirrorMatchMetadata,
   openMirrorDb,
   putMirrorMatchRecord,
+  putStyleVectorRecord,
+  setCurrentStyleVector,
   type PlayerRecord,
   type StyleVector,
   type StyleVectorRecord,
@@ -160,6 +166,77 @@ describe('openMirrorDb', () => {
     await expect((await openMirrorDb(dbName)).get('mirror_matches', record.id)).resolves.toEqual(
       record
     );
+  });
+
+  it('merges Mirror match metadata and lists completed matches for a player', async () => {
+    const dbName = nextDbName();
+    const baseRecord = {
+      id: 'mirror-match-1',
+      player_id: 'player-1',
+      started_at: '2026-05-27T00:00:00.000Z',
+      completed_at: '2026-05-27T00:10:00.000Z',
+      result: 'You won',
+      metadata: { explanation: 'line' },
+    };
+    await putMirrorMatchRecord(baseRecord, dbName);
+    await putMirrorMatchRecord(
+      {
+        id: 'mirror-match-in-progress',
+        player_id: 'player-1',
+        started_at: '2026-05-27T00:11:00.000Z',
+      },
+      dbName
+    );
+
+    await mergeMirrorMatchMetadata('mirror-match-1', { self_recognition: { correct: true } }, dbName);
+
+    await expect(getMirrorMatchRecord('mirror-match-1', dbName)).resolves.toMatchObject({
+      metadata: {
+        explanation: 'line',
+        self_recognition: { correct: true },
+      },
+    });
+    await expect(getMirrorMatchesForPlayer('player-1', dbName)).resolves.toHaveLength(1);
+  });
+
+  it('stores tuned style vectors and updates the current player pointer', async () => {
+    const dbName = nextDbName();
+    const db = await openMirrorDb(dbName);
+    await db.put('players', {
+      id: 'player-1',
+      created_at: '2026-05-27T00:00:00.000Z',
+      updated_at: '2026-05-27T00:00:00.000Z',
+    });
+    const row: StyleVectorRecord = {
+      id: 'style-vector-tuned',
+      player_id: 'player-1',
+      source: 'tuned',
+      previous_vector_id: 'style-vector-original',
+      vector: makeVector(1510),
+      computed_at: '2026-05-27T00:30:00.000Z',
+    };
+
+    await putStyleVectorRecord(row, dbName);
+    await setCurrentStyleVector('player-1', row, dbName);
+
+    await expect(db.get('style_vectors', row.id)).resolves.toEqual(row);
+    await expect(db.get('players', 'player-1')).resolves.toMatchObject({
+      current_style_vector_id: row.id,
+      detected_elo: 1510,
+    });
+  });
+
+  it('logs anonymous local events into the feedback store', async () => {
+    const dbName = nextDbName();
+
+    const event = await logAnonymousEvent('mirror_played', { mirror_match_id: 'match-1' }, dbName);
+
+    await expect((await openMirrorDb(dbName)).get('feedback', event.id)).resolves.toMatchObject({
+      metadata: {
+        event_type: 'mirror_played',
+        mirror_match_id: 'match-1',
+      },
+    });
   });
 });
 
