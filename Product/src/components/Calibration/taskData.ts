@@ -1,3 +1,15 @@
+// Content-loading pattern (the content seam — docs/ARCHITECTURE.md §B.5):
+//
+//   src/data/<content>.json      ← authored static JSON, build-time import
+//   src/.../taskData.ts          ← thin typed accessors, no runtime fetch
+//
+// Future content types (story dialogue, task definitions, lessons) should
+// follow the same shape: a JSON file under src/data/ and a typed accessor
+// module next to its consumers. If a content file grows past ~100 KB, switch
+// from a top-level `import` to a lazy `await import(...)` so it stays out of
+// the main bundle. Do not build a generic content registry until two
+// non-calibration content types exist.
+
 import calibrationPositions from '../../data/calibrationPositions.json';
 
 export type TacticalTaskPosition = {
