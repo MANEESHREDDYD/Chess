@@ -4,7 +4,9 @@ import {
   MIRROR_DB_VERSION,
   closeMirrorDb,
   deleteMirrorDb,
+  getLatestStyleVectorRecord,
   openMirrorDb,
+  putMirrorMatchRecord,
   type PlayerRecord,
   type StyleVector,
   type StyleVectorRecord,
@@ -106,4 +108,79 @@ describe('openMirrorDb', () => {
     await expect(db.get('style_vectors', 'style-vector-1')).resolves.toEqual(row);
     await expect(db.getAllFromIndex('style_vectors', 'computed_at')).resolves.toEqual([row]);
   });
+
+  it('returns the latest style vector for a player', async () => {
+    const dbName = nextDbName();
+    const db = await openMirrorDb(dbName);
+    const earlyRow: StyleVectorRecord = {
+      id: 'style-vector-early',
+      player_id: 'player-1',
+      source: 'calibration',
+      vector: makeVector(1200),
+      computed_at: '2026-05-27T00:10:00.000Z',
+    };
+    const latestRow: StyleVectorRecord = {
+      id: 'style-vector-latest',
+      player_id: 'player-1',
+      source: 'tuned',
+      vector: makeVector(1510),
+      computed_at: '2026-05-27T00:20:00.000Z',
+    };
+    const otherPlayerRow: StyleVectorRecord = {
+      id: 'style-vector-other',
+      player_id: 'player-2',
+      source: 'calibration',
+      vector: makeVector(1800),
+      computed_at: '2026-05-27T00:30:00.000Z',
+    };
+
+    await db.put('style_vectors', latestRow);
+    await db.put('style_vectors', otherPlayerRow);
+    await db.put('style_vectors', earlyRow);
+
+    await expect(getLatestStyleVectorRecord('player-1', dbName)).resolves.toEqual(latestRow);
+  });
+
+  it('persists completed Mirror matches', async () => {
+    const dbName = nextDbName();
+    const record = {
+      id: 'mirror-match-1',
+      player_id: 'player-1',
+      started_at: '2026-05-27T00:00:00.000Z',
+      completed_at: '2026-05-27T00:10:00.000Z',
+      pgn: '1. e4 e5',
+      result: 'Draw',
+      metadata: {
+        explanation: 'It took the trade on move 12 because you accept that exchange about 80% of the time.',
+      },
+    };
+
+    await putMirrorMatchRecord(record, dbName);
+
+    await expect((await openMirrorDb(dbName)).get('mirror_matches', record.id)).resolves.toEqual(
+      record
+    );
+  });
 });
+
+function makeVector(detectedElo: number): StyleVector {
+  return {
+    opening_white_top3: ['e4'],
+    opening_black_top3: ['e5'],
+    avg_move_time_ms: 9_500,
+    time_pressure_blunder_rate: 0.25,
+    exchange_willingness: 0.6,
+    preferred_minor: 'bishop',
+    motif_blindness: {
+      fork: 0.25,
+      pin: 0.5,
+      skewer: 0.25,
+      removing_the_defender: 0.75,
+    },
+    endgame_strength: 0.65,
+    swindle_preference: 'principled',
+    detected_elo: detectedElo,
+    elo_band: 'initiate',
+    schema_version: 1,
+  };
+}

@@ -136,6 +136,24 @@ export async function deleteMirrorDb(dbName = MIRROR_DB_NAME): Promise<void> {
   await deleteDB(dbName);
 }
 
+export async function getLatestStyleVectorRecord(
+  playerId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<StyleVectorRecord | null> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('style_vectors', 'computed_at');
+  const playerRows = rows.filter((row) => row.player_id === playerId);
+  return playerRows[playerRows.length - 1] ?? null;
+}
+
+export async function putMirrorMatchRecord(
+  record: MirrorMatchRecord,
+  dbName = MIRROR_DB_NAME
+): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('mirror_matches', record);
+}
+
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
   db.createObjectStore('players', { keyPath: 'id' });
 

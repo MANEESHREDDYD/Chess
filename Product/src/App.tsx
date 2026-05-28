@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import Home from './routes/Home';
 import Calibration from './routes/Calibration';
 import Play from './routes/Play';
+import Mirror from './routes/Mirror';
 import About from './routes/About';
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
         </Link>
         <nav className="app-nav">
           <Link to="/calibration">Calibration</Link>
+          <Link to="/mirror">Mirror</Link>
           <Link to="/play">Play</Link>
           <Link to="/about">About</Link>
         </nav>
@@ -21,6 +23,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/calibration" element={<Calibration />} />
+          <Route path="/mirror" element={<Mirror />} />
           <Route path="/play" element={<Play />} />
           <Route path="/about" element={<About />} />
         </Routes>

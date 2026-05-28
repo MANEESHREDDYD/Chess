@@ -56,8 +56,8 @@ export default function Calibration() {
             </div>
           </dl>
           <p>
-            <Link to="/play" className="btn btn-primary">
-              Continue to play
+            <Link to="/mirror" className="btn btn-primary">
+              Play your Mirror
             </Link>
           </p>
         </section>

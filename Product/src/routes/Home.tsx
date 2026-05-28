@@ -17,6 +17,9 @@ export default function Home() {
           <Link to="/calibration" className="btn btn-primary">
             Begin Calibration
           </Link>
+          <Link to="/mirror" className="btn btn-secondary">
+            Play Mirror
+          </Link>
           <Link to="/play" className="btn btn-ghost">
             Free play
           </Link>
