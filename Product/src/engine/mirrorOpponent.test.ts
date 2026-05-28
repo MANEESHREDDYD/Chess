@@ -144,4 +144,29 @@ describe('describeMirrorDecision', () => {
       },
     });
   });
+
+  it('does not claim exchange willingness caused a Stockfish-top capture with zero exchange bias', () => {
+    const trace: MirrorDecisionTrace = {
+      move: 'e4d5',
+      san: 'exd5',
+      stockfishTopMove: 'e4d5',
+      stockfishTopSan: 'exd5',
+      overrodeStockfish: false,
+      styleDimension: 'engine',
+      styleBias: 0,
+      stockfishTopEngineScore: 24,
+      rerankedEngineScore: 24,
+      rerankedTotalScore: 24,
+      reason: 'exchange',
+      tendency: 0.5,
+      detail: 'capture or trade candidate',
+    };
+
+    const explanation = describeMirrorDecision(trace, 4);
+
+    expect(explanation).toBe(
+      'It played exd5; the engine still ranked it highest after your style was applied.'
+    );
+    expect(explanation).not.toContain('because you accept that exchange');
+  });
 });

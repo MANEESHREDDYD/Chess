@@ -211,36 +211,21 @@ export function describeMirrorDecision(
 
   const percent = Math.round(trace.tendency * 100);
   const topMove = trace.stockfishTopSan ?? trace.stockfishTopMove ?? 'the top engine move';
+  const hasPositiveStyleDriver = trace.styleDimension !== 'engine' && trace.styleBias > 0;
 
-  if (trace.overrodeStockfish) {
+  if (trace.overrodeStockfish && hasPositiveStyleDriver) {
     return `It overrode Stockfish's ${topMove} with ${trace.san} on move ${moveNumber} because ${dimensionPhrase(trace, percent)}.`;
   }
 
-  if (trace.styleDimension !== 'engine' && trace.styleBias > 0) {
+  if (trace.overrodeStockfish) {
+    return `It overrode Stockfish's ${topMove} with ${trace.san} on move ${moveNumber} after reranking, but no single positive style dimension dominated that choice.`;
+  }
+
+  if (hasPositiveStyleDriver) {
     return `It kept Stockfish's ${trace.san} on move ${moveNumber}; ${dimensionPhrase(trace, percent)} confirmed the choice.`;
   }
 
-  if (trace.reason === 'exchange') {
-    return `It took the trade on move ${moveNumber} because you accept that exchange about ${percent}% of the time.`;
-  }
-
-  if (trace.reason === 'time_pressure_probe') {
-    return `It chose ${trace.san} on move ${moveNumber} because your time-pressure profile misses forcing moves about ${percent}% of the time.`;
-  }
-
-  if (trace.reason === 'motif_probe') {
-    return `It chose ${trace.san} on move ${moveNumber} because your tactical calibration showed a ${percent}% blind-spot signal for motifs like this.`;
-  }
-
-  if (trace.reason === 'swindle') {
-    return `It kept ${trace.san} on move ${moveNumber} because your style allows messy swindles when the board offers them.`;
-  }
-
-  if (trace.reason === 'forcing') {
-    return `It chose the forcing move ${trace.san} on move ${moveNumber} because your profile rewards direct pressure.`;
-  }
-
-  return `It played ${trace.san} on move ${moveNumber} because Stockfish still ranked it highest after your style vector was applied.`;
+  return `It played ${trace.san}; the engine still ranked it highest after your style was applied.`;
 }
 
 interface StyleContribution {
