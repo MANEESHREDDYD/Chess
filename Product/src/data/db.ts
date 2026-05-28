@@ -9,6 +9,17 @@ export const MIRROR_DB_VERSION = 1;
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
 
+// Persistence-intent annotations (the storage seam — docs/ARCHITECTURE.md §B.3).
+// These do not change runtime behavior. They mark where a future sync layer
+// would draw its boundary so it does not have to be re-derived.
+//
+// LOCAL-ONLY            ephemeral, device-bound (settingsStore lives in
+//                       localStorage, not here)
+// USER-OWNED / MIRROR   authored on device, would mirror to server when
+//                       accounts arrive; loss-on-clear is a UX bug
+// SERVER-CANONICAL      cannot live device-authoritative (none yet)
+
+// USER-OWNED / MIRROR
 export interface PlayerRecord {
   id: string;
   created_at: string;
@@ -18,6 +29,7 @@ export interface PlayerRecord {
   elo_band?: EloBand;
 }
 
+// USER-OWNED / MIRROR
 export interface CalibrationRunRecord {
   id: string;
   player_id: string;
@@ -29,6 +41,7 @@ export interface CalibrationRunRecord {
   style_vector_id?: string;
 }
 
+// USER-OWNED / MIRROR
 export interface StyleVectorRecord {
   id: string;
   player_id: string;
@@ -39,6 +52,7 @@ export interface StyleVectorRecord {
   previous_vector_id?: string;
 }
 
+// USER-OWNED / MIRROR  (store provisioned at v1; no writers yet — Mirror match feature)
 export interface MirrorMatchRecord {
   id: string;
   player_id: string;
@@ -49,6 +63,8 @@ export interface MirrorMatchRecord {
   metadata?: Record<string, unknown>;
 }
 
+// USER-OWNED / MIRROR  (store provisioned at v1; no writers yet — beta-cohort signal,
+// eventually the storage seam's first server-bound surface)
 export interface FeedbackRecord {
   id: string;
   player_id?: string;
