@@ -1,11 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TaskButtonGrid } from './TaskButtonGrid';
 import { pieceIcon } from './pieceIcons';
 import { getExchangePositions } from './taskData';
 
-export function Task7Exchange() {
+type Task7ExchangeProps = {
+  onComplete?: (result: {
+    choices: Array<{ decision: 'accept' | 'decline'; kept_minor: 'knight' | 'bishop' }>;
+  }) => void;
+};
+
+export function Task7Exchange({ onComplete }: Task7ExchangeProps) {
   const positions = getExchangePositions();
   const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (positions.length === 0) return;
+    if (Object.keys(answers).length !== positions.length) return;
+
+    onComplete?.({
+      choices: positions.map((position) => {
+        const selected = answers[position.id];
+        if (selected === position.accept) {
+          return { decision: 'accept', kept_minor: position.kept_minor_accept };
+        }
+
+        return { decision: 'decline', kept_minor: position.kept_minor_decline };
+      }),
+    });
+  }, [answers, onComplete, positions]);
 
   return (
     <div className="calibration-exchange-task">

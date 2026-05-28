@@ -1,11 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TaskButtonGrid } from './TaskButtonGrid';
 import { pieceIcon } from './pieceIcons';
 import { getBlackRepertoireTask } from './taskData';
 
-export function Task6BlackRepertoire() {
+type Task6BlackRepertoireProps = {
+  onComplete?: (result: { selected_replies: string[] }) => void;
+};
+
+export function Task6BlackRepertoire({ onComplete }: Task6BlackRepertoireProps) {
   const positions = getBlackRepertoireTask();
   const [selected, setSelected] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    if (positions.length === 0) return;
+    if (Object.keys(selected).length !== positions.length) return;
+
+    onComplete?.({ selected_replies: positions.map((_, index) => selected[index]).filter((value): value is string => Boolean(value)) });
+  }, [onComplete, positions, selected]);
 
   return (
     <div className="calibration-black-repertoire">

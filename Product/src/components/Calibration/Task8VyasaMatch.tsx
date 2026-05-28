@@ -4,13 +4,14 @@ import { BoardView } from '../Board/BoardView';
 import { init as initCalibrationOpponent, move as moveCalibrationOpponent, dispose as disposeCalibrationOpponent } from '../../engine/calibrationOpponent';
 import type { ThemeManifest } from '../../lib/theme';
 import { pickVyasaLine, type VyasaLine } from './vyasaLines';
+import type { VyasaResult } from '../../ml/styleVector';
 
 const BASE_CLOCK_MS = 5 * 60 * 1000;
 const INCREMENT_MS = 3 * 1000;
 
 type Task8VyasaMatchProps = {
   themeManifest?: ThemeManifest | null;
-  onComplete?: (result: { line: string; status: string; moveCount: number }) => void;
+  onComplete?: (result: { line: string; result: VyasaResult; moveCount: number; avg_move_time_ms: number; avg_cp_loss: number | null }) => void;
 };
 
 export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8VyasaMatchProps) {
@@ -25,6 +26,8 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
   const [vyasaLine, setVyasaLine] = useState<VyasaLine>(pickVyasaLine(initialSnapshot()));
   const activeSideRef = useRef<'white' | 'black'>('white');
   const lastTickRef = useRef(Date.now());
+  const whiteMoveTimeTotalRef = useRef(0);
+  const whiteMoveCountRef = useRef(0);
 
   useEffect(() => {
     void initCalibrationOpponent({ depth: 6, skillLevel: 8 });
@@ -58,9 +61,15 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
 
   useEffect(() => {
     if (status === 'game-over') {
-      onComplete?.({ line: vyasaLine.line, status: result, moveCount });
+      onComplete?.({
+        line: vyasaLine.line,
+        result: result === 'Time out' ? 'abandoned' : resolveVyasaResult(game),
+        moveCount,
+        avg_move_time_ms: whiteMoveCountRef.current === 0 ? 0 : Math.round(whiteMoveTimeTotalRef.current / whiteMoveCountRef.current),
+        avg_cp_loss: null,
+      });
     }
-  }, [moveCount, onComplete, result, status, vyasaLine.line]);
+  }, [game, moveCount, onComplete, result, status, vyasaLine.line]);
 
   const lineText = useMemo(() => vyasaLine.line, [vyasaLine.line]);
 
@@ -99,6 +108,8 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
     const now = Date.now();
     const elapsed = now - lastTickRef.current;
     lastTickRef.current = now;
+    whiteMoveTimeTotalRef.current += elapsed;
+    whiteMoveCountRef.current += 1;
     setWhiteClockMs((previous) => Math.max(0, previous - elapsed + INCREMENT_MS));
     activeSideRef.current = 'black';
     setMoveCount((previous) => previous + 1);
@@ -177,6 +188,18 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
       </footer>
     </section>
   );
+}
+
+function resolveVyasaResult(game: Chess): VyasaResult {
+  if (game.isCheckmate()) {
+    return game.turn() === 'b' ? 'win' : 'loss';
+  }
+
+  if (game.isDraw()) {
+    return 'draw';
+  }
+
+  return 'abandoned';
 }
 
 function formatClock(ms: number): string {

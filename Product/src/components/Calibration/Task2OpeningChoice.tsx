@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TaskButtonGrid } from './TaskButtonGrid';
 import { pieceIcon } from './pieceIcons';
 import { getOpeningChoiceTask } from './taskData';
 
 const choicePieces = ['wP', 'wN', 'wB', 'wR', 'wQ', 'wK'] as const;
 
-export function Task2OpeningChoice() {
+type Task2OpeningChoiceProps = {
+  onComplete?: (result: { selected_move: string }) => void;
+};
+
+export function Task2OpeningChoice({ onComplete }: Task2OpeningChoiceProps) {
   const task = getOpeningChoiceTask();
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedChoice) return;
+    onComplete?.({ selected_move: selectedChoice });
+  }, [onComplete, selectedChoice]);
 
   if (!task) return null;
 
