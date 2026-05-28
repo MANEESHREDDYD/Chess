@@ -511,8 +511,18 @@ export default function Mirror() {
         }
       }
 
-      await navigator.clipboard?.writeText(scoutingCardShareText(input));
-      setScoutingCardStatus('Scouting card generated. Share text copied.');
+      const shareText = scoutingCardShareText(input);
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareText);
+          setScoutingCardStatus('Scouting card generated. Share text copied.');
+          return;
+        } catch {
+          // Clipboard permissions can be denied in private, headless, or locked-down browsers.
+        }
+      }
+
+      setScoutingCardStatus('Share card ready. Copy/share unavailable in this browser.');
     } catch (error) {
       setScoutingCardStatus(
         error instanceof Error ? `Could not generate scouting card: ${error.message}` : 'Could not generate scouting card.'
