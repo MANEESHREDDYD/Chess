@@ -498,13 +498,17 @@ export default function Mirror() {
       });
 
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: 'MIRROR scouting card',
-          text: scoutingCardShareText(input),
-          files: [file],
-        });
-        setScoutingCardStatus('Scouting card shared.');
-        return;
+        try {
+          await navigator.share({
+            title: 'MIRROR scouting card',
+            text: scoutingCardShareText(input),
+            files: [file],
+          });
+          setScoutingCardStatus('Scouting card shared.');
+          return;
+        } catch {
+          // Browser support can be optimistic, especially in automated or desktop contexts.
+        }
       }
 
       await navigator.clipboard?.writeText(scoutingCardShareText(input));
