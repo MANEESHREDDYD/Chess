@@ -11,7 +11,9 @@ import {
 import {
   createMirrorOpponent,
   describeMirrorDecision,
+  summarizeMirrorReranks,
   type MirrorDecisionTrace,
+  type MirrorRerankSummary,
   type MirrorOpponentProvider,
 } from '../engine/mirrorOpponent';
 import { stopThinking } from '../engine/stockfishBridge';
@@ -55,6 +57,12 @@ export default function Mirror() {
   const [themeError, setThemeError] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [lastMirrorLine, setLastMirrorLine] = useState<string | null>(null);
+  const [rerankSummary, setRerankSummary] = useState<MirrorRerankSummary>({
+    totalMirrorMoves: 0,
+    overrideCount: 0,
+    overrideRate: 0,
+    overridesByDimension: {},
+  });
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,6 +93,7 @@ export default function Mirror() {
           setPendingPromotion(null);
           setExplanation(null);
           setLastMirrorLine(null);
+          setRerankSummary(summarizeMirrorReranks([]));
           setSaveStatus(null);
         } else {
           setStatus('idle');
@@ -146,12 +155,18 @@ export default function Mirror() {
       persistedRef.current = true;
 
       const traces = mirrorTracesRef.current;
-      const highlightedTrace = traces.find((trace) => trace.reason !== 'engine') ?? traces[0] ?? null;
+      const highlightedTrace =
+        traces.find((trace) => trace.overrodeStockfish) ??
+        traces.find((trace) => trace.styleDimension !== 'engine') ??
+        traces[0] ??
+        null;
+      const summary = summarizeMirrorReranks(traces);
       const explanationText = describeMirrorDecision(
         highlightedTrace,
         highlightedTrace?.moveNumber ?? Math.max(1, Math.ceil(gameRef.current.history().length / 2))
       );
       setExplanation(explanationText);
+      setRerankSummary(summary);
 
       const completedAt = new Date().toISOString();
       const game = gameRef.current;
@@ -180,6 +195,7 @@ export default function Mirror() {
             style_vector_id: styleRecord.id,
             explanation: explanationText,
             mirror_moves: traces,
+            rerank_summary: summary,
             mirror_base: 'stockfish-limit-strength',
           },
         });
@@ -248,6 +264,7 @@ export default function Mirror() {
           ply: gameRef.current.history().length,
         };
         mirrorTracesRef.current.push(storedTrace);
+        setRerankSummary(summarizeMirrorReranks(mirrorTracesRef.current));
         setLastMirrorLine(describeMirrorDecision(storedTrace, moveNumber));
       }
 
@@ -300,6 +317,7 @@ export default function Mirror() {
     setPendingPromotion(null);
     setExplanation(null);
     setLastMirrorLine(null);
+    setRerankSummary(summarizeMirrorReranks([]));
     setSaveStatus(null);
   }, [styleRecord]);
 
@@ -422,6 +440,16 @@ export default function Mirror() {
           <section className="mirror-panel mirror-panel--line">
             <h3>Why that move?</h3>
             <p>{lastMirrorLine}</p>
+          </section>
+        ) : null}
+
+        {rerankSummary.totalMirrorMoves > 0 ? (
+          <section className="mirror-panel">
+            <h3>Personalization</h3>
+            <p>
+              {rerankSummary.overrideCount} of {rerankSummary.totalMirrorMoves} Mirror moves
+              overrode Stockfish's top line ({Math.round(rerankSummary.overrideRate * 100)}%).
+            </p>
           </section>
         ) : null}
 

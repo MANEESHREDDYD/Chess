@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { EngineCandidate } from './stockfishBridge';
 import {
+  buildMirrorDecisionTrace,
   describeMirrorDecision,
   rankMirrorCandidates,
+  summarizeMirrorReranks,
   type MirrorDecisionTrace,
 } from './mirrorOpponent';
 import type { StyleVector } from '../ml/styleVector';
@@ -49,6 +51,7 @@ describe('rankMirrorCandidates', () => {
 
     expect(ranked[0].move).toBe('e4d5');
     expect(ranked[0].reason).toBe('exchange');
+    expect(ranked[0].styleDimension).toBe('exchange_willingness');
   });
 
   it('keeps engine order when the style vector has no strong signal', () => {
@@ -58,6 +61,21 @@ describe('rankMirrorCandidates', () => {
     expect(ranked[0].move).toBe('e4e5');
     expect(ranked[0].reason).toBe('engine');
   });
+
+  it('builds an auditable trace when style reranking overrides Stockfish top', () => {
+    const fen = '4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1';
+    const ranked = rankMirrorCandidates(fen, [candidate('e4e5', 16), candidate('e4d5', 0, 2)], {
+      ...baseVector,
+      exchange_willingness: 0.9,
+    });
+
+    expect(buildMirrorDecisionTrace(ranked)).toMatchObject({
+      move: 'e4d5',
+      stockfishTopMove: 'e4e5',
+      overrodeStockfish: true,
+      styleDimension: 'exchange_willingness',
+    });
+  });
 });
 
 describe('describeMirrorDecision', () => {
@@ -65,13 +83,65 @@ describe('describeMirrorDecision', () => {
     const trace: MirrorDecisionTrace = {
       move: 'e4d5',
       san: 'exd5',
+      stockfishTopMove: 'e4e5',
+      stockfishTopSan: 'e5',
+      overrodeStockfish: true,
+      styleDimension: 'exchange_willingness',
+      styleBias: 36,
+      stockfishTopEngineScore: 16,
+      rerankedEngineScore: 0,
+      rerankedTotalScore: 36,
       reason: 'exchange',
       tendency: 0.8,
       detail: 'capture or trade candidate',
     };
 
     expect(describeMirrorDecision(trace, 12)).toBe(
-      'It took the trade on move 12 because you accept that exchange about 80% of the time.'
+      "It overrode Stockfish's e5 with exd5 on move 12 because your exchange_willingness is 80%."
     );
+  });
+
+  it('summarizes override frequency by driving dimension', () => {
+    const traces: MirrorDecisionTrace[] = [
+      {
+        move: 'e4d5',
+        san: 'exd5',
+        stockfishTopMove: 'e4e5',
+        stockfishTopSan: 'e5',
+        overrodeStockfish: true,
+        styleDimension: 'exchange_willingness',
+        styleBias: 36,
+        stockfishTopEngineScore: 16,
+        rerankedEngineScore: 0,
+        rerankedTotalScore: 36,
+        reason: 'exchange',
+        tendency: 0.8,
+        detail: 'capture or trade candidate',
+      },
+      {
+        move: 'g8f6',
+        san: 'Nf6',
+        stockfishTopMove: 'g8f6',
+        stockfishTopSan: 'Nf6',
+        overrodeStockfish: false,
+        styleDimension: 'engine',
+        styleBias: 0,
+        stockfishTopEngineScore: 22,
+        rerankedEngineScore: 22,
+        rerankedTotalScore: 22,
+        reason: 'engine',
+        tendency: 0.5,
+        detail: 'engine preference',
+      },
+    ];
+
+    expect(summarizeMirrorReranks(traces)).toEqual({
+      totalMirrorMoves: 2,
+      overrideCount: 1,
+      overrideRate: 0.5,
+      overridesByDimension: {
+        exchange_willingness: 1,
+      },
+    });
   });
 });

@@ -10,10 +10,27 @@ const STOCKFISH_MIN_ELO = 1320;
 const STOCKFISH_MAX_ELO = 3190;
 
 type MirrorReason = 'engine' | 'exchange' | 'forcing' | 'time_pressure_probe' | 'motif_probe' | 'swindle';
+export type StyleDimension =
+  | 'engine'
+  | 'exchange_willingness'
+  | 'preferred_minor'
+  | 'opening_repertoire'
+  | 'aggression'
+  | 'time_pressure'
+  | 'motif_blindness'
+  | 'swindle_preference';
 
 export interface MirrorDecisionTrace {
   move: string;
   san: string;
+  stockfishTopMove: string | null;
+  stockfishTopSan: string | null;
+  overrodeStockfish: boolean;
+  styleDimension: StyleDimension;
+  styleBias: number;
+  stockfishTopEngineScore: number | null;
+  rerankedEngineScore: number;
+  rerankedTotalScore: number;
   reason: MirrorReason;
   tendency: number;
   detail: string;
@@ -22,10 +39,12 @@ export interface MirrorDecisionTrace {
 export interface RankedMirrorCandidate {
   move: string;
   san: string;
+  engineRank: number;
   engineScore: number;
   styleBias: number;
   totalScore: number;
   reason: MirrorReason;
+  styleDimension: StyleDimension;
   tendency: number;
   detail: string;
 }
@@ -34,6 +53,13 @@ export interface MirrorMoveResult {
   move: string | null;
   trace: MirrorDecisionTrace | null;
   candidates: RankedMirrorCandidate[];
+}
+
+export interface MirrorRerankSummary {
+  totalMirrorMoves: number;
+  overrideCount: number;
+  overrideRate: number;
+  overridesByDimension: Partial<Record<StyleDimension, number>>;
 }
 
 export interface MirrorOpponentOptions {
@@ -77,15 +103,10 @@ export function createMirrorOpponent(
       const ranked = rankMirrorCandidates(fen, candidates, styleVector);
 
       if (ranked[0]) {
+        const trace = buildMirrorDecisionTrace(ranked);
         return {
           move: ranked[0].move,
-          trace: {
-            move: ranked[0].move,
-            san: ranked[0].san,
-            reason: ranked[0].reason,
-            tendency: ranked[0].tendency,
-            detail: ranked[0].detail,
-          },
+          trace,
           candidates: ranked,
         };
       }
@@ -110,7 +131,7 @@ export function rankMirrorCandidates(
   const legalByUci = new Map(legalMoves.map((move) => [moveToUci(move), move]));
 
   return candidates
-    .map((candidate) => {
+    .map((candidate, index) => {
       const move = legalByUci.get(candidate.move);
       if (!move) return null;
 
@@ -121,16 +142,63 @@ export function rankMirrorCandidates(
       return {
         move: candidate.move,
         san: move.san,
+        engineRank: candidate.multipv || index + 1,
         engineScore,
         styleBias: style.bias,
         totalScore,
         reason: style.reason,
+        styleDimension: style.dimension,
         tendency: style.tendency,
         detail: style.detail,
       };
     })
     .filter((candidate): candidate is RankedMirrorCandidate => candidate !== null)
     .sort((a, b) => b.totalScore - a.totalScore || a.move.localeCompare(b.move));
+}
+
+export function buildMirrorDecisionTrace(
+  rankedCandidates: RankedMirrorCandidate[]
+): MirrorDecisionTrace | null {
+  const chosen = rankedCandidates[0];
+  if (!chosen) return null;
+
+  const stockfishTop =
+    [...rankedCandidates].sort((a, b) => a.engineRank - b.engineRank || b.engineScore - a.engineScore)[0] ??
+    null;
+
+  return {
+    move: chosen.move,
+    san: chosen.san,
+    stockfishTopMove: stockfishTop?.move ?? null,
+    stockfishTopSan: stockfishTop?.san ?? null,
+    overrodeStockfish: Boolean(stockfishTop && stockfishTop.move !== chosen.move),
+    styleDimension: chosen.styleDimension,
+    styleBias: chosen.styleBias,
+    stockfishTopEngineScore: stockfishTop?.engineScore ?? null,
+    rerankedEngineScore: chosen.engineScore,
+    rerankedTotalScore: chosen.totalScore,
+    reason: chosen.reason,
+    tendency: chosen.tendency,
+    detail: chosen.detail,
+  };
+}
+
+export function summarizeMirrorReranks(traces: MirrorDecisionTrace[]): MirrorRerankSummary {
+  const overrides = traces.filter((trace) => trace.overrodeStockfish);
+  const overridesByDimension = overrides.reduce<Partial<Record<StyleDimension, number>>>(
+    (counts, trace) => ({
+      ...counts,
+      [trace.styleDimension]: (counts[trace.styleDimension] ?? 0) + 1,
+    }),
+    {}
+  );
+
+  return {
+    totalMirrorMoves: traces.length,
+    overrideCount: overrides.length,
+    overrideRate: traces.length > 0 ? overrides.length / traces.length : 0,
+    overridesByDimension,
+  };
 }
 
 export function describeMirrorDecision(
@@ -142,6 +210,15 @@ export function describeMirrorDecision(
   }
 
   const percent = Math.round(trace.tendency * 100);
+  const topMove = trace.stockfishTopSan ?? trace.stockfishTopMove ?? 'the top engine move';
+
+  if (trace.overrodeStockfish) {
+    return `It overrode Stockfish's ${topMove} with ${trace.san} on move ${moveNumber} because ${dimensionPhrase(trace, percent)}.`;
+  }
+
+  if (trace.styleDimension !== 'engine' && trace.styleBias > 0) {
+    return `It kept Stockfish's ${trace.san} on move ${moveNumber}; ${dimensionPhrase(trace, percent)} confirmed the choice.`;
+  }
 
   if (trace.reason === 'exchange') {
     return `It took the trade on move ${moveNumber} because you accept that exchange about ${percent}% of the time.`;
@@ -166,67 +243,143 @@ export function describeMirrorDecision(
   return `It played ${trace.san} on move ${moveNumber} because Stockfish still ranked it highest after your style vector was applied.`;
 }
 
-function styleBiasForMove(
-  fen: string,
-  move: Move,
-  vector: StyleVector
-): Pick<RankedMirrorCandidate, 'styleBias' | 'reason' | 'tendency' | 'detail'> & {
+interface StyleContribution {
+  dimension: StyleDimension;
   bias: number;
+  reason: MirrorReason;
+  tendency: number;
+  detail: string;
+}
+
+function styleBiasForMove(fen: string, move: Move, vector: StyleVector): {
+  bias: number;
+  reason: MirrorReason;
+  dimension: StyleDimension;
+  tendency: number;
+  detail: string;
 } {
   const exchangeTendency = clamp01(vector.exchange_willingness);
   const timePressureTendency = clamp01(vector.time_pressure_blunder_rate);
   const motifTendency = average(Object.values(vector.motif_blindness));
+  const aggressionTendency = derivedAggression(vector);
   const isExchange = move.isCapture();
   const isForcing = move.san.includes('+') || move.san.includes('#') || move.isPromotion();
   const probeWindow = shouldProbeWeakness(fen, vector);
-
-  let bias = 0;
-  let reason: MirrorReason = 'engine';
-  let tendency = 0.5;
-  let detail = 'engine preference';
+  const contributions: StyleContribution[] = [];
 
   if (isExchange) {
-    const exchangeBias = (exchangeTendency - 0.5) * 90;
-    bias += exchangeBias;
-    reason = 'exchange';
-    tendency = exchangeTendency;
-    detail = 'capture or trade candidate';
+    contributions.push({
+      dimension: 'exchange_willingness',
+      bias: (exchangeTendency - 0.5) * 90,
+      reason: 'exchange',
+      tendency: exchangeTendency,
+      detail: 'capture or trade candidate',
+    });
+  }
+
+  if (matchesOpeningRepertoire(fen, move, vector)) {
+    contributions.push({
+      dimension: 'opening_repertoire',
+      bias: 24,
+      reason: 'engine',
+      tendency: 1,
+      detail: 'stored opening repertoire',
+    });
+  }
+
+  if (matchesPreferredMinor(move, vector)) {
+    contributions.push({
+      dimension: 'preferred_minor',
+      bias: 10,
+      reason: 'engine',
+      tendency: 1,
+      detail: `preferred ${vector.preferred_minor}`,
+    });
   }
 
   if (isForcing) {
-    const forceBias = 18 + timePressureTendency * 24;
-    bias += forceBias;
-    reason = 'forcing';
-    tendency = timePressureTendency;
-    detail = 'check, mate threat, or promotion candidate';
+    contributions.push({
+      dimension: 'aggression',
+      bias: 14 + aggressionTendency * 30,
+      reason: 'forcing',
+      tendency: aggressionTendency,
+      detail: 'forcing check, mate threat, or promotion candidate',
+    });
   }
 
   if (probeWindow && isForcing && timePressureTendency >= 0.45) {
-    bias += 28;
-    reason = 'time_pressure_probe';
-    tendency = timePressureTendency;
-    detail = 'opportunistic time-pressure probe';
+    contributions.push({
+      dimension: 'time_pressure',
+      bias: 28,
+      reason: 'time_pressure_probe',
+      tendency: timePressureTendency,
+      detail: 'opportunistic time-pressure probe',
+    });
   } else if (probeWindow && move.isCapture() && motifTendency >= 0.45) {
-    bias += 24;
-    reason = 'motif_probe';
-    tendency = motifTendency;
-    detail = 'opportunistic motif-blindness probe';
+    contributions.push({
+      dimension: 'motif_blindness',
+      bias: 24,
+      reason: 'motif_probe',
+      tendency: motifTendency,
+      detail: 'opportunistic motif-blindness probe',
+    });
   }
 
   if (vector.swindle_preference === 'swindle' && isMessyMove(fen, move)) {
-    bias += 18;
-    reason = 'swindle';
-    tendency = 1;
-    detail = 'messy forcing or material-imbalancing candidate';
+    contributions.push({
+      dimension: 'swindle_preference',
+      bias: 18,
+      reason: 'swindle',
+      tendency: 1,
+      detail: 'messy forcing or material-imbalancing candidate',
+    });
   }
+
+  const bias = contributions.reduce((total, contribution) => total + contribution.bias, 0);
+  const driver =
+    contributions
+      .filter((contribution) => contribution.bias > 0)
+      .sort((a, b) => Math.abs(b.bias) - Math.abs(a.bias))[0] ?? null;
 
   return {
     bias,
-    styleBias: bias,
-    reason,
-    tendency,
-    detail,
+    reason: driver?.reason ?? 'engine',
+    dimension: driver?.dimension ?? 'engine',
+    tendency: driver?.tendency ?? 0.5,
+    detail: driver?.detail ?? 'engine preference',
   };
+}
+
+function dimensionPhrase(trace: MirrorDecisionTrace, percent: number): string {
+  if (trace.styleDimension === 'exchange_willingness') {
+    return `your exchange_willingness is ${percent}%`;
+  }
+
+  if (trace.styleDimension === 'time_pressure') {
+    return `your time-pressure miss rate is ${percent}%`;
+  }
+
+  if (trace.styleDimension === 'motif_blindness') {
+    return `your motif_blindness signal is ${percent}%`;
+  }
+
+  if (trace.styleDimension === 'swindle_preference') {
+    return 'your swindle_preference allows messy forcing lines';
+  }
+
+  if (trace.styleDimension === 'preferred_minor') {
+    return `your preferred_minor signal favored ${trace.detail.replace('preferred ', '')}`;
+  }
+
+  if (trace.styleDimension === 'opening_repertoire') {
+    return 'your stored opening repertoire matched that move';
+  }
+
+  if (trace.styleDimension === 'aggression') {
+    return `your derived aggression signal is ${percent}%`;
+  }
+
+  return 'no stronger style signal beat the engine choice';
 }
 
 function shouldProbeWeakness(fen: string, vector: StyleVector): boolean {
@@ -235,6 +388,38 @@ function shouldProbeWeakness(fen: string, vector: StyleVector): boolean {
     clamp01(vector.time_pressure_blunder_rate) * 0.4;
   if (weaknessSignal < 0.45) return false;
   return deterministicBucket(`${fen}|${vector.detected_elo}|${vector.elo_band}`) < 20;
+}
+
+function matchesOpeningRepertoire(fen: string, move: Move, vector: StyleVector): boolean {
+  if (fullMoveNumberFromFen(fen) > 4) return false;
+
+  const repertoire = move.color === 'w' ? vector.opening_white_top3 : vector.opening_black_top3;
+  const moveKeys = new Set([normalizeMoveKey(move.san), normalizeMoveKey(moveToUci(move))]);
+  return repertoire.some((storedMove) => moveKeys.has(normalizeMoveKey(storedMove)));
+}
+
+function matchesPreferredMinor(move: Move, vector: StyleVector): boolean {
+  if (vector.preferred_minor === 'neutral') return false;
+  if (vector.preferred_minor === 'knight') return move.piece === 'n';
+  return move.piece === 'b';
+}
+
+function derivedAggression(vector: StyleVector): number {
+  const swindle = vector.swindle_preference === 'swindle' ? 0.75 : 0.35;
+  return clamp01(swindle * 0.45 + vector.exchange_willingness * 0.25 + vector.time_pressure_blunder_rate * 0.3);
+}
+
+function fullMoveNumberFromFen(fen: string): number {
+  const fullMove = Number(fen.split(/\s+/)[5]);
+  return Number.isFinite(fullMove) ? fullMove : 1;
+}
+
+function normalizeMoveKey(move: string): string {
+  return move
+    .toLowerCase()
+    .replace(/\.+/g, '')
+    .replace(/[+#?!]/g, '')
+    .trim();
 }
 
 function isMessyMove(fen: string, move: Move): boolean {
