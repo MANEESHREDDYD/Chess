@@ -6,12 +6,22 @@ interface EngineMessage {
   move?: string | null;
   cp?: number | null;
   mate?: number | null;
+  multipv?: number;
+  pv?: string[];
   message?: string;
 }
 
 interface Evaluation {
   cp: number | null;
   mate: number | null;
+}
+
+export interface EngineCandidate {
+  move: string;
+  cp: number | null;
+  mate: number | null;
+  multipv: number;
+  pv: string[];
 }
 
 type EngineOptionValue = string | number | boolean;
@@ -100,7 +110,76 @@ export async function getBestMove(
     }, timeoutMs);
 
     w.addEventListener('message', handler);
-    w.postMessage({ cmd: 'go', fen, depth, requestId });
+    w.postMessage({ cmd: 'go', fen, depth, multipv: 1, requestId });
+  });
+}
+
+export async function getCandidateMoves(
+  fen: string,
+  multipv = 4,
+  depth = 8,
+  timeoutMs = 15000
+): Promise<EngineCandidate[]> {
+  await waitForEngine();
+  const w = ensureWorker();
+  const requestId = nextRequestId();
+  const candidateCount = Math.max(1, Math.min(8, Math.round(multipv)));
+  const latestCandidates = new Map<number, EngineCandidate>();
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      w.removeEventListener('message', handler);
+    };
+
+    const settle = (fallbackMove?: string | null) => {
+      cleanup();
+      const candidates = Array.from(latestCandidates.values()).sort(
+        (a, b) => a.multipv - b.multipv
+      );
+
+      if (candidates.length === 0 && fallbackMove) {
+        resolve([
+          {
+            move: fallbackMove,
+            cp: null,
+            mate: null,
+            multipv: 1,
+            pv: [fallbackMove],
+          },
+        ]);
+        return;
+      }
+
+      resolve(candidates);
+    };
+
+    const handler = (e: MessageEvent<EngineMessage>) => {
+      if (e.data?.requestId !== requestId) return;
+
+      if (e.data.type === 'info' && e.data.pv?.[0]) {
+        const candidate: EngineCandidate = {
+          move: e.data.pv[0],
+          cp: e.data.cp ?? null,
+          mate: e.data.mate ?? null,
+          multipv: e.data.multipv ?? 1,
+          pv: e.data.pv,
+        };
+        latestCandidates.set(candidate.multipv, candidate);
+      }
+
+      if (e.data.type === 'bestmove') {
+        settle(e.data.move ?? null);
+      }
+    };
+
+    const timer = window.setTimeout(() => {
+      w.postMessage({ cmd: 'stop', requestId });
+      settle();
+    }, timeoutMs);
+
+    w.addEventListener('message', handler);
+    w.postMessage({ cmd: 'go', fen, depth, multipv: candidateCount, requestId });
   });
 }
 
@@ -139,7 +218,7 @@ export async function evaluatePosition(fen: string, depth = 14): Promise<Evaluat
     }, 15000);
 
     w.addEventListener('message', handler);
-    w.postMessage({ cmd: 'go', fen, depth, requestId });
+    w.postMessage({ cmd: 'go', fen, depth, multipv: 1, requestId });
   });
 }
 

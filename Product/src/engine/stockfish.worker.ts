@@ -4,6 +4,7 @@ interface WorkerCommand {
   cmd?: 'init' | 'go' | 'stop' | 'setoption';
   fen?: string;
   depth?: number;
+  multipv?: number;
   name?: string;
   value?: string | number | boolean;
   requestId?: number;
@@ -52,14 +53,18 @@ function handleLine(line: string): void {
 
   if (line.startsWith('info') && line.includes(' score ')) {
     const depthMatch = line.match(/depth (\d+)/);
+    const multipvMatch = line.match(/multipv (\d+)/);
     const cpMatch = line.match(/score cp (-?\d+)/);
     const mateMatch = line.match(/score mate (-?\d+)/);
+    const pvMatch = line.match(/\bpv\s+(.+)$/);
     send({
       type: 'info',
       requestId: activeRequestId,
       depth: depthMatch ? parseInt(depthMatch[1], 10) : 0,
+      multipv: multipvMatch ? parseInt(multipvMatch[1], 10) : 1,
       cp: cpMatch ? parseInt(cpMatch[1], 10) : null,
       mate: mateMatch ? parseInt(mateMatch[1], 10) : null,
+      pv: pvMatch ? pvMatch[1].trim().split(/\s+/) : [],
       raw: line,
     });
   }
@@ -182,6 +187,8 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
 
   if (data.cmd === 'go') {
     activeRequestId = typeof data.requestId === 'number' ? data.requestId : null;
+    const multipv = Math.max(1, Math.min(8, Math.round(data.multipv ?? 1)));
+    engine.postMessage(formatSetOption('MultiPV', multipv));
     engine.postMessage(`position fen ${data.fen ?? ''}`);
     engine.postMessage(`go depth ${data.depth ?? 10}`);
   } else if (data.cmd === 'setoption' && data.name) {
