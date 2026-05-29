@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 import { BoardView } from '../Board/BoardView';
 import { init as initCalibrationOpponent, move as moveCalibrationOpponent, dispose as disposeCalibrationOpponent } from '../../engine/calibrationOpponent';
@@ -28,11 +28,36 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
   const lastTickRef = useRef(Date.now());
   const whiteMoveTimeTotalRef = useRef(0);
   const whiteMoveCountRef = useRef(0);
+  const mountedRef = useRef(true);
+  const statusRef = useRef(status);
+  const completionSentRef = useRef(false);
+
+  const completeOnce = useCallback(
+    (resultPayload: {
+      line: string;
+      result: VyasaResult;
+      moveCount: number;
+      avg_move_time_ms: number;
+      avg_cp_loss: number | null;
+    }): void => {
+      if (completionSentRef.current) return;
+      completionSentRef.current = true;
+      onComplete?.(resultPayload);
+    },
+    [onComplete]
+  );
 
   useEffect(() => {
     void initCalibrationOpponent({ depth: 6, skillLevel: 8 });
-    return () => disposeCalibrationOpponent();
+    return () => {
+      mountedRef.current = false;
+      disposeCalibrationOpponent();
+    };
   }, []);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
     if (status !== 'playing') return;
@@ -61,7 +86,7 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
 
   useEffect(() => {
     if (status === 'game-over') {
-      onComplete?.({
+      completeOnce({
         line: vyasaLine.line,
         result: result === 'Time out' ? 'abandoned' : resolveVyasaResult(game),
         moveCount,
@@ -69,7 +94,7 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
         avg_cp_loss: null,
       });
     }
-  }, [game, moveCount, onComplete, result, status, vyasaLine.line]);
+  }, [completeOnce, game, moveCount, result, status, vyasaLine.line]);
 
   const lineText = useMemo(() => vyasaLine.line, [vyasaLine.line]);
 
@@ -125,6 +150,7 @@ export function Task8VyasaMatch({ themeManifest = null, onComplete }: Task8Vyasa
     setEngineThinking(true);
     void (async () => {
       const reply = await moveCalibrationOpponent(game.fen(), { depth: 6, skillLevel: 8 });
+      if (!mountedRef.current || statusRef.current !== 'playing') return;
       setEngineThinking(false);
       if (!reply) return;
 
