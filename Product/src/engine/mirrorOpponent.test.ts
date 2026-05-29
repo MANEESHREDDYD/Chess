@@ -3,6 +3,7 @@ import type { EngineCandidate } from './stockfishBridge';
 import {
   buildMirrorDecisionTrace,
   describeMirrorDecision,
+  mirrorEngineRegimeFor,
   rankMirrorCandidates,
   summarizeMirrorReranks,
   type MirrorDecisionTrace,
@@ -38,6 +39,47 @@ function candidate(move: string, cp: number, multipv = 1): EngineCandidate {
     pv: [move],
   };
 }
+
+describe('mirrorEngineRegimeFor', () => {
+  it('keeps UCI_LimitStrength regime at or above the 1320 floor', () => {
+    expect(mirrorEngineRegimeFor(1320)).toEqual({ regime: 'uci-limit', uciElo: 1320 });
+    expect(mirrorEngineRegimeFor(1500)).toEqual({ regime: 'uci-limit', uciElo: 1500 });
+    expect(mirrorEngineRegimeFor(2100)).toEqual({ regime: 'uci-limit', uciElo: 2100 });
+  });
+
+  it('clamps detected_elo above the Stockfish UCI ceiling', () => {
+    expect(mirrorEngineRegimeFor(3500)).toEqual({ regime: 'uci-limit', uciElo: 3190 });
+  });
+
+  it('drops to the Skill Level + depth regime below 1320', () => {
+    const just_below = mirrorEngineRegimeFor(1319);
+    expect(just_below).toEqual({ regime: 'skill', skillLevel: 10, depthCap: 6 });
+
+    const apprentice_floor = mirrorEngineRegimeFor(800);
+    expect(apprentice_floor).toEqual({ regime: 'skill', skillLevel: 0, depthCap: 2 });
+
+    const calibration_baseline = mirrorEngineRegimeFor(1000);
+    expect(calibration_baseline.regime).toBe('skill');
+    if (calibration_baseline.regime === 'skill') {
+      expect(calibration_baseline.skillLevel).toBeGreaterThan(0);
+      expect(calibration_baseline.skillLevel).toBeLessThan(10);
+      expect(calibration_baseline.depthCap).toBeGreaterThanOrEqual(2);
+      expect(calibration_baseline.depthCap).toBeLessThan(6);
+    }
+  });
+
+  it('clamps detected_elo below the eloDetect floor into the lowest skill regime', () => {
+    expect(mirrorEngineRegimeFor(600)).toEqual({ regime: 'skill', skillLevel: 0, depthCap: 2 });
+  });
+
+  it('falls back to the floor for non-finite input', () => {
+    expect(mirrorEngineRegimeFor(Number.NaN)).toEqual({
+      regime: 'skill',
+      skillLevel: 0,
+      depthCap: 2,
+    });
+  });
+});
 
 describe('rankMirrorCandidates', () => {
   it('reranks a near-equal capture when the player accepts exchanges', () => {

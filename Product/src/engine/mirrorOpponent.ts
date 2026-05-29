@@ -6,8 +6,21 @@ import type { OpponentMoveOptions, OpponentProvider } from '../types/opponent';
 const DEFAULT_MULTIPV = 5;
 const DEFAULT_DEPTH = 8;
 const DEFAULT_TIMEOUT_MS = 15_000;
-const STOCKFISH_MIN_ELO = 1320;
-const STOCKFISH_MAX_ELO = 3190;
+
+// Two-regime base-strength selection (see docs/m3-report.md).
+//
+// Stockfish's UCI_LimitStrength can only set UCI_Elo within [1320, 3190].
+// For detected_elo below 1320 (the apprentice band and the low end of
+// initiate) we fall back to the same mechanism calibrationOpponent.ts uses
+// successfully: Skill Level (0-20) plus a depth cap, both mapped from the
+// player's detected_elo. The style reranker (rankMirrorCandidates) runs on
+// top of whichever base the engine is configured into.
+const STOCKFISH_UCI_MIN_ELO = 1320;
+const STOCKFISH_UCI_MAX_ELO = 3190;
+const DETECTED_ELO_FLOOR = 800;
+const SKILL_REGIME_MIN_DEPTH = 2;
+const SKILL_REGIME_MAX_DEPTH = 6;
+const SKILL_REGIME_MAX_LEVEL = 10;
 
 type MirrorReason = 'engine' | 'exchange' | 'forcing' | 'time_pressure_probe' | 'motif_probe' | 'swindle';
 export type StyleDimension =
@@ -72,17 +85,62 @@ export interface MirrorOpponentProvider extends OpponentProvider {
   getMoveWithTrace(fen: string, options?: OpponentMoveOptions): Promise<MirrorMoveResult>;
 }
 
+export type MirrorEngineRegime =
+  | { regime: 'uci-limit'; uciElo: number }
+  | { regime: 'skill'; skillLevel: number; depthCap: number };
+
+// Pick the base-strength regime for a detected_elo. Above the Stockfish
+// UCI_LimitStrength floor (1320) we use UCI_Elo. Below it we cannot — the
+// option won't accept anything lower — so we fall back to Skill Level + a
+// depth cap, the same mechanism calibrationOpponent uses. The reranker
+// runs identically on top of either regime.
+export function mirrorEngineRegimeFor(detectedElo: number): MirrorEngineRegime {
+  const safeElo = Number.isFinite(detectedElo)
+    ? Math.round(detectedElo)
+    : DETECTED_ELO_FLOOR;
+
+  if (safeElo >= STOCKFISH_UCI_MIN_ELO) {
+    return {
+      regime: 'uci-limit',
+      uciElo: Math.min(STOCKFISH_UCI_MAX_ELO, safeElo),
+    };
+  }
+
+  // Linear ramp from detected_elo 800 -> 1319 across:
+  //   skillLevel 0  ->  SKILL_REGIME_MAX_LEVEL (10, well below mid-default 20)
+  //   depthCap   2  ->  SKILL_REGIME_MAX_DEPTH (6)
+  const clampedElo = Math.max(DETECTED_ELO_FLOOR, safeElo);
+  const span = STOCKFISH_UCI_MIN_ELO - DETECTED_ELO_FLOOR;
+  const t = span > 0 ? (clampedElo - DETECTED_ELO_FLOOR) / span : 0;
+  const skillLevel = Math.max(0, Math.min(20, Math.round(t * SKILL_REGIME_MAX_LEVEL)));
+  const depthSpan = SKILL_REGIME_MAX_DEPTH - SKILL_REGIME_MIN_DEPTH;
+  const depthCap = Math.max(
+    SKILL_REGIME_MIN_DEPTH,
+    Math.min(SKILL_REGIME_MAX_DEPTH, SKILL_REGIME_MIN_DEPTH + Math.round(t * depthSpan))
+  );
+  return { regime: 'skill', skillLevel, depthCap };
+}
+
 export function createMirrorOpponent(
   styleVector: StyleVector,
   defaults: MirrorOpponentOptions = {}
 ): MirrorOpponentProvider {
   let configured = false;
+  let activeRegime: MirrorEngineRegime | null = null;
 
   async function configureEngine(): Promise<void> {
     if (configured) return;
     await waitForEngine();
-    await setOption('UCI_LimitStrength', true);
-    await setOption('UCI_Elo', clampElo(styleVector.detected_elo));
+    const regime = mirrorEngineRegimeFor(styleVector.detected_elo);
+    if (regime.regime === 'uci-limit') {
+      await setOption('UCI_LimitStrength', true);
+      await setOption('UCI_Elo', regime.uciElo);
+    } else {
+      // Sub-1320: turn UCI_LimitStrength off so Skill Level governs play.
+      await setOption('UCI_LimitStrength', false);
+      await setOption('Skill Level', regime.skillLevel);
+    }
+    activeRegime = regime;
     configured = true;
   }
 
@@ -97,7 +155,11 @@ export function createMirrorOpponent(
     async getMoveWithTrace(fen, options = {}) {
       await configureEngine();
       const multipv = defaults.multipv ?? DEFAULT_MULTIPV;
-      const depth = options.depth ?? defaults.depth ?? DEFAULT_DEPTH;
+      const requestedDepth = options.depth ?? defaults.depth ?? DEFAULT_DEPTH;
+      const depth =
+        activeRegime?.regime === 'skill'
+          ? Math.min(requestedDepth, activeRegime.depthCap)
+          : requestedDepth;
       const timeoutMs = options.timeoutMs ?? defaults.timeoutMs ?? DEFAULT_TIMEOUT_MS;
       const candidates = await getCandidateMoves(fen, multipv, depth, timeoutMs);
       const ranked = rankMirrorCandidates(fen, candidates, styleVector);
@@ -117,6 +179,7 @@ export function createMirrorOpponent(
 
     dispose() {
       configured = false;
+      activeRegime = null;
     },
   };
 }
@@ -456,10 +519,6 @@ function deterministicBucket(input: string): number {
     hash = Math.imul(hash, 16777619);
   }
   return Math.abs(hash) % 100;
-}
-
-function clampElo(value: number): number {
-  return Math.max(STOCKFISH_MIN_ELO, Math.min(STOCKFISH_MAX_ELO, Math.round(value)));
 }
 
 function average(values: number[]): number {
