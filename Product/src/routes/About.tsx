@@ -5,8 +5,8 @@ export default function About() {
 
       <p>
         MIRROR is an open chess experiment. The goal is to test whether a chess opponent calibrated
-        to your specific style feels meaningfully like you. This is the Stage 0 prototype — bare
-        bones, no story, no theme.
+        to your specific style feels meaningfully like you. The current MVP includes calibration,
+        free play, the personalized Mirror match, and an optional Kurukshetra board theme.
       </p>
 
       <h2>Credits &amp; open-source attribution</h2>

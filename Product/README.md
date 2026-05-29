@@ -1,6 +1,6 @@
-# MIRROR — The Apprentice
+# MIRROR - The Apprentice
 
-A chess prototype where the final opponent is built from how you play. This commit ships **Agent A** from `docs/v4_implementation.html` — the foundation: PWA shell, chess board with drag-to-move, Stockfish in a Web Worker, PGN export.
+A chess prototype where the final opponent is built from how you play. The current MVP includes calibration, free play, a Stockfish-based personalized Mirror opponent, self-recognition, scouting-card export, and an optional Kurukshetra board theme.
 
 ## Design docs
 
@@ -8,21 +8,24 @@ Read these before extending the codebase. They live in `docs/`:
 
 | File | What it covers |
 | --- | --- |
-| `docs/v2_strategy.html` | Staging plan (Stage 0 / 1 / 2), gate criteria, kill criteria |
+| `docs/v2_strategy.html` | Historical staging plan, gate criteria, kill criteria |
 | `docs/v3_story.html`    | Full Mahabharata Mode 1 bible (Stage 2 scope) |
-| `docs/v4_implementation.html` | Executable plan — the spec this codebase implements |
+| `docs/v4_implementation.html` | Historical executable plan and implementation reference |
 
-## What's in this commit (Agent A)
+## What's built
 
 - React + TypeScript PWA on Vite 5
 - Chess board with drag-to-move, real promotion chooser, color selection
 - Stockfish in a Web Worker, fixed depth 10, bundled from the pinned npm package
 - PGN export, resign, new-game flow
+- Calibration flow and style-vector persistence in IndexedDB
+- Personalized Mirror match, decision traces, self-recognition, and scouting-card export
+- Optional Kurukshetra board and piece theme
 - `/about` route with GPL notices for Stockfish (license compliance, required)
 - Cloudflare `_headers` file for COEP/COOP
 - PWA manifest with proper icons
 
-**Not yet built**: calibration (Agent B), Mirror generator (Agent C), story system (Agent E), Coach (Agent F). All remain Stage 0 except where noted in `v4_implementation.html` §7.
+**Not yet built**: story system, Coach, multiplayer, sync/auth, ranked play, and the larger post-MVP roadmap systems.
 
 ## Quickstart
 
@@ -32,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>. Click **Begin**. Play a game.
+Open <http://localhost:5173>. Click **Begin Calibration**, then play Mirror or free play.
 
 ## Scripts
 
@@ -73,4 +76,4 @@ Stockfish, bundled: GPLv3 — see `/about` in the running app for full attributi
 
 ## Status
 
-`v0.1.0-stage0` — Agent A complete. Agents B–H to follow.
+Mirror MVP work is in progress: calibration, Mirror, self-recognition, export, and theme are implemented; deployment and launch polish remain.

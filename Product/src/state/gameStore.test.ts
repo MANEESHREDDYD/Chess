@@ -26,7 +26,7 @@ describe('gameStore', () => {
     useGameStore.getState().startGame('white');
 
     const pgn = useGameStore.getState().exportPgn();
-    expect(pgn).toContain('[Event "MIRROR Stage 0 prototype"]');
+    expect(pgn).toContain('[Event "MIRROR free play"]');
     expect(pgn).toContain('[White "Player"]');
     expect(pgn).toContain('[Black "Stockfish (depth 10)"]');
   });

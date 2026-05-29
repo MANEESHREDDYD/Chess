@@ -29,8 +29,8 @@ export default function App() {
         </Routes>
       </main>
       <footer className="app-footer">
-        <span>MIRROR · Stage 0 prototype</span>
-        <span>·</span>
+        <span>MIRROR | MVP prototype</span>
+        <span>|</span>
         <Link to="/about">Credits &amp; GPL notices</Link>
       </footer>
     </div>

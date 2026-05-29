@@ -79,7 +79,8 @@ export default function Play() {
         </div>
 
         <p className="play-note">
-          Calibration is available from Home. The Mirror match arrives in the next phase.
+          Use calibration from Home to refresh your style vector, or visit Mirror for the
+          personalized match.
         </p>
       </aside>
 

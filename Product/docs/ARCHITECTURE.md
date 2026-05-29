@@ -1,6 +1,6 @@
 # MIRROR Architecture
 
-> Status: Stage 0 (free-play + calibration). The Mirror match is the next real feature; everything else in this document is **architecture for what could attach later, not a build plan**.
+> Status: MVP Mirror path (free-play, calibration, optional Kurukshetra theme, and Stockfish-only Mirror match). The six roadmap systems remain **architecture for what could attach later, not a build plan**.
 
 This document maps the codebase today, names the seams where the seven future systems would plug in, declares what we are deliberately not building, and describes how the IndexedDB schema would evolve.
 

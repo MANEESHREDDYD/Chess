@@ -151,7 +151,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { _game, playerColor } = get();
     _game.header(
       'Event',
-      'MIRROR Stage 0 prototype',
+      'MIRROR free play',
       'White',
       playerColor === 'white' ? 'Player' : 'Stockfish (depth 10)',
       'Black',

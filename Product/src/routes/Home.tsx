@@ -4,14 +4,15 @@ export default function Home() {
   return (
     <div className="home">
       <div className="home-hero">
-        <div className="home-eyebrow">A chess prototype</div>
+        <div className="home-eyebrow">A local-first chess prototype</div>
         <h1 className="home-title">
           Play a chess opponent <br /> built from how <em>you</em> play.
         </h1>
         <p className="home-lede">
           MIRROR is an experiment. We are testing whether a chess opponent calibrated to your
-          specific style — your openings, your time pressure, your tactical blind spots — actually
-          feels like you. Stage 0 is a bare prototype. No story, no theme, no signup. Just chess.
+          specific style - your openings, your time pressure, your tactical blind spots - actually
+          feels like you. The current MVP includes calibration, free play, the Mirror match, and an
+          optional Kurukshetra board theme. No signup; games stay on your device.
         </p>
         <div className="home-actions">
           <Link to="/calibration" className="btn btn-primary">
