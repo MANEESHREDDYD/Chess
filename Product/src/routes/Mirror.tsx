@@ -75,8 +75,6 @@ export default function Mirror() {
   const [themeError, setThemeError] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [lastMirrorLine, setLastMirrorLine] = useState<string | null>(null);
-  // DEBUG: remove before v1.0.0.
-  const [mirrorDebugStatus, setMirrorDebugStatus] = useState<string>('No Mirror move requested yet.');
   const [rerankSummary, setRerankSummary] = useState<MirrorRerankSummary>({
     totalMirrorMoves: 0,
     overrideCount: 0,
@@ -131,7 +129,6 @@ export default function Mirror() {
           setPendingPromotion(null);
           setExplanation(null);
           setLastMirrorLine(null);
-          setMirrorDebugStatus('No Mirror move requested yet.');
           setRerankSummary(summarizeMirrorReranks([]));
           setCurrentMatchId(null);
           setSelfRecognitionChallenge(null);
@@ -318,18 +315,12 @@ export default function Mirror() {
     const moveNumber = nextMoveNumber(gameRef.current);
     setIsMirrorThinking(true);
     setLastMirrorLine(null);
-    // DEBUG: remove before v1.0.0.
-    console.log(`[mirror] requesting move for fen: ${fenBefore}`);
-    setMirrorDebugStatus(`Requesting move for ${fenBefore}`);
 
     try {
       const mirrorMove = await opponent.getMoveWithTrace(fenBefore, {
         depth: 8,
         timeoutMs: 15_000,
       });
-      // DEBUG: remove before v1.0.0.
-      console.log(`[mirror] opponent returned: ${mirrorMove.move ?? 'null'}`, mirrorMove);
-      setMirrorDebugStatus(`Opponent returned: ${mirrorMove.move ?? 'null'}`);
       if (gameIdRef.current !== activeGameId || status !== 'playing') return;
 
       if (!mirrorMove.move) {
@@ -340,20 +331,8 @@ export default function Mirror() {
       }
 
       try {
-        // DEBUG: remove before v1.0.0.
-        console.log(`[mirror] applying to chess.js: ${mirrorMove.move}`);
-        const appliedMove = gameRef.current.move(uciToMove(mirrorMove.move));
-        // DEBUG: remove before v1.0.0.
-        console.log(`[mirror] applying to chess.js: ${mirrorMove.move} ok`, appliedMove);
-        setMirrorDebugStatus(`Applied ${mirrorMove.move}: ok (${appliedMove.san})`);
+        gameRef.current.move(uciToMove(mirrorMove.move));
       } catch (error) {
-        // DEBUG: remove before v1.0.0.
-        console.error(`[mirror] applying to chess.js: ${mirrorMove.move} threw`, error);
-        setMirrorDebugStatus(
-          error instanceof Error
-            ? `Error applying ${mirrorMove.move}: ${error.message}`
-            : `Error applying ${mirrorMove.move}: ${String(error)}`
-        );
         setLastMirrorLine(
           error instanceof Error
             ? `Mirror produced an invalid move (${mirrorMove.move}): ${error.message}`
@@ -381,9 +360,6 @@ export default function Mirror() {
       }
     } catch (error) {
       if (gameIdRef.current === activeGameId) {
-        // DEBUG: remove before v1.0.0.
-        console.error('[mirror] caught error:', error);
-        setMirrorDebugStatus(error instanceof Error ? `Mirror error: ${error.message}` : `Mirror error: ${String(error)}`);
         setLastMirrorLine(
           error instanceof Error ? `Mirror engine error: ${error.message}` : 'Mirror engine error.'
         );
@@ -427,7 +403,6 @@ export default function Mirror() {
     setPendingPromotion(null);
     setExplanation(null);
     setLastMirrorLine(null);
-    setMirrorDebugStatus('No Mirror move requested yet.');
     setRerankSummary(summarizeMirrorReranks([]));
     setCurrentMatchId(null);
     setSelfRecognitionChallenge(null);
@@ -667,12 +642,6 @@ export default function Mirror() {
             <p>{lastMirrorLine}</p>
           </section>
         ) : null}
-
-        {/* DEBUG: remove before v1.0.0. */}
-        <section className="mirror-panel">
-          <h3>Mirror debug</h3>
-          <p className="play-note">{mirrorDebugStatus}</p>
-        </section>
 
         {rerankSummary.totalMirrorMoves > 0 ? (
           <section className="mirror-panel">
