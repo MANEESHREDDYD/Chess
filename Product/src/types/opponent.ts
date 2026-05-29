@@ -1,18 +1,20 @@
-// OpponentProvider — the architecture seam for "things that produce the next move."
+// OpponentProvider - the architecture seam for "things that produce the next move."
 //
-// Two implementations exist today, neither yet wrapped behind this interface:
+// STATUS: intentional future contract. Keep this seam even when only some
+// opponents declare conformance, so move-producing engines have one shared
+// shape as the app grows.
+//
+// Runtime implementations today:
 //   - src/engine/stockfishBridge.ts       (free-play, full strength)
 //   - src/engine/calibrationOpponent.ts   (calibration Tasks 3 + 8, skill-capped)
+//   - src/engine/mirrorOpponent.ts        (Mirror, style-reranked Stockfish)
 //
-// Two future implementations are anticipated, neither built:
-//   - MirrorOpponent (style-reranked Stockfish — the core product premise)
+// Future implementations are anticipated:
 //   - RemoteOpponent (cross-device multiplayer transport)
 //
-// This file is documentation-as-types: it defines the seam so future code can
-// declare conformance, and it gives the eventual Mirror builder a place to
-// hang an adapter. It deliberately does not refactor either existing module.
-//
-// See docs/ARCHITECTURE.md §B.2 for the full seam analysis.
+// This file is documentation-as-types. It deliberately does not force older
+// free-play or calibration modules through an adapter until those areas are
+// next changed.
 
 export interface OpponentMoveOptions {
   depth?: number;

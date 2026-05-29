@@ -52,7 +52,7 @@ export interface StyleVectorRecord {
   previous_vector_id?: string;
 }
 
-// USER-OWNED / MIRROR  (store provisioned at v1; no writers yet — Mirror match feature)
+// USER-OWNED / MIRROR
 export interface MirrorMatchRecord {
   id: string;
   player_id: string;
@@ -63,8 +63,8 @@ export interface MirrorMatchRecord {
   metadata?: Record<string, unknown>;
 }
 
-// USER-OWNED / MIRROR  (store provisioned at v1; no writers yet — beta-cohort signal,
-// eventually the storage seam's first server-bound surface)
+// USER-OWNED / MIRROR  (anonymous event/feedback records today; eventual
+// storage seam's first server-bound surface)
 export interface FeedbackRecord {
   id: string;
   player_id?: string;

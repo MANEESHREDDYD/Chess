@@ -1,9 +1,9 @@
 // GameMode — the architecture seam for "a chess game with different rules
 // around setup, opponent, scoring, and completion."
 //
-// STATUS: draft contract. No implementation exists yet, and the eventual
-// MirrorMatchMode is expected to refine the shape. This file is intentionally
-// minimal so the refinement is cheap.
+// STATUS: intentional future contract. No implementation exists yet, and the
+// eventual mode adapters are expected to refine the shape. Keep this file even
+// while it is unused so future game modes share one explicit seam.
 //
 // Today's flows that this interface anticipates (none of them currently
 // implement it; refactors should happen only when those modules are next

@@ -200,6 +200,8 @@ export async function getCandidateMoves(
   });
 }
 
+// Intentional future analysis helper. It is not wired into the current UI, but
+// the analysis/scouting roadmap needs a shared full-position eval facade.
 export async function evaluatePosition(fen: string, depth = 14): Promise<Evaluation> {
   await waitForEngine();
   const w = ensureWorker();
