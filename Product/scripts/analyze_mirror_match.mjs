@@ -39,11 +39,10 @@
 //
 // Paste into a file, then run this script against that file.
 
-import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { createTimedUciEngine, stockfishPathFromEnv } from './lib/uci-engine.mjs';
 
-const STOCKFISH = process.env.STOCKFISH_PATH
-  || 'tools/stockfish/stockfish/stockfish-windows-x86-64-avx2.exe';
+const STOCKFISH = stockfishPathFromEnv();
 const ANALYSIS_DEPTH = Number(process.env.ANALYSIS_DEPTH ?? 14);
 
 if (!existsSync(STOCKFISH)) {
@@ -82,34 +81,6 @@ console.log(`Traces:          ${traces.length}`);
 console.log(`Analysis depth:  ${ANALYSIS_DEPTH}  (UCI_LimitStrength = false)`);
 console.log();
 
-const engine = spawn(STOCKFISH, [], { stdio: ['pipe', 'pipe', 'pipe'] });
-engine.stdout.setEncoding('utf8');
-
-function ioBridge() {
-  let buf = '';
-  let pending = null;
-  engine.stdout.on('data', (chunk) => {
-    buf += chunk;
-    const lines = buf.split(/\r?\n/);
-    buf = lines.pop() ?? '';
-    for (const line of lines) {
-      if (!pending) continue;
-      pending.lines.push(line.trim());
-      if (line.includes(pending.token)) {
-        const cur = pending;
-        pending = null;
-        cur.resolve(cur.lines);
-      }
-    }
-  });
-  return {
-    send(cmd) { engine.stdin.write(cmd + '\n'); },
-    readUntil(token) {
-      return new Promise((resolve) => { pending = { token, resolve, lines: [] }; });
-    },
-  };
-}
-
 function parseScore(line) {
   const mate = line.match(/score mate (-?\d+)/);
   if (mate) {
@@ -130,7 +101,7 @@ function lastInfoScore(lines) {
   return last;
 }
 
-const io = ioBridge();
+const io = createTimedUciEngine(STOCKFISH, { label: 'analyze_mirror_match', timeoutMs: 60_000 });
 io.send('uci');
 await io.readUntil('uciok');
 io.send('setoption name UCI_LimitStrength value false');
@@ -186,7 +157,7 @@ for (let i = 0; i < traces.length; i += 1) {
   );
 }
 
-io.send('quit');
+io.quit();
 
 const gaps = rows.map((r) => r.gapCp).filter(Number.isFinite);
 const total = gaps.reduce((a, b) => a + b, 0);

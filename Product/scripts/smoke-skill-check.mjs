@@ -1,31 +1,18 @@
 import { existsSync } from 'node:fs';
-import { spawn } from 'node:child_process';
+import { createTimedUciEngine, stockfishPathFromEnv } from './lib/uci-engine.mjs';
 
-const STOCKFISH = process.env.STOCKFISH_PATH || 'tools/stockfish/stockfish/stockfish-windows-x86-64-avx2.exe';
+const STOCKFISH = stockfishPathFromEnv();
 if (!existsSync(STOCKFISH)) { console.error('Stockfish not found at', STOCKFISH); process.exit(2); }
 
-function spawnEngine() {
-  const e = spawn(STOCKFISH, [], { stdio: ['pipe','pipe','pipe'] });
-  e.stdout.setEncoding('utf8');
-  return e;
-}
-
-function communicator(engine) {
-  let buf=''; let pending=null;
-  engine.stdout.on('data',(c)=>{ buf+=c; const lines=buf.split(/\r?\n/); buf=lines.pop()||''; for(const line of lines){ if(!pending) continue; pending.lines.push(line.trim()); if(line.includes(pending.token)){ const cur=pending; pending=null; cur.resolve(cur.lines); } } });
-  return { send(cmd){ engine.stdin.write(cmd+'\n'); }, readUntil(token){ return new Promise((resolve)=>{ pending={token,resolve,lines:[]}; }); } };
-}
-
 async function bestmoveForFen(skill, fen, depth=6) {
-  const e = spawnEngine();
-  const c = communicator(e);
+  const c = createTimedUciEngine(STOCKFISH, { label: 'smoke-skill-check', timeoutMs: 60_000 });
   c.send('uci'); await c.readUntil('uciok');
   c.send('ucinewgame');
   c.send(`setoption name Skill Level value ${skill}`);
   c.send(`position fen ${fen}`);
   c.send(`go depth ${depth}`);
   const out = await c.readUntil('bestmove');
-  e.stdin.write('quit\n');
+  c.quit();
   for (const line of out.reverse()) {
     if (line.startsWith('bestmove')) return line.split(' ')[1];
   }

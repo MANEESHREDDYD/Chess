@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
 import { Chess } from 'chess.js';
+import { createTimedUciEngine } from './lib/uci-engine.mjs';
 
 const POSITIONS_PATH = 'src/data/calibrationPositions.json';
 const DEFAULT_STOCKFISH_PATH = join(
@@ -22,37 +22,10 @@ if (!existsSync(stockfishPath)) {
   process.exit(1);
 }
 
-const engine = spawn(stockfishPath, [], { stdio: ['pipe', 'pipe', 'pipe'] });
-engine.stdout.setEncoding('utf8');
-
-let buffer = '';
-let pending = null;
-
-engine.stdout.on('data', (chunk) => {
-  buffer += chunk;
-  const lines = buffer.split(/\r?\n/);
-  buffer = lines.pop() ?? '';
-
-  for (const line of lines) {
-    if (!pending) continue;
-    pending.lines.push(line.trim());
-    if (line.includes(pending.token)) {
-      const current = pending;
-      pending = null;
-      current.resolve(current.lines);
-    }
-  }
+const engine = createTimedUciEngine(stockfishPath, {
+  label: 'verify-calibration-positions',
+  timeoutMs: 60_000,
 });
-
-function send(command) {
-  engine.stdin.write(`${command}\n`);
-}
-
-function readUntil(token) {
-  return new Promise((resolve) => {
-    pending = { token, resolve, lines: [] };
-  });
-}
 
 function scoreValue(line) {
   const cp = line.match(/score cp (-?\d+)/);
@@ -72,11 +45,11 @@ function pvMove(line) {
 }
 
 async function analyze(fen, depth, multipv = 1) {
-  send('ucinewgame');
-  send(`setoption name MultiPV value ${multipv}`);
-  send(`position fen ${fen}`);
-  send(`go depth ${depth}`);
-  const output = await readUntil('bestmove');
+  engine.send('ucinewgame');
+  engine.send(`setoption name MultiPV value ${multipv}`);
+  engine.send(`position fen ${fen}`);
+  engine.send(`go depth ${depth}`);
+  const output = await engine.readUntil('bestmove');
   const latest = new Map();
 
   for (const line of output) {
@@ -175,14 +148,14 @@ async function verifyExchanges() {
 }
 
 try {
-  send('uci');
-  await readUntil('uciok');
+  engine.send('uci');
+  await engine.readUntil('uciok');
   await verifyTactics();
   await verifyExchanges();
   console.log('[verify-calibration-positions] PASS');
-  send('quit');
+  engine.quit();
 } catch (error) {
-  send('quit');
+  engine.quit();
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 }

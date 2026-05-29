@@ -1,41 +1,11 @@
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { Chess } from 'chess.js';
+import { createTimedUciEngine, stockfishPathFromEnv } from './lib/uci-engine.mjs';
 
-const STOCKFISH = process.env.STOCKFISH_PATH || 'tools/stockfish/stockfish/stockfish-windows-x86-64-avx2.exe';
+const STOCKFISH = stockfishPathFromEnv();
 if (!existsSync(STOCKFISH)) {
   console.error('Stockfish not found at', STOCKFISH);
   process.exit(1);
-}
-
-function spawnEngine() {
-  const e = spawn(STOCKFISH, [], { stdio: ['pipe', 'pipe', 'pipe'] });
-  e.stdout.setEncoding('utf8');
-  return e;
-}
-
-function communicate(engine) {
-  let buffer = '';
-  let pending = null;
-  engine.stdout.on('data', (chunk) => {
-    buffer += chunk;
-    const lines = buffer.split(/\r?\n/);
-    buffer = lines.pop() ?? '';
-    for (const line of lines) {
-      if (!pending) continue;
-      pending.lines.push(line.trim());
-      if (line.includes(pending.token)) {
-        const cur = pending;
-        pending = null;
-        cur.resolve(cur.lines);
-      }
-    }
-  });
-
-  return {
-    send(cmd) { engine.stdin.write(cmd + '\n'); },
-    readUntil(token) { return new Promise((resolve) => { pending = { token, resolve, lines: [] }; }); }
-  };
 }
 
 async function analyzeFen(engineComm, fen, depth = 14, multipv = 3) {
@@ -65,8 +35,7 @@ function isCaptureFen(fen, move) {
 }
 
 async function findCandidates({trials=200, plyDepthMin=12, plyDepthMax=40} = {}) {
-  const engine = spawnEngine();
-  const comm = communicate(engine);
+  const comm = createTimedUciEngine(STOCKFISH, { label: 'find_task5_candidates', timeoutMs: 60_000 });
   comm.send('uci');
   await comm.readUntil('uciok');
 
@@ -97,7 +66,7 @@ async function findCandidates({trials=200, plyDepthMin=12, plyDepthMax=40} = {})
     }
   }
 
-  engine.stdin.write('quit\n');
+  comm.quit();
   return results;
 }
 
