@@ -103,12 +103,13 @@ export const useCalibrationStore = create<CalibrationState>((set, get) => ({
 
   submitTask: async (taskIndex, output) => {
     const run = get().run ?? (await get().startRun());
-    const taskKey = toTaskKey(taskIndex);
+    const normalizedTaskIndex = normalizeTaskIndex(taskIndex);
+    const taskKey = toTaskKey(normalizedTaskIndex);
     const taskOutputs = { ...run.task_outputs, [taskKey]: output };
     const updatedRun: CalibrationRunRecord = {
       ...run,
       task_outputs: taskOutputs,
-      current_task_index: Math.min(TOTAL_TASKS, taskIndex + 1),
+      current_task_index: Math.min(TOTAL_TASKS, normalizedTaskIndex + 1),
     };
 
     await (await openMirrorDb()).put('calibration_runs', updatedRun);
@@ -200,7 +201,12 @@ function nextTaskIndex(taskOutputs: TaskOutputs): number {
 }
 
 function toTaskKey(taskIndex: number): string {
-  return `task${Math.max(1, Math.min(TOTAL_TASKS, Math.round(taskIndex)))}`;
+  return `task${normalizeTaskIndex(taskIndex)}`;
+}
+
+function normalizeTaskIndex(taskIndex: number): number {
+  if (!Number.isFinite(taskIndex)) return 1;
+  return Math.max(1, Math.min(TOTAL_TASKS, Math.round(taskIndex)));
 }
 
 function isStale(startedAt: string): boolean {

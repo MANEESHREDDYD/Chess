@@ -6,6 +6,7 @@ import type { OpponentMoveOptions, OpponentProvider } from '../types/opponent';
 const DEFAULT_MULTIPV = 5;
 const DEFAULT_DEPTH = 8;
 const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_STOCKFISH_SKILL_LEVEL = 20;
 
 // Two-regime base-strength selection (see docs/m3-report.md).
 //
@@ -155,7 +156,7 @@ export function createMirrorOpponent(
     async getMoveWithTrace(fen, options = {}) {
       await configureEngine();
       const multipv = defaults.multipv ?? DEFAULT_MULTIPV;
-      const requestedDepth = options.depth ?? defaults.depth ?? DEFAULT_DEPTH;
+      const requestedDepth = searchDepth(options.depth ?? defaults.depth, DEFAULT_DEPTH);
       const depth =
         activeRegime?.regime === 'skill'
           ? Math.min(requestedDepth, activeRegime.depthCap)
@@ -178,6 +179,8 @@ export function createMirrorOpponent(
     },
 
     dispose() {
+      void setOption('UCI_LimitStrength', false);
+      void setOption('Skill Level', DEFAULT_STOCKFISH_SKILL_LEVEL);
       configured = false;
       activeRegime = null;
     },
@@ -524,6 +527,11 @@ function deterministicBucket(input: string): number {
 function average(values: number[]): number {
   if (values.length === 0) return 0;
   return values.reduce((total, value) => total + clamp01(value), 0) / values.length;
+}
+
+function searchDepth(value: number | undefined, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(1, Math.round(Number(value)));
 }
 
 function clamp01(value: number): number {
