@@ -146,6 +146,18 @@ export async function getLatestStyleVectorRecord(
   return playerRows[playerRows.length - 1] ?? null;
 }
 
+export async function getCurrentStyleVectorRecord(
+  playerId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<StyleVectorRecord | null> {
+  const db = await openMirrorDb(dbName);
+  const player = await db.get('players', playerId);
+  if (!player?.current_style_vector_id) return getLatestStyleVectorRecord(playerId, dbName);
+
+  const row = await db.get('style_vectors', player.current_style_vector_id);
+  return row?.player_id === playerId ? row : null;
+}
+
 export async function putMirrorMatchRecord(
   record: MirrorMatchRecord,
   dbName = MIRROR_DB_NAME

@@ -5,7 +5,7 @@ import Mirror from './Mirror';
 import type { StyleVectorRecord } from '../data/db';
 
 const dbMocks = vi.hoisted(() => ({
-  getLatestStyleVectorRecord: vi.fn(),
+  getCurrentStyleVectorRecord: vi.fn(),
   getMirrorMatchesForPlayer: vi.fn(),
   getMirrorMatchRecord: vi.fn(),
   logAnonymousEvent: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('../components/Board/BoardView', () => ({
 }));
 
 vi.mock('../data/db', () => ({
-  getLatestStyleVectorRecord: dbMocks.getLatestStyleVectorRecord,
+  getCurrentStyleVectorRecord: dbMocks.getCurrentStyleVectorRecord,
   getMirrorMatchesForPlayer: dbMocks.getMirrorMatchesForPlayer,
   getMirrorMatchRecord: dbMocks.getMirrorMatchRecord,
   logAnonymousEvent: dbMocks.logAnonymousEvent,
@@ -62,7 +62,7 @@ vi.mock('../state/settingsStore', () => ({
 describe('Mirror match persistence failure recovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    dbMocks.getLatestStyleVectorRecord.mockResolvedValue(styleRecord());
+    dbMocks.getCurrentStyleVectorRecord.mockResolvedValue(styleRecord());
     dbMocks.getMirrorMatchesForPlayer.mockResolvedValue([]);
     dbMocks.getMirrorMatchRecord.mockResolvedValue(undefined);
     dbMocks.logAnonymousEvent.mockResolvedValue({ id: 'event-1', created_at: 'now' });

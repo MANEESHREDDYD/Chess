@@ -15,7 +15,7 @@ import {
 import { generateSummary } from '../components/Mirror/styleSummary';
 import {
   getMirrorMatchRecord,
-  getLatestStyleVectorRecord,
+  getCurrentStyleVectorRecord,
   getMirrorMatchesForPlayer,
   logAnonymousEvent,
   mergeMirrorMatchMetadata,
@@ -109,7 +109,7 @@ export default function Mirror() {
       setLoadError(null);
 
       try {
-        const row = await getLatestStyleVectorRecord(LOCAL_PLAYER_ID);
+        const row = await getCurrentStyleVectorRecord(LOCAL_PLAYER_ID);
         if (cancelled) return;
 
         setStyleRecord(row);

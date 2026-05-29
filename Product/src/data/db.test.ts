@@ -5,6 +5,7 @@ import {
   closeMirrorDb,
   deleteMirrorDb,
   getLatestStyleVectorRecord,
+  getCurrentStyleVectorRecord,
   getMirrorMatchRecord,
   getMirrorMatchesForPlayer,
   logAnonymousEvent,
@@ -145,6 +146,36 @@ describe('openMirrorDb', () => {
     await db.put('style_vectors', earlyRow);
 
     await expect(getLatestStyleVectorRecord('player-1', dbName)).resolves.toEqual(latestRow);
+  });
+
+  it('returns the style vector pointed to by the current player row', async () => {
+    const dbName = nextDbName();
+    const db = await openMirrorDb(dbName);
+    const currentRow: StyleVectorRecord = {
+      id: 'style-vector-current',
+      player_id: 'player-1',
+      source: 'calibration',
+      vector: makeVector(1200),
+      computed_at: '2026-05-27T00:10:00.000Z',
+    };
+    const newerRow: StyleVectorRecord = {
+      id: 'style-vector-newer-but-not-current',
+      player_id: 'player-1',
+      source: 'tuned',
+      vector: makeVector(1510),
+      computed_at: '2026-05-27T00:20:00.000Z',
+    };
+
+    await db.put('style_vectors', currentRow);
+    await db.put('style_vectors', newerRow);
+    await db.put('players', {
+      id: 'player-1',
+      created_at: '2026-05-27T00:00:00.000Z',
+      updated_at: '2026-05-27T00:30:00.000Z',
+      current_style_vector_id: currentRow.id,
+    });
+
+    await expect(getCurrentStyleVectorRecord('player-1', dbName)).resolves.toEqual(currentRow);
   });
 
   it('persists completed Mirror matches', async () => {
