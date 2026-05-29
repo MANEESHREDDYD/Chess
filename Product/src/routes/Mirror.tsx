@@ -14,6 +14,7 @@ import {
 } from '../components/Mirror/scoutingCard';
 import { generateSummary } from '../components/Mirror/styleSummary';
 import {
+  getMirrorMatchRecord,
   getLatestStyleVectorRecord,
   getMirrorMatchesForPlayer,
   logAnonymousEvent,
@@ -95,6 +96,7 @@ export default function Mirror() {
   });
   const [scoutingCardUrl, setScoutingCardUrl] = useState<string | null>(null);
   const [scoutingCardStatus, setScoutingCardStatus] = useState<string | null>(null);
+  const [matchExportStatus, setMatchExportStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -137,6 +139,7 @@ export default function Mirror() {
             return null;
           });
           setScoutingCardStatus(null);
+          setMatchExportStatus(null);
           setSaveStatus(null);
         } else {
           setStatus('idle');
@@ -530,6 +533,38 @@ export default function Mirror() {
     }
   };
 
+  const handleExportMatchData = async () => {
+    if (!styleRecord) return;
+
+    setMatchExportStatus('Preparing match export...');
+    try {
+      const record =
+        (currentMatchId ? await getMirrorMatchRecord(currentMatchId) : undefined) ??
+        latestMirrorMatch(await getMirrorMatchesForPlayer(styleRecord.player_id));
+
+      if (!record) {
+        setMatchExportStatus('No saved Mirror match found yet.');
+        return;
+      }
+
+      const json = JSON.stringify(record, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${record.id || 'mirror-match'}.json`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      const traces = Array.isArray(record.metadata?.mirror_moves) ? record.metadata.mirror_moves.length : 0;
+      setMatchExportStatus(`Exported ${record.id} with ${traces} Mirror traces.`);
+    } catch (error) {
+      setMatchExportStatus(error instanceof Error ? `Could not export match: ${error.message}` : 'Could not export match.');
+    }
+  };
+
   const statusLabel = useMemo(() => {
     if (isLoading) return 'Loading style vector...';
     if (loadError) return 'Could not load Mirror';
@@ -676,6 +711,10 @@ export default function Mirror() {
             {scoutingCardUrl ? (
               <img className="mirror-share__preview" alt="Generated MIRROR scouting card" src={scoutingCardUrl} />
             ) : null}
+            <button className="btn btn-ghost" type="button" onClick={() => void handleExportMatchData()}>
+              Export match data
+            </button>
+            {matchExportStatus ? <p className="play-note">{matchExportStatus}</p> : null}
           </section>
         ) : null}
 
@@ -736,6 +775,10 @@ function pgnResultFor(result: MirrorResult): string {
   if (result === 'Mirror won') return '0-1';
   if (result === 'Draw') return '1/2-1/2';
   return '*';
+}
+
+function latestMirrorMatch(matches: Awaited<ReturnType<typeof getMirrorMatchesForPlayer>>) {
+  return [...matches].sort((a, b) => a.started_at.localeCompare(b.started_at)).pop();
 }
 
 function nextMoveNumber(game: Chess): number {
