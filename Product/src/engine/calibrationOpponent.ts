@@ -20,6 +20,12 @@ interface PendingMove {
   timer: number;
 }
 
+interface ReadyWaiter {
+  resolve: () => void;
+  reject: (error: Error) => void;
+  timer: number;
+}
+
 const DEFAULT_SKILL_LEVEL = 8;
 const DEFAULT_DEPTH = 6;
 const DEFAULT_MOVE_TIMEOUT_MS = 12000;
@@ -29,7 +35,7 @@ let ready = false;
 let configured = false;
 let requestSeq = 0;
 let pendingMove: PendingMove | null = null;
-const readyWaiters: Array<() => void> = [];
+const readyWaiters: ReadyWaiter[] = [];
 
 export async function init(options: CalibrationOpponentOptions = {}): Promise<void> {
   ensureWorker();
@@ -63,7 +69,7 @@ export async function move(
 
 export function dispose(): void {
   settlePendingMove(null);
-  readyWaiters.splice(0).forEach((resolve) => resolve());
+  rejectReadyWaiters('Calibration Stockfish disposed before it became ready.');
 
   if (worker) {
     worker.postMessage({ cmd: 'stop' });
@@ -85,6 +91,9 @@ function ensureWorker(): Worker {
   worker.addEventListener('message', handleMessage);
   worker.addEventListener('error', (event) => {
     console.error('[calibrationOpponent] worker exception:', event.message);
+    if (!ready) {
+      failWorkerStartup(event.message || 'Calibration Stockfish worker failed before ready.');
+    }
   });
   worker.postMessage({ cmd: 'init' });
 
@@ -95,15 +104,22 @@ function waitForReady(timeoutMs = 8000): Promise<void> {
   if (ready) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
-    const waiter = () => {
-      window.clearTimeout(timer);
-      resolve();
-    };
     const timer = window.setTimeout(() => {
       const index = readyWaiters.indexOf(waiter);
       if (index >= 0) readyWaiters.splice(index, 1);
       reject(new Error('Calibration Stockfish did not become ready in time.'));
     }, timeoutMs);
+    const waiter: ReadyWaiter = {
+      resolve: () => {
+        window.clearTimeout(timer);
+        resolve();
+      },
+      reject: (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+      timer,
+    };
 
     readyWaiters.push(waiter);
   });
@@ -121,12 +137,15 @@ function handleMessage(event: MessageEvent<EngineMessage>): void {
 
   if (data.type === 'ready') {
     ready = true;
-    readyWaiters.splice(0).forEach((resolve) => resolve());
+    resolveReadyWaiters();
     return;
   }
 
   if (data.type === 'error') {
     console.error('[calibrationOpponent] worker error:', data.message);
+    if (!ready) {
+      failWorkerStartup(data.message ?? 'Calibration Stockfish worker failed before ready.');
+    }
     return;
   }
 
@@ -146,4 +165,22 @@ function settlePendingMove(move: string | null): void {
 function nextRequestId(): number {
   requestSeq += 1;
   return requestSeq;
+}
+
+function resolveReadyWaiters(): void {
+  readyWaiters.splice(0).forEach((waiter) => waiter.resolve());
+}
+
+function rejectReadyWaiters(message: string): void {
+  readyWaiters.splice(0).forEach((waiter) => waiter.reject(new Error(message)));
+}
+
+function failWorkerStartup(message: string): void {
+  if (worker) {
+    worker.terminate();
+    worker = null;
+  }
+  ready = false;
+  configured = false;
+  rejectReadyWaiters(message);
 }
