@@ -12,10 +12,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const sfPath = join(__dirname, '..', 'node_modules', 'stockfish', 'src');
 
 if (!existsSync(sfPath)) {
-  console.warn('\n[setup-stockfish] WARNING: stockfish/src not found in node_modules.');
-  console.warn('[setup-stockfish] The chess engine will not load.');
-  console.warn('[setup-stockfish] Try: npm install stockfish --save-dev\n');
-  process.exit(0); // do not fail install - let dev figure it out
+  console.error('\n[setup-stockfish] ERROR: stockfish/src not found in node_modules.');
+  console.error('[setup-stockfish] The chess engine will not load.');
+  console.error('[setup-stockfish] Try: npm install stockfish --save-dev\n');
+  process.exit(1);
 }
 
 const files = readdirSync(sfPath).filter((f) => /stockfish.*\.(js|wasm)$/.test(f));
@@ -23,10 +23,10 @@ const requiredFiles = ['stockfish-nnue-16-single.js', 'stockfish-nnue-16-single.
 const missingRequired = requiredFiles.filter((file) => !files.includes(file));
 
 if (missingRequired.length > 0) {
-  console.warn(
-    `[setup-stockfish] WARNING: missing required Stockfish file(s): ${missingRequired.join(', ')}`
+  console.error(
+    `[setup-stockfish] ERROR: missing required Stockfish file(s): ${missingRequired.join(', ')}`
   );
-  process.exit(0);
+  process.exit(1);
 }
 
 console.log(`[setup-stockfish] OK - found ${files.length} stockfish file(s): ${files.join(', ')}`);
