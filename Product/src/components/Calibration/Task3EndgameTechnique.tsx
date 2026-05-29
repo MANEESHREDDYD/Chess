@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 import { BoardView } from '../Board/BoardView';
 import { init as initCalibrationOpponent, move as moveCalibrationOpponent, dispose as disposeCalibrationOpponent } from '../../engine/calibrationOpponent';
@@ -48,19 +48,38 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
   const [engineThinking, setEngineThinking] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
   const [endgameStrength, setEndgameStrength] = useState(0);
+  const mountedRef = useRef(true);
+  const statusRef = useRef(status);
+  const completionSentRef = useRef(false);
+
+  const completeOnce = useCallback(
+    (resultPayload: { endgame_strength: number; moveCount: number; success: boolean }): void => {
+      if (completionSentRef.current) return;
+      completionSentRef.current = true;
+      onComplete?.(resultPayload);
+    },
+    [onComplete]
+  );
 
   useEffect(() => {
     void initCalibrationOpponent({ depth: 6, skillLevel: 8 });
-    return () => disposeCalibrationOpponent();
+    return () => {
+      mountedRef.current = false;
+      disposeCalibrationOpponent();
+    };
   }, []);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
     if (moveCount >= 25 && status === 'playing') {
       setStatus('game-over');
       setResult('Conversion budget exhausted');
-      onComplete?.({ endgame_strength: computeStrength(moveCount), moveCount, success: false });
+      completeOnce({ endgame_strength: computeStrength(moveCount), moveCount, success: false });
     }
-  }, [moveCount, onComplete, status]);
+  }, [completeOnce, moveCount, status]);
 
   useEffect(() => {
     setEndgameStrength(Math.max(0, 100 - moveCount * 4));
@@ -70,6 +89,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
 
   const playEngineReply = async (nextMoveCount: number): Promise<void> => {
     const reply = await moveCalibrationOpponent(game.fen(), { depth: 6, skillLevel: 8 });
+    if (!mountedRef.current || statusRef.current !== 'playing') return;
     setEngineThinking(false);
 
     if (reply) {
@@ -83,7 +103,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
     if (engineOutcome !== 'continuing') {
       setStatus('game-over');
       setResult(engineOutcome === 'user_lost' ? 'You were mated' : 'Game ended without conversion');
-      onComplete?.({ endgame_strength: 0, moveCount: nextMoveCount, success: false });
+      completeOnce({ endgame_strength: 0, moveCount: nextMoveCount, success: false });
     }
 
     return;
@@ -98,7 +118,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
       setStatus('game-over');
       const userSuccess = userOutcome === 'user_won';
       setResult(userSuccess ? 'Conversion complete' : 'Game ended without conversion');
-      onComplete?.({
+      completeOnce({
         endgame_strength: userSuccess ? computeStrength(nextMoveCount) : 0,
         moveCount: nextMoveCount,
         success: userSuccess,

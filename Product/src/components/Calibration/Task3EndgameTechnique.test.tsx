@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Task3EndgameTechnique } from './Task3EndgameTechnique';
+import { dispose as disposeCalibrationOpponent, move as moveCalibrationOpponent } from '../../engine/calibrationOpponent';
 
 vi.mock('../Board/BoardView', () => ({
   BoardView: ({ fen, onPieceDrop }: { fen: string; onPieceDrop: (from: string, to: string) => boolean }) => (
@@ -28,6 +29,24 @@ describe('Task3EndgameTechnique', () => {
 
     await waitFor(() => {
       expect(screen.getByText('1', { selector: 'dd' })).toBeInTheDocument();
+    });
+  });
+
+  it('ignores a late engine reply after unmount', async () => {
+    let resolveMove: (move: string | null) => void = () => undefined;
+    vi.mocked(moveCalibrationOpponent).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMove = resolve;
+      })
+    );
+    const { unmount } = render(<Task3EndgameTechnique />);
+
+    fireEvent.click(screen.getByTestId('move'));
+    unmount();
+    resolveMove('a2a1q');
+
+    await waitFor(() => {
+      expect(disposeCalibrationOpponent).toHaveBeenCalled();
     });
   });
 });
