@@ -201,7 +201,6 @@ export default function Mirror() {
   const finishGame = useCallback(
     async (resultLabel: MirrorResult) => {
       if (persistedRef.current || !styleRecord) return;
-      persistedRef.current = true;
 
       const traces = mirrorTracesRef.current;
       const highlightedTrace =
@@ -283,6 +282,7 @@ export default function Mirror() {
 
         opponentRef.current?.dispose?.();
         opponentRef.current = createMirrorOpponent(tunedRecord.vector);
+        persistedRef.current = true;
         setStyleRecord(tunedRecord);
         setCurrentMatchId(matchId);
         setSelfRecognitionChallenge(challenge);
@@ -760,7 +760,19 @@ export default function Mirror() {
           )}
         </section>
 
-        {saveStatus ? <p className="play-note">{saveStatus}</p> : null}
+        {saveStatus ? (
+          <p className="play-note">
+            {saveStatus}
+            {saveStatus.startsWith('Match finished, but save failed') && result ? (
+              <>
+                {' '}
+                <button className="btn btn-ghost" type="button" onClick={() => void finishGame(result)}>
+                  Retry save
+                </button>
+              </>
+            ) : null}
+          </p>
+        ) : null}
       </aside>
 
       <section className="play-board-wrap">
