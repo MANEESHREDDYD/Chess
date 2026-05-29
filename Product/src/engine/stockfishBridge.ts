@@ -25,11 +25,16 @@ export interface EngineCandidate {
 }
 
 type EngineOptionValue = string | number | boolean;
+type ReadyWaiter = {
+  resolve: () => void;
+  reject: (error: Error) => void;
+  timer: number;
+};
 
 let worker: Worker | null = null;
 let ready = false;
 let requestSeq = 0;
-const readyWaiters: Array<() => void> = [];
+const readyWaiters: ReadyWaiter[] = [];
 
 function ensureWorker(): Worker {
   if (worker) return worker;
@@ -41,17 +46,22 @@ function ensureWorker(): Worker {
   worker.addEventListener('message', (e: MessageEvent<EngineMessage>) => {
     if (e.data?.type === 'ready') {
       ready = true;
-      readyWaiters.forEach((resolve) => resolve());
-      readyWaiters.length = 0;
+      resolveReadyWaiters();
     }
 
     if (e.data?.type === 'error') {
       console.error('[stockfish] worker error:', e.data.message);
+      if (!ready) {
+        failWorkerStartup(e.data.message ?? 'Stockfish worker failed before ready.');
+      }
     }
   });
 
   worker.addEventListener('error', (e) => {
     console.error('[stockfish] worker exception:', e.message);
+    if (!ready) {
+      failWorkerStartup(e.message || 'Stockfish worker failed before ready.');
+    }
   });
 
   return worker;
@@ -67,15 +77,22 @@ export function waitForEngine(timeoutMs = 8000): Promise<void> {
   ensureWorker();
 
   return new Promise((resolve, reject) => {
-    const waiter = () => {
-      clearTimeout(timer);
-      resolve();
-    };
     const timer = window.setTimeout(() => {
       const index = readyWaiters.indexOf(waiter);
       if (index >= 0) readyWaiters.splice(index, 1);
       reject(new Error('Stockfish worker did not become ready in time.'));
     }, timeoutMs);
+    const waiter: ReadyWaiter = {
+      resolve: () => {
+        window.clearTimeout(timer);
+        resolve();
+      },
+      reject: (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+      timer,
+    };
 
     readyWaiters.push(waiter);
   });
@@ -230,4 +247,17 @@ export async function setOption(name: string, value: EngineOptionValue): Promise
 export function stopThinking(): void {
   if (!worker) return;
   worker.postMessage({ cmd: 'stop' });
+}
+
+function resolveReadyWaiters(): void {
+  readyWaiters.splice(0).forEach((waiter) => waiter.resolve());
+}
+
+function failWorkerStartup(message: string): void {
+  if (worker) {
+    worker.terminate();
+    worker = null;
+  }
+  ready = false;
+  readyWaiters.splice(0).forEach((waiter) => waiter.reject(new Error(message)));
 }
