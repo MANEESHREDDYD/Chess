@@ -69,6 +69,7 @@ export default function Mirror() {
   const [result, setResult] = useState<MirrorResult | null>(null);
   const [isMirrorThinking, setIsMirrorThinking] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
+  const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
   const [themeManifest, setThemeManifest] = useState<Awaited<ReturnType<typeof loadThemeManifest>>>(
     null
   );
@@ -99,6 +100,8 @@ export default function Mirror() {
   const [matchExportStatus, setMatchExportStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
+  const requestMirrorMoveRef = useRef<() => Promise<void>>();
+
   useEffect(() => {
     let cancelled = false;
 
@@ -122,6 +125,7 @@ export default function Mirror() {
           startedAtRef.current = new Date().toISOString();
           persistedRef.current = false;
           mirrorTracesRef.current = [];
+          setPlayerColor('white');
           setFen(gameRef.current.fen());
           setStatus('playing');
           setResult(null);
@@ -368,10 +372,15 @@ export default function Mirror() {
     }
   }, [finishGame, settleIfGameOver, status]);
 
+  useEffect(() => {
+    requestMirrorMoveRef.current = requestMirrorMove;
+  }, [requestMirrorMove]);
+
   const makePlayerMove = useCallback(
     (from: string, to: string, promotion?: Promotion): boolean => {
       if (!styleRecord || status !== 'playing' || isMirrorThinking) return false;
-      if (gameRef.current.turn() !== 'w') return false;
+      const turnColor = gameRef.current.turn() === 'w' ? 'white' : 'black';
+      if (turnColor !== playerColor) return false;
 
       try {
         const move = gameRef.current.move({ from, to, promotion: promotion ?? 'q' });
@@ -389,13 +398,14 @@ export default function Mirror() {
     [isMirrorThinking, requestMirrorMove, settleIfGameOver, status, styleRecord]
   );
 
-  const startNewGame = useCallback(() => {
+  const startNewGame = useCallback((color: 'white' | 'black' = 'white') => {
     stopThinking();
     gameIdRef.current += 1;
     gameRef.current = new Chess();
     startedAtRef.current = new Date().toISOString();
     persistedRef.current = false;
     mirrorTracesRef.current = [];
+    setPlayerColor(color);
     setFen(gameRef.current.fen());
     setStatus(styleRecord ? 'playing' : 'idle');
     setResult(null);
@@ -414,6 +424,14 @@ export default function Mirror() {
     });
     setScoutingCardStatus(null);
     setSaveStatus(null);
+
+    if (color === 'black' && styleRecord) {
+      setTimeout(() => {
+        if (requestMirrorMoveRef.current) {
+          void requestMirrorMoveRef.current();
+        }
+      }, 10);
+    }
   }, [styleRecord]);
 
   const handlePromotionCheck = (sourceSquare: string, targetSquare: string, piece: string): boolean => {
@@ -602,7 +620,7 @@ export default function Mirror() {
         <h2 className="play-title">Mirror</h2>
         <dl className="play-meta">
           <dt>You play</dt>
-          <dd>White</dd>
+          <dd>{playerColor === 'white' ? 'White' : 'Black'}</dd>
           <dt>Opponent</dt>
           <dd>Mirror ({styleRecord.vector.detected_elo} Elo base)</dd>
           <dt>Theme</dt>
@@ -618,8 +636,11 @@ export default function Mirror() {
           >
             Theme - {activeTheme === 'standard' ? 'Standard' : 'Kurukshetra'}
           </button>
-          <button className="btn btn-secondary" onClick={startNewGame}>
-            New Mirror game
+          <button className="btn btn-secondary" onClick={() => startNewGame('white')}>
+            New Mirror game · White
+          </button>
+          <button className="btn btn-secondary" onClick={() => startNewGame('black')}>
+            New Mirror game · Black
           </button>
           {status === 'playing' ? (
             <button className="btn btn-warn" onClick={handleResign}>
@@ -747,7 +768,7 @@ export default function Mirror() {
       <section className="play-board-wrap">
         <BoardView
           fen={fen}
-          playerColor="white"
+          playerColor={playerColor}
           status={status}
           engineThinking={isMirrorThinking}
           onPieceDrop={(from, to) => makePlayerMove(from, to)}
