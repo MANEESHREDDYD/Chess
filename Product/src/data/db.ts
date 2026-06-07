@@ -4,7 +4,7 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 1;
+export const MIRROR_DB_VERSION = 2;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
@@ -63,6 +63,23 @@ export interface MirrorMatchRecord {
   metadata?: Record<string, unknown>;
 }
 
+// USER-OWNED / LOCAL ONLY
+export interface LocalMatchRecord {
+  id: string;
+  player_id: string;
+  mode: 'computer';
+  side: 'white' | 'black' | 'random';
+  actual_side: 'white' | 'black';
+  difficulty: 'Beginner' | 'Casual' | 'Club' | 'Strong';
+  result: 'white_win' | 'black_win' | 'draw' | 'resigned' | 'abandoned';
+  result_label: string;
+  pgn: string;
+  move_count: number;
+  created_at: string;
+  completed_at: string;
+  metadata?: Record<string, unknown>;
+}
+
 // USER-OWNED / MIRROR  (anonymous event/feedback records today; eventual
 // storage seam's first server-bound surface)
 export interface FeedbackRecord {
@@ -102,6 +119,13 @@ export interface MirrorDB extends DBSchema {
     key: string;
     value: FeedbackRecord;
   };
+  local_matches: {
+    key: string;
+    value: LocalMatchRecord;
+    indexes: {
+      created_at: string;
+    };
+  };
 }
 
 const dbCache = new Map<string, Promise<IDBPDatabase<MirrorDB>>>();
@@ -114,6 +138,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
     upgrade(db, oldVersion) {
       if (oldVersion < 1) {
         createV1Schema(db);
+      }
+      if (oldVersion < 2) {
+        createV2Schema(db);
       }
     },
   });
@@ -248,6 +275,21 @@ export async function logAnonymousEvent(
   return event;
 }
 
+export async function putLocalMatchRecord(
+  record: LocalMatchRecord,
+  dbName = MIRROR_DB_NAME
+): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('local_matches', record);
+}
+
+export async function getLocalMatches(
+  dbName = MIRROR_DB_NAME
+): Promise<LocalMatchRecord[]> {
+  const db = await openMirrorDb(dbName);
+  return db.getAllFromIndex('local_matches', 'created_at');
+}
+
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
   db.createObjectStore('players', { keyPath: 'id' });
 
@@ -259,6 +301,11 @@ function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
 
   db.createObjectStore('mirror_matches', { keyPath: 'id' });
   db.createObjectStore('feedback', { keyPath: 'id' });
+}
+
+function createV2Schema(db: IDBPDatabase<MirrorDB>): void {
+  const localMatches = db.createObjectStore('local_matches', { keyPath: 'id' });
+  localMatches.createIndex('created_at', 'created_at');
 }
 
 function makeId(prefix: string): string {
