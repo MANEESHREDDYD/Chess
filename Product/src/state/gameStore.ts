@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { Chess } from 'chess.js';
 import { getBestMove, stopThinking } from '../engine/stockfishBridge';
+import { putLocalMatchRecord } from '../data/db';
 
 type Color = 'white' | 'black';
 type Status = 'idle' | 'playing' | 'game-over';
+type ResultLabel = 'white_win' | 'black_win' | 'draw' | 'resigned' | 'abandoned';
 type Result = 'You won' | 'You lost' | 'Draw' | 'Game ended' | null;
+export type Difficulty = 'Beginner' | 'Casual' | 'Club' | 'Strong';
 
 interface GameState {
   // Chess.js instance (not in state — it mutates; we expose .fen via fen).
@@ -13,14 +16,22 @@ interface GameState {
   fen: string;
   status: Status;
   result: Result;
-  playerColor: Color;
+  resultLabel: ResultLabel | null;
+  playerColor: Color; // This is the actual_side
+  selectedSide: 'white' | 'black' | 'random';
   engineThinking: boolean;
+  engineError: string | null;
   gameId: number;
+  savedMatchId: number | null;
+  difficulty: Difficulty;
+  history: string[];
 
-  startGame: (color: Color | 'random') => void;
+  startGame: (side: 'white' | 'black' | 'random', difficulty?: Difficulty) => void;
   makePlayerMove: (from: string, to: string, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
   triggerEngineMove: () => Promise<void>;
   resign: () => void;
+  claimDraw: () => void;
+  clearEngineError: () => void;
   exportPgn: () => string;
 }
 
@@ -32,21 +43,38 @@ function uciToMove(uci: string): { from: string; to: string; promotion?: string 
   return promotion ? { from, to, promotion } : { from, to };
 }
 
-function checkGameEnd(game: Chess, playerColor: Color): { status: Status; result: Result } {
-  if (!game.isGameOver()) return { status: 'playing', result: null };
+function checkGameEnd(game: Chess, playerColor: Color): { status: Status; result: Result; resultLabel: ResultLabel | null } {
+  if (!game.isGameOver()) return { status: 'playing', result: null, resultLabel: null };
 
   if (game.isCheckmate()) {
-    // The side TO MOVE was checkmated. Loser = side to move.
     const loser: Color = game.turn() === 'w' ? 'white' : 'black';
-    if (loser === playerColor) return { status: 'game-over', result: 'You lost' };
-    return { status: 'game-over', result: 'You won' };
+    if (loser === playerColor) return { status: 'game-over', result: 'You lost', resultLabel: playerColor === 'white' ? 'black_win' : 'white_win' };
+    return { status: 'game-over', result: 'You won', resultLabel: playerColor === 'white' ? 'white_win' : 'black_win' };
   }
 
   if (game.isDraw() || game.isStalemate() || game.isThreefoldRepetition() || game.isInsufficientMaterial()) {
-    return { status: 'game-over', result: 'Draw' };
+    return { status: 'game-over', result: 'Draw', resultLabel: 'draw' };
   }
 
-  return { status: 'game-over', result: 'Game ended' };
+  return { status: 'game-over', result: 'Game ended', resultLabel: 'abandoned' };
+}
+
+function saveLocalMatch(game: Chess, selectedSide: 'white'|'black'|'random', playerColor: Color, difficulty: Difficulty, resultLabel: ResultLabel) {
+  const record = {
+    id: `local-match-${Date.now()}`,
+    player_id: 'local_user',
+    mode: 'computer' as const,
+    side: selectedSide,
+    actual_side: playerColor,
+    difficulty,
+    result: resultLabel,
+    result_label: resultLabel,
+    pgn: game.pgn(),
+    move_count: game.history().length,
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString()
+  };
+  putLocalMatchRecord(record).catch(err => console.error('Failed to save local match:', err));
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -54,15 +82,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   fen: new Chess().fen(),
   status: 'idle',
   result: null,
+  resultLabel: null,
   playerColor: 'white',
+  selectedSide: 'white',
   engineThinking: false,
+  engineError: null,
   gameId: 0,
+  savedMatchId: null,
+  difficulty: 'Club',
+  history: [],
 
-  startGame: (color) => {
+  clearEngineError: () => set({ engineError: null }),
+
+  startGame: (side, difficulty = 'Club') => {
     stopThinking();
     const game = new Chess();
     const playerColor: Color =
-      color === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : color;
+      side === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : side;
     const gameId = get().gameId + 1;
 
     set({
@@ -70,9 +106,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       fen: game.fen(),
       status: 'playing',
       result: null,
+      resultLabel: null,
       playerColor,
+      selectedSide: side,
       engineThinking: false,
+      engineError: null,
       gameId,
+      savedMatchId: null,
+      difficulty,
+      history: []
     });
 
     // If the player is Black, the engine moves first.
@@ -98,7 +140,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!result) return false;
 
     const end = checkGameEnd(_game, playerColor);
-    set({ fen: _game.fen(), ...end });
+    if (end.status === 'game-over' && end.resultLabel && get().savedMatchId !== get().gameId) {
+      saveLocalMatch(_game, get().selectedSide, playerColor, get().difficulty, end.resultLabel);
+      set({ savedMatchId: get().gameId });
+    }
+    set({ fen: _game.fen(), history: _game.history(), engineError: null, ...end });
 
     if (end.status === 'playing') {
       void get().triggerEngineMove();
@@ -107,12 +153,19 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   triggerEngineMove: async () => {
-    const { _game, playerColor, gameId } = get();
+    const { _game, playerColor, gameId, difficulty } = get();
     if (_game.isGameOver()) return;
 
     set({ engineThinking: true });
     try {
-      const uci = await getBestMove(_game.fen(), 10);
+      let depth = 10;
+      switch (difficulty) {
+        case 'Beginner': depth = 1; break;
+        case 'Casual': depth = 5; break;
+        case 'Club': depth = 10; break;
+        case 'Strong': depth = 15; break;
+      }
+      const uci = await getBestMove(_game.fen(), depth);
       const current = get();
       if (current.gameId !== gameId || current.status !== 'playing') return;
       if (!uci) {
@@ -128,22 +181,53 @@ export const useGameStore = create<GameState>((set, get) => ({
         return;
       }
       const end = checkGameEnd(_game, playerColor);
-      set({ fen: _game.fen(), engineThinking: false, ...end });
+      if (end.status === 'game-over' && end.resultLabel && get().savedMatchId !== gameId) {
+        saveLocalMatch(_game, get().selectedSide, playerColor, difficulty, end.resultLabel);
+        set({ savedMatchId: gameId });
+      }
+      set({ fen: _game.fen(), history: _game.history(), engineThinking: false, engineError: null, ...end });
     } catch (err) {
       console.error('[gameStore] engine error:', err);
       if (get().gameId === gameId) {
-        set({ engineThinking: false });
+        set({ engineThinking: false, engineError: 'Engine error. Please try again.' });
       }
     }
   },
 
   resign: () => {
     stopThinking();
+    const game = get()._game;
+    if (get().savedMatchId !== get().gameId) {
+      saveLocalMatch(game, get().selectedSide, get().playerColor, get().difficulty, 'resigned');
+      set({ savedMatchId: get().gameId });
+    }
     set({
       status: 'game-over',
       result: 'You lost',
+      resultLabel: 'resigned',
       engineThinking: false,
-      gameId: get().gameId + 1,
+    });
+  },
+
+  claimDraw: () => {
+    const game = get()._game;
+    const isLegalDraw = game.isDraw() || game.isStalemate() || game.isThreefoldRepetition() || game.isInsufficientMaterial();
+    
+    if (!isLegalDraw) {
+      set({ engineError: 'No legal draw can be claimed in this position.' });
+      return;
+    }
+
+    stopThinking();
+    if (get().savedMatchId !== get().gameId) {
+      saveLocalMatch(game, get().selectedSide, get().playerColor, get().difficulty, 'draw');
+      set({ savedMatchId: get().gameId });
+    }
+    set({
+      status: 'game-over',
+      result: 'Draw',
+      resultLabel: 'draw',
+      engineThinking: false,
     });
   },
 
