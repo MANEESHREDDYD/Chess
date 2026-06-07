@@ -49,6 +49,7 @@ describe('openMirrorDb', () => {
     expect(objectStoreNames(db)).toEqual([
       'calibration_runs',
       'feedback',
+      'local_matches',
       'mirror_matches',
       'players',
       'style_vectors',
