@@ -27,7 +27,9 @@ export default function App() {
           <Route path="/mirror" element={<Mirror />} />
           <Route path="/play" element={<Play />} />
           <Route path="/about" element={<About />} />
-          <Route path="/dev/mirror-verification" element={<DevMirrorVerification />} />
+          {import.meta.env.DEV && (
+            <Route path="/dev/mirror-verification" element={<DevMirrorVerification />} />
+          )}
         </Routes>
       </main>
       <footer className="app-footer">

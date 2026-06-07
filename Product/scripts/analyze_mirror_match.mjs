@@ -147,7 +147,9 @@ for (let i = 0; i < traces.length; i += 1) {
     topUci: top.bestmove,
     topCp: topScore,
     playedCp: playedScore,
-    gapCp: gap,
+    signedDeltaCp: gap,
+    absoluteGapCp: Math.abs(gap),
+    isOutlier: Math.abs(gap) > 1000,
     overrodeWeakMultiPv1: Boolean(trace.overrodeStockfish),
     styleDimension: trace.styleDimension ?? null,
   });
@@ -159,20 +161,28 @@ for (let i = 0; i < traces.length; i += 1) {
 
 io.quit();
 
-const gaps = rows.map((r) => r.gapCp).filter(Number.isFinite);
-const total = gaps.reduce((a, b) => a + b, 0);
-const avg = gaps.length > 0 ? Math.round(total / gaps.length) : 0;
-const sorted = [...gaps].sort((a, b) => a - b);
-const median = sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0;
-const max = sorted.length > 0 ? sorted[sorted.length - 1] : 0;
+const signedDeltas = rows.map((r) => r.signedDeltaCp).filter(Number.isFinite);
+const absoluteGaps = rows.map((r) => r.absoluteGapCp).filter(Number.isFinite);
+
+const totalSigned = signedDeltas.reduce((a, b) => a + b, 0);
+const totalAbsolute = absoluteGaps.reduce((a, b) => a + b, 0);
+
+const avgSigned = signedDeltas.length > 0 ? Math.round(totalSigned / signedDeltas.length) : 0;
+const avgAbsolute = absoluteGaps.length > 0 ? Math.round(totalAbsolute / absoluteGaps.length) : 0;
+
+const sortedAbsolute = [...absoluteGaps].sort((a, b) => a - b);
+const medianAbsolute = sortedAbsolute.length > 0 ? sortedAbsolute[Math.floor(sortedAbsolute.length / 2)] : 0;
+
+const outliers = rows.filter((r) => r.isOutlier).length;
 const overrides = rows.filter((r) => r.overrodeWeakMultiPv1).length;
 
 console.log();
 console.log('=== Full-strength re-analysis ===');
-console.log(`Mirror moves analyzed:        ${rows.length}`);
-console.log(`Avg cp gap vs full-strength:  ${avg}`);
-console.log(`Median cp gap:                ${median}`);
-console.log(`Max cp gap (worst choice):    ${max}`);
+console.log(`analyzed_move_count:         ${rows.length}`);
+console.log(`signed_cp_delta_avg:         ${avgSigned}  (Negative means played move evaluated better than unconstrained search)`);
+console.log(`absolute_cp_gap_avg:         ${avgAbsolute}  (Magnitude of deviation from top engine move)`);
+console.log(`median_absolute_cp_gap:      ${medianAbsolute}`);
+console.log(`outlier_count (>1000cp):     ${outliers}`);
 console.log(`Reranker override of weak-multipv-1: ${overrides} / ${rows.length}`);
 console.log();
 console.log('Per-move detail (positive gap = Mirror played worse than full-strength engine):');
@@ -183,7 +193,8 @@ console.table(
     topUci: r.topUci,
     topCp: r.topCp,
     playedCp: r.playedCp,
-    gapCp: r.gapCp,
+    signedDelta: r.signedDeltaCp,
+    absGap: r.absoluteGapCp,
     reranker: r.overrodeWeakMultiPv1 ? r.styleDimension ?? 'override' : '-',
   }))
 );
