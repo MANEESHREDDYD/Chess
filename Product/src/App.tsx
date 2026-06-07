@@ -4,6 +4,7 @@ import Calibration from './routes/Calibration';
 import Play from './routes/Play';
 import Mirror from './routes/Mirror';
 import About from './routes/About';
+import DevMirrorVerification from './routes/DevMirrorVerification';
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/mirror" element={<Mirror />} />
           <Route path="/play" element={<Play />} />
           <Route path="/about" element={<About />} />
+          <Route path="/dev/mirror-verification" element={<DevMirrorVerification />} />
         </Routes>
       </main>
       <footer className="app-footer">

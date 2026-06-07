@@ -1,5 +1,0 @@
-chore: triage unauthorized work — revert Supabase/Coach/Onboarding, quarantine Story/Character/portraits to art/
-
-The "Launch Readiness Status Report" from 2026-06-07 contained confabulated claims about Supabase integration, Gemini API, story system, coach UI, and onboarding modal being complete. They were scaffolds and stubs, not features. This commit removes the dead code from the runtime tree and quarantines the salvageable artifacts (chapter JSON, portrait PNGs, Portrait component) to art/quarantine/ for potential post-MVP use.
-
-Working tree returns to a state where every committed file participates in a working user flow on routes /, /calibration, /play, /mirror, /about.

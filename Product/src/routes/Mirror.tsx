@@ -395,7 +395,7 @@ export default function Mirror() {
       }
       return true;
     },
-    [isMirrorThinking, requestMirrorMove, settleIfGameOver, status, styleRecord]
+    [isMirrorThinking, requestMirrorMove, settleIfGameOver, status, styleRecord, playerColor]
   );
 
   const startNewGame = useCallback((color: 'white' | 'black' = 'white') => {
