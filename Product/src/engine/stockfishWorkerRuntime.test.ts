@@ -53,7 +53,7 @@ describe('stockfish worker runtime', () => {
     await vi.advanceTimersByTimeAsync(READY_FALLBACK_MS);
 
     expect(sent).toEqual([{ type: 'ready' }]);
-    expect(deps.console.warn).not.toHaveBeenCalled();
+    expect(deps.console.warn).not.toHaveBeenCalledWith('[stockfish.worker] readyok not received before fallback timeout; marking ready.');
   });
 
   it('logs and marks ready when the readyok fallback fires', async () => {

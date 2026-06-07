@@ -40,7 +40,7 @@ function ensureWorker(): Worker {
   if (worker) return worker;
 
   worker = new Worker(new URL('./stockfish.worker.ts', import.meta.url), {
-    type: 'classic',
+    type: 'module',
   });
 
   worker.addEventListener('message', (e: MessageEvent<EngineMessage>) => {

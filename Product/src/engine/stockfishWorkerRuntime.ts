@@ -54,7 +54,13 @@ export function createStockfishWorkerRuntime(
     if (typeof line !== 'string') return;
 
     if (line === 'readyok') {
+      deps.console.warn('[stockfish.worker] received readyok');
       markReady();
+      return;
+    }
+
+    if (line === 'uciok') {
+      deps.console.warn('[stockfish.worker] received uciok');
       return;
     }
 
@@ -63,6 +69,7 @@ export function createStockfishWorkerRuntime(
       const move = parts[1];
       const requestId = activeRequestId;
       activeRequestId = null;
+      deps.console.warn(`[stockfish.worker] received bestmove: ${move}`);
       send({
         type: 'bestmove',
         requestId,
@@ -134,6 +141,7 @@ export function createStockfishWorkerRuntime(
       });
       candidate.addEventListener('error', (event) => {
         const message = event.message || 'Unknown Stockfish worker load error.';
+        deps.console.warn(`[stockfish.worker] worker error: ${message}`);
         if (source === 'local' && !readySent) {
           cleanupEngine();
           startEngine('cdn', message);
@@ -147,7 +155,12 @@ export function createStockfishWorkerRuntime(
 
         send({ type: 'error', message });
       });
+      candidate.addEventListener('messageerror', (event) => {
+        deps.console.warn(`[stockfish.worker] worker messageerror:`, event);
+      });
+      deps.console.warn(`[stockfish.worker] sending uci to ${source}`);
       candidate.postMessage('uci');
+      deps.console.warn(`[stockfish.worker] sending isready to ${source}`);
       candidate.postMessage('isready');
       readyFallbackTimer = deps.setTimeout(() => {
         if (engine !== candidate || readySent) return;
@@ -170,6 +183,7 @@ export function createStockfishWorkerRuntime(
 
   function startEngine(source: EngineSource, localError: string | null = null): void {
     const url = source === 'local' ? deps.localEngine : deps.cdnEngine;
+    deps.console.warn(`[stockfish.worker] worker created for ${source}: ${url}`);
 
     try {
       attachEngine(createEngineWorker(url, source), source, localError);
@@ -206,8 +220,10 @@ export function createStockfishWorkerRuntime(
       activeRequestId = typeof data.requestId === 'number' ? data.requestId : null;
       const multipv = Math.max(1, Math.min(8, Math.round(data.multipv ?? 1)));
       const depth = Math.max(1, Math.round(Number.isFinite(data.depth) ? Number(data.depth) : 10));
+      deps.console.warn(`[stockfish.worker] sending position: ${data.fen ?? ''}`);
       engine.postMessage(formatSetOption('MultiPV', multipv));
       engine.postMessage(`position fen ${data.fen ?? ''}`);
+      deps.console.warn(`[stockfish.worker] sending go depth ${depth}`);
       engine.postMessage(`go depth ${depth}`);
     } else if (data.cmd === 'setoption' && data.name) {
       engine.postMessage(formatSetOption(data.name, data.value));
