@@ -52,8 +52,51 @@ export default function Calibration() {
               <dd>{styleVector.elo_band}</dd>
             </div>
             <div>
-              <dt>Swindle</dt>
-              <dd>{styleVector.swindle_preference ?? 'unset'}</dd>
+              <dt>Top White Openings</dt>
+              <dd>{styleVector.opening_white_top3?.join(', ') || 'N/A'}</dd>
+            </div>
+            <div>
+              <dt>Top Black Replies</dt>
+              <dd>{styleVector.opening_black_top3?.join(', ') || 'N/A'}</dd>
+            </div>
+            <div>
+              <dt>Exchange Willingness</dt>
+              <dd>{(styleVector.exchange_willingness * 100).toFixed(0)}%</dd>
+            </div>
+            <div>
+              <dt>Preferred Minor</dt>
+              <dd>{styleVector.preferred_minor}</dd>
+            </div>
+            <div>
+              <dt>Time-Pressure Blunder Rate</dt>
+              <dd>{(styleVector.time_pressure_blunder_rate * 100).toFixed(0)}%</dd>
+            </div>
+            <div>
+              <dt>Endgame Strength</dt>
+              <dd>{(styleVector.endgame_strength * 100).toFixed(0)}%</dd>
+            </div>
+            <div>
+              <dt>Swindle Preference</dt>
+              <dd>{styleVector.swindle_preference || 'unset'}</dd>
+            </div>
+          </dl>
+          <h3>Motif Blindness</h3>
+          <dl className="calibration-task-stats">
+            <div>
+              <dt>Fork</dt>
+              <dd>{((styleVector.motif_blindness?.fork ?? 0) * 100).toFixed(0)}%</dd>
+            </div>
+            <div>
+              <dt>Pin</dt>
+              <dd>{((styleVector.motif_blindness?.pin ?? 0) * 100).toFixed(0)}%</dd>
+            </div>
+            <div>
+              <dt>Skewer</dt>
+              <dd>{((styleVector.motif_blindness?.skewer ?? 0) * 100).toFixed(0)}%</dd>
+            </div>
+            <div>
+              <dt>Removing Defender</dt>
+              <dd>{((styleVector.motif_blindness?.removing_the_defender ?? 0) * 100).toFixed(0)}%</dd>
             </div>
           </dl>
           <p>

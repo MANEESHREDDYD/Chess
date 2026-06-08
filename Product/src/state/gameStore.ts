@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { Chess } from 'chess.js';
 import { getBestMove, stopThinking } from '../engine/stockfishBridge';
-import { putLocalMatchRecord } from '../data/db';
+import { putLocalMatchRecord, getOrCreateDefaultPlayer } from '../data/db';
+import { usePlayerStore } from './playerStore';
 
 type Color = 'white' | 'black';
 type Status = 'idle' | 'playing' | 'game-over';
@@ -10,14 +11,12 @@ type Result = 'You won' | 'You lost' | 'Draw' | 'Game ended' | null;
 export type Difficulty = 'Beginner' | 'Casual' | 'Club' | 'Strong';
 
 interface GameState {
-  // Chess.js instance (not in state — it mutates; we expose .fen via fen).
   _game: Chess;
-
   fen: string;
   status: Status;
   result: Result;
   resultLabel: ResultLabel | null;
-  playerColor: Color; // This is the actual_side
+  playerColor: Color;
   selectedSide: 'white' | 'black' | 'random';
   engineThinking: boolean;
   engineError: string | null;
@@ -36,7 +35,6 @@ interface GameState {
 }
 
 function uciToMove(uci: string): { from: string; to: string; promotion?: string } {
-  // UCI: 'e2e4' or 'e7e8q'
   const from = uci.slice(0, 2);
   const to = uci.slice(2, 4);
   const promotion = uci.length === 5 ? uci[4] : undefined;
@@ -59,10 +57,17 @@ function checkGameEnd(game: Chess, playerColor: Color): { status: Status; result
   return { status: 'game-over', result: 'Game ended', resultLabel: 'abandoned' };
 }
 
-function saveLocalMatch(game: Chess, selectedSide: 'white'|'black'|'random', playerColor: Color, difficulty: Difficulty, resultLabel: ResultLabel) {
+async function saveLocalMatch(game: Chess, selectedSide: 'white'|'black'|'random', playerColor: Color, difficulty: Difficulty, resultLabel: ResultLabel) {
+  let playerId = usePlayerStore.getState().activePlayerId;
+  if (!playerId) {
+    const defaultPlayer = await getOrCreateDefaultPlayer();
+    await usePlayerStore.getState().setActivePlayer(defaultPlayer.id);
+    playerId = defaultPlayer.id;
+  }
+
   const record = {
     id: `local-match-${Date.now()}`,
-    player_id: 'local_user',
+    player_id: playerId,
     mode: 'computer' as const,
     side: selectedSide,
     actual_side: playerColor,

@@ -4,9 +4,19 @@ import Calibration from './routes/Calibration';
 import Play from './routes/Play';
 import Mirror from './routes/Mirror';
 import About from './routes/About';
+import { Onboarding } from './routes/Onboarding';
 import DevMirrorVerification from './routes/DevMirrorVerification';
+import DevInspector from './routes/DevInspector';
+import { useEffect } from 'react';
+import { usePlayerStore } from './state/playerStore';
 
 export default function App() {
+  const loadActivePlayer = usePlayerStore(s => s.loadActivePlayer);
+
+  useEffect(() => {
+    void loadActivePlayer();
+  }, [loadActivePlayer]);
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -23,12 +33,16 @@ export default function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/calibration" element={<Calibration />} />
           <Route path="/mirror" element={<Mirror />} />
           <Route path="/play" element={<Play />} />
           <Route path="/about" element={<About />} />
           {import.meta.env.DEV && (
-            <Route path="/dev/mirror-verification" element={<DevMirrorVerification />} />
+            <>
+              <Route path="/dev/mirror-verification" element={<DevMirrorVerification />} />
+              <Route path="/dev/inspector" element={<DevInspector />} />
+            </>
           )}
         </Routes>
       </main>

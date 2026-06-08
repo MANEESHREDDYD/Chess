@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { BoardView } from '../components/Board/BoardView';
 import { useGameStore, type Difficulty } from '../state/gameStore';
 import { useSettingsStore } from '../state/settingsStore';
-import { getLocalMatches, type LocalMatchRecord } from '../data/db';
+import { getLocalMatchesForPlayer, type LocalMatchRecord } from '../data/db';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
+import { usePlayerStore } from '../state/playerStore';
 
 export default function Play() {
   const status = useGameStore((s) => s.status);
@@ -22,6 +23,7 @@ export default function Play() {
 
   const activeTheme = useSettingsStore((s) => s.activeTheme);
   const setActiveTheme = useSettingsStore((s) => s.setActiveTheme);
+  const activePlayerId = usePlayerStore((s) => s.activePlayerId);
 
   const [themeManifest, setThemeManifest] = useState<Awaited<ReturnType<typeof loadThemeManifest>>>(null);
   const [themeError, setThemeError] = useState<string | null>(null);
@@ -61,18 +63,22 @@ export default function Play() {
   }, [activeTheme]);
 
   useEffect(() => {
-    if (status === 'game-over') {
-      getLocalMatches().then(matches => {
-        setLocalMatches(matches.sort((a, b) => b.created_at.localeCompare(a.created_at)));
+    if (status === 'game-over' && activePlayerId) {
+      getLocalMatchesForPlayer(activePlayerId).then(matches => {
+        setLocalMatches(matches);
       });
     }
-  }, [status]);
+  }, [status, activePlayerId]);
 
   useEffect(() => {
-    getLocalMatches().then(matches => {
-      setLocalMatches(matches.sort((a, b) => b.created_at.localeCompare(a.created_at)));
-    });
-  }, []);
+    if (activePlayerId && status === 'idle') {
+      getLocalMatchesForPlayer(activePlayerId).then(matches => {
+        setLocalMatches(matches);
+      });
+    }
+  }, [activePlayerId, status]);
+
+
 
   const handleDownloadPgn = () => {
     const pgn = exportPgn();

@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Mirror from './Mirror';
 import type { StyleVectorRecord } from '../data/db';
+import { usePlayerStore } from '../state/playerStore';
 
 const dbMocks = vi.hoisted(() => ({
   getCurrentStyleVectorRecord: vi.fn(),
@@ -62,6 +63,7 @@ vi.mock('../state/settingsStore', () => ({
 describe('Mirror match persistence failure recovery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    usePlayerStore.setState({ activePlayerId: 'local-player' });
     dbMocks.getCurrentStyleVectorRecord.mockResolvedValue(styleRecord());
     dbMocks.getMirrorMatchesForPlayer.mockResolvedValue([]);
     dbMocks.getMirrorMatchRecord.mockResolvedValue(undefined);

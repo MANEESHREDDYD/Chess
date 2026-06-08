@@ -3,12 +3,12 @@ import { spawn } from 'child_process';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 
-const PORT = 4173;
+const PORT = 5173;
 const URL = `http://localhost:${PORT}/dev/mirror-verification`;
 
 async function run() {
-  console.log('Starting preview server...');
-  const server = spawn('npm', ['run', 'preview'], { stdio: 'pipe', shell: true });
+  console.log('Starting dev server...');
+  const server = spawn('npm', ['run', 'dev'], { stdio: 'pipe', shell: true });
   
   await new Promise(resolve => setTimeout(resolve, 3000)); // wait for vite
   

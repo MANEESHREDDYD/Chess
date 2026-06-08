@@ -2,12 +2,12 @@ import { create } from 'zustand';
 import {
   openMirrorDb,
   type CalibrationRunRecord,
-  type PlayerRecord,
   type StyleVectorRecord,
 } from '../data/db';
 import { computeStyleVector, type CalibrationRunData, type StyleVector } from '../ml/styleVector';
 
-const LOCAL_PLAYER_ID = 'local-player';
+import { usePlayerStore } from './playerStore';
+
 const TOTAL_TASKS = 8;
 const RUN_STALE_MS = 24 * 60 * 60 * 1000;
 
@@ -45,12 +45,14 @@ export const useCalibrationStore = create<CalibrationState>((set, get) => ({
 
   startRun: async () => {
     set({ isLoading: true });
+    const playerId = usePlayerStore.getState().activePlayerId;
+    if (!playerId) throw new Error('No active player for calibration');
+
     const db = await openMirrorDb();
     const now = new Date().toISOString();
-    const player = await ensureLocalPlayer(now);
     const run: CalibrationRunRecord = {
       id: makeId('calibration-run'),
-      player_id: player.id,
+      player_id: playerId,
       started_at: now,
       status: 'in_progress',
       current_task_index: 1,
@@ -58,6 +60,12 @@ export const useCalibrationStore = create<CalibrationState>((set, get) => ({
     };
 
     await db.put('calibration_runs', run);
+    // Also update player status
+    const player = await db.get('players', playerId);
+    if (player) {
+      await db.put('players', { ...player, calibration_status: 'in_progress', updated_at: now });
+      usePlayerStore.getState().loadActivePlayer(); // refresh store
+    }
     set({
       run,
       currentTaskIndex: 1,
@@ -71,10 +79,13 @@ export const useCalibrationStore = create<CalibrationState>((set, get) => ({
 
   resumeRun: async () => {
     set({ isLoading: true });
+    const playerId = usePlayerStore.getState().activePlayerId;
+    if (!playerId) throw new Error('No active player for calibration');
+
     const db = await openMirrorDb();
     const runs = await db.getAllFromIndex('calibration_runs', 'started_at');
     const inProgressRuns = runs.filter(
-      (run) => run.player_id === LOCAL_PLAYER_ID && run.status === 'in_progress'
+      (run) => run.player_id === playerId && run.status === 'in_progress'
     );
     const latestRun = inProgressRuns[inProgressRuns.length - 1];
 
@@ -141,17 +152,21 @@ export const useCalibrationStore = create<CalibrationState>((set, get) => ({
       completed_at: now,
       style_vector_id: styleVectorRow.id,
     };
-    const player = await ensureLocalPlayer(now);
+    const player = await db.get('players', run.player_id);
 
     await db.put('style_vectors', styleVectorRow);
     await db.put('calibration_runs', completedRun);
-    await db.put('players', {
-      ...player,
-      current_style_vector_id: styleVectorRow.id,
-      detected_elo: vector.detected_elo,
-      elo_band: vector.elo_band,
-      updated_at: now,
-    });
+    if (player) {
+      await db.put('players', {
+        ...player,
+        current_style_vector_id: styleVectorRow.id,
+        calibration_status: 'complete',
+        detected_elo: vector.detected_elo,
+        elo_band: vector.elo_band,
+        updated_at: now,
+      });
+      usePlayerStore.getState().loadActivePlayer();
+    }
 
     set({
       run: completedRun,
@@ -181,19 +196,7 @@ export const useCalibrationStore = create<CalibrationState>((set, get) => ({
   },
 }));
 
-async function ensureLocalPlayer(now = new Date().toISOString()): Promise<PlayerRecord> {
-  const db = await openMirrorDb();
-  const existing = await db.get('players', LOCAL_PLAYER_ID);
-  if (existing) return existing;
-
-  const player: PlayerRecord = {
-    id: LOCAL_PLAYER_ID,
-    created_at: now,
-    updated_at: now,
-  };
-  await db.put('players', player);
-  return player;
-}
+// removed ensureLocalPlayer
 
 function nextTaskIndex(taskOutputs: TaskOutputs): number {
   const completedTasks = Object.keys(taskOutputs).filter((key) => /^task\d+$/.test(key)).length;

@@ -68,6 +68,7 @@ describe('openMirrorDb', () => {
     const dbName = nextDbName();
     const player: PlayerRecord = {
       id: 'player-1',
+      display_name: 'test-player',
       created_at: '2026-05-27T00:00:00.000Z',
       updated_at: '2026-05-27T00:00:00.000Z',
     };
@@ -171,6 +172,7 @@ describe('openMirrorDb', () => {
     await db.put('style_vectors', newerRow);
     await db.put('players', {
       id: 'player-1',
+      display_name: 'test-player',
       created_at: '2026-05-27T00:00:00.000Z',
       updated_at: '2026-05-27T00:30:00.000Z',
       current_style_vector_id: currentRow.id,
@@ -236,8 +238,9 @@ describe('openMirrorDb', () => {
     const db = await openMirrorDb(dbName);
     await db.put('players', {
       id: 'player-1',
-      created_at: '2026-05-27T00:00:00.000Z',
-      updated_at: '2026-05-27T00:00:00.000Z',
+      display_name: 'test-player',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
     const row: StyleVectorRecord = {
       id: 'style-vector-tuned',
@@ -263,7 +266,7 @@ describe('openMirrorDb', () => {
 
     const event = await logAnonymousEvent('mirror_played', { mirror_match_id: 'match-1' }, dbName);
 
-    await expect((await openMirrorDb(dbName)).get('feedback', event.id)).resolves.toMatchObject({
+    await expect((await openMirrorDb(dbName)).get('feedback', event.id!)).resolves.toMatchObject({
       metadata: {
         event_type: 'mirror_played',
         mirror_match_id: 'match-1',

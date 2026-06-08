@@ -22,9 +22,12 @@ export type StyleVectorSource = 'calibration' | 'tuned';
 // USER-OWNED / MIRROR
 export interface PlayerRecord {
   id: string;
+  display_name: string;
   created_at: string;
   updated_at: string;
   current_style_vector_id?: string;
+  calibration_status?: "not_started" | "in_progress" | "complete";
+  settings?: Record<string, unknown>;
   detected_elo?: number;
   elo_band?: EloBand;
 }
@@ -84,11 +87,14 @@ export interface LocalMatchRecord {
 // storage seam's first server-bound surface)
 export interface FeedbackRecord {
   id: string;
-  player_id?: string;
-  mirror_match_id?: string;
+  player_id: string;
+  mirror_match_id: string;
+  style_vector_id: string;
+  felt_like_me: 'yes' | 'somewhat' | 'no';
+  perceived_strength: 'weaker' | 'equal' | 'stronger';
+  similar_notes?: string;
+  wrong_notes?: string;
   created_at: string;
-  felt_like_me?: boolean;
-  notes?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -162,6 +168,98 @@ export async function deleteMirrorDb(dbName = MIRROR_DB_NAME): Promise<void> {
   await closeMirrorDb(dbName);
   await deleteDB(dbName);
 }
+
+// -----------------------------------------------------------------------------
+// PLAYER API
+// -----------------------------------------------------------------------------
+
+export async function createLocalPlayer(display_name: string, dbName = MIRROR_DB_NAME): Promise<PlayerRecord> {
+  const db = await openMirrorDb(dbName);
+  const now = new Date().toISOString();
+  const player: PlayerRecord = {
+    id: `player-${Date.now()}`,
+    display_name,
+    created_at: now,
+    updated_at: now,
+    calibration_status: 'not_started',
+    settings: {},
+  };
+  await db.put('players', player);
+  return player;
+}
+
+export async function getLocalPlayer(playerId: string, dbName = MIRROR_DB_NAME): Promise<PlayerRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  return db.get('players', playerId);
+}
+
+export async function getAllLocalPlayers(dbName = MIRROR_DB_NAME): Promise<PlayerRecord[]> {
+  const db = await openMirrorDb(dbName);
+  return db.getAll('players');
+}
+
+export async function updateLocalPlayer(playerId: string, patch: Partial<PlayerRecord>, dbName = MIRROR_DB_NAME): Promise<PlayerRecord> {
+  const db = await openMirrorDb(dbName);
+  const existing = await db.get('players', playerId);
+  if (!existing) throw new Error('Player not found');
+  const updated = { ...existing, ...patch, updated_at: new Date().toISOString() };
+  await db.put('players', updated);
+  return updated;
+}
+
+export async function getOrCreateDefaultPlayer(dbName = MIRROR_DB_NAME): Promise<PlayerRecord> {
+  const players = await getAllLocalPlayers(dbName);
+  if (players.length > 0) return players[0];
+  return createLocalPlayer('Local Player', dbName);
+}
+
+// -----------------------------------------------------------------------------
+// CALIBRATION API
+// -----------------------------------------------------------------------------
+
+export async function createCalibrationRun(playerId: string, dbName = MIRROR_DB_NAME): Promise<CalibrationRunRecord> {
+  const db = await openMirrorDb(dbName);
+  const now = new Date().toISOString();
+  const run: CalibrationRunRecord = {
+    id: `calib-${Date.now()}`,
+    player_id: playerId,
+    started_at: now,
+    status: 'in_progress',
+    current_task_index: 0,
+    task_outputs: {},
+  };
+  await db.put('calibration_runs', run);
+  await updateLocalPlayer(playerId, { calibration_status: 'in_progress' }, dbName);
+  return run;
+}
+
+export async function updateCalibrationRun(runId: string, patch: Partial<CalibrationRunRecord>, dbName = MIRROR_DB_NAME): Promise<CalibrationRunRecord> {
+  const db = await openMirrorDb(dbName);
+  const existing = await db.get('calibration_runs', runId);
+  if (!existing) throw new Error('Calibration run not found');
+  const updated = { ...existing, ...patch };
+  await db.put('calibration_runs', updated);
+  return updated;
+}
+
+export async function completeCalibrationRun(runId: string, taskOutputs: Record<string, unknown>, dbName = MIRROR_DB_NAME): Promise<CalibrationRunRecord> {
+  return updateCalibrationRun(runId, {
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+    task_outputs: taskOutputs,
+  }, dbName);
+}
+
+export async function getLatestCalibrationRunForPlayer(playerId: string, dbName = MIRROR_DB_NAME): Promise<CalibrationRunRecord | null> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('calibration_runs', 'started_at');
+  const playerRows = rows.filter((row) => row.player_id === playerId);
+  return playerRows.length > 0 ? playerRows[playerRows.length - 1] : null;
+}
+
+// -----------------------------------------------------------------------------
+// STYLE VECTOR API
+// -----------------------------------------------------------------------------
 
 export async function getLatestStyleVectorRecord(
   playerId: string,
@@ -243,27 +341,20 @@ export async function setCurrentStyleVector(
   styleVector: StyleVectorRecord,
   dbName = MIRROR_DB_NAME
 ): Promise<void> {
-  const db = await openMirrorDb(dbName);
-  const now = new Date().toISOString();
-  const existing = await db.get('players', playerId);
-  await db.put('players', {
-    id: playerId,
-    created_at: existing?.created_at ?? now,
-    updated_at: now,
-    ...existing,
+  await updateLocalPlayer(playerId, {
     current_style_vector_id: styleVector.id,
     detected_elo: styleVector.vector.detected_elo,
     elo_band: styleVector.vector.elo_band,
-  });
+    calibration_status: 'complete'
+  }, dbName);
 }
 
 export async function logAnonymousEvent(
-  eventType: 'calibration_completed' | 'mirror_played' | 'self_recognition_correct',
-  metadata: Record<string, unknown> = {},
+  eventType: string,
+  metadata?: Record<string, unknown>,
   dbName = MIRROR_DB_NAME
-): Promise<FeedbackRecord> {
-  const db = await openMirrorDb(dbName);
-  const event: FeedbackRecord = {
+): Promise<Partial<FeedbackRecord>> {
+  const event: Partial<FeedbackRecord> = {
     id: makeId('event'),
     created_at: new Date().toISOString(),
     metadata: {
@@ -271,8 +362,18 @@ export async function logAnonymousEvent(
       ...metadata,
     },
   };
-  await db.put('feedback', event);
+  await (await openMirrorDb(dbName)).put('feedback', event as FeedbackRecord);
   return event;
+}
+
+export async function saveFeedbackRecord(record: FeedbackRecord, dbName = MIRROR_DB_NAME): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('feedback', record);
+}
+
+export async function getFeedbackRecords(dbName = MIRROR_DB_NAME): Promise<FeedbackRecord[]> {
+  const db = await openMirrorDb(dbName);
+  return db.getAll('feedback');
 }
 
 export async function putLocalMatchRecord(
@@ -288,6 +389,34 @@ export async function getLocalMatches(
 ): Promise<LocalMatchRecord[]> {
   const db = await openMirrorDb(dbName);
   return db.getAllFromIndex('local_matches', 'created_at');
+}
+
+export async function getLocalMatchesForPlayer(
+  playerId: string,
+  limit?: number,
+  dbName = MIRROR_DB_NAME
+): Promise<LocalMatchRecord[]> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('local_matches', 'created_at');
+  let playerRows = rows.filter(r => r.player_id === playerId);
+  playerRows.reverse(); // Newest first
+  if (limit) {
+    playerRows = playerRows.slice(0, limit);
+  }
+  return playerRows;
+}
+
+export async function getRecentLocalMatches(
+  limit?: number,
+  dbName = MIRROR_DB_NAME
+): Promise<LocalMatchRecord[]> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('local_matches', 'created_at');
+  rows.reverse();
+  if (limit) {
+    return rows.slice(0, limit);
+  }
+  return rows;
 }
 
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {

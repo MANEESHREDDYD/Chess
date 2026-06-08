@@ -1,6 +1,18 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { usePlayerStore } from '../state/playerStore';
+import { getLocalMatchesForPlayer } from '../data/db';
 
 export default function Home() {
+  const { activePlayer, clearActivePlayer } = usePlayerStore();
+  const [matchCount, setMatchCount] = useState(0);
+
+  useEffect(() => {
+    if (activePlayer) {
+      getLocalMatchesForPlayer(activePlayer.id).then(m => setMatchCount(m.length));
+    }
+  }, [activePlayer]);
+
   return (
     <div className="home">
       <div className="home-hero">
@@ -14,17 +26,43 @@ export default function Home() {
           feels like you. The current MVP includes calibration, free play, the Mirror match, and an
           optional Kurukshetra board theme. No signup; games stay on your device.
         </p>
-        <div className="home-actions">
-          <Link to="/calibration" className="btn btn-primary">
-            Begin Calibration
-          </Link>
-          <Link to="/mirror" className="btn btn-secondary">
-            Play Mirror
-          </Link>
-          <Link to="/play" className="btn btn-ghost">
-            Free play
-          </Link>
-        </div>
+        
+        {activePlayer ? (
+          <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Player Profile: {activePlayer.display_name}</h2>
+              <button className="btn btn-ghost" onClick={clearActivePlayer} style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}>Switch Profile</button>
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', lineHeight: 1.6 }}>
+              <li><strong>Calibration Status:</strong> {activePlayer.calibration_status}</li>
+              {activePlayer.detected_elo !== undefined && (
+                <li><strong>Detected Elo:</strong> {activePlayer.detected_elo} ({activePlayer.elo_band})</li>
+              )}
+              <li><strong>Local Games Played:</strong> {matchCount}</li>
+            </ul>
+            <div className="home-actions" style={{ justifyContent: 'flex-start' }}>
+              <Link to="/calibration" className="btn btn-primary">
+                {activePlayer.calibration_status === 'complete' ? 'Recalibrate' : 'Start Calibration'}
+              </Link>
+              <Link to="/mirror" className="btn btn-secondary">
+                Play Mirror
+              </Link>
+              <Link to="/play" className="btn btn-ghost">
+                Play Computer
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="home-actions">
+            <Link to="/onboarding" className="btn btn-primary">
+              Create Player Profile
+            </Link>
+            <Link to="/play" className="btn btn-ghost">
+              Free play
+            </Link>
+          </div>
+        )}
+
         <p className="home-privacy">
           We don't track you. Games stay on your device unless you submit feedback.
         </p>

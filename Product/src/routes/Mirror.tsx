@@ -21,6 +21,7 @@ import {
   mergeMirrorMatchMetadata,
   putMirrorMatchRecord,
   putStyleVectorRecord,
+  saveFeedbackRecord,
   setCurrentStyleVector,
   type StyleVectorRecord,
 } from '../data/db';
@@ -36,6 +37,7 @@ import { stopThinking } from '../engine/stockfishBridge';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { sharpenMirrorVector } from '../ml/evolvingMirror';
 import { useSettingsStore } from '../state/settingsStore';
+import { usePlayerStore } from '../state/playerStore';
 
 type GameStatus = 'idle' | 'playing' | 'game-over';
 type MirrorResult = 'You won' | 'Mirror won' | 'Draw' | 'Game ended';
@@ -48,12 +50,10 @@ type StoredMirrorTrace = MirrorDecisionTrace & {
   ply: number;
 };
 
-const LOCAL_PLAYER_ID = 'local-player';
-const FEEDBACK_FORM_URL = import.meta.env.VITE_FEEDBACK_FORM_URL?.trim() ?? '';
-
 export default function Mirror() {
   const activeTheme = useSettingsStore((state) => state.activeTheme);
   const setActiveTheme = useSettingsStore((state) => state.setActiveTheme);
+  const activePlayerId = usePlayerStore((s) => s.activePlayerId);
   const gameRef = useRef(new Chess());
   const gameIdRef = useRef(0);
   const opponentRef = useRef<MirrorOpponentProvider | null>(null);
@@ -99,6 +99,12 @@ export default function Mirror() {
   const [scoutingCardStatus, setScoutingCardStatus] = useState<string | null>(null);
   const [matchExportStatus, setMatchExportStatus] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
+  const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState(false);
+  const [feltLikeMe, setFeltLikeMe] = useState<'yes' | 'somewhat' | 'no' | null>(null);
+  const [perceivedStrength, setPerceivedStrength] = useState<'weaker' | 'equal' | 'stronger' | null>(null);
+  const [similarNotes, setSimilarNotes] = useState('');
+  const [wrongNotes, setWrongNotes] = useState('');
 
   const requestMirrorMoveRef = useRef<() => Promise<void>>();
 
@@ -110,7 +116,14 @@ export default function Mirror() {
       setLoadError(null);
 
       try {
-        const row = await getCurrentStyleVectorRecord(LOCAL_PLAYER_ID);
+        if (!activePlayerId) {
+          setStyleRecord(null);
+          setStatus('idle');
+          setIsLoading(false);
+          return;
+        }
+
+        const row = await getCurrentStyleVectorRecord(activePlayerId);
         if (cancelled) return;
 
         setStyleRecord(row);
@@ -145,6 +158,12 @@ export default function Mirror() {
           setScoutingCardStatus(null);
           setMatchExportStatus(null);
           setSaveStatus(null);
+          setFeedbackStatus(null);
+          setHasSubmittedFeedback(false);
+          setFeltLikeMe(null);
+          setPerceivedStrength(null);
+          setSimilarNotes('');
+          setWrongNotes('');
         } else {
           setStatus('idle');
         }
@@ -166,7 +185,7 @@ export default function Mirror() {
       opponentRef.current?.dispose?.();
       opponentRef.current = null;
     };
-  }, []);
+  }, [activePlayerId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -424,6 +443,12 @@ export default function Mirror() {
     });
     setScoutingCardStatus(null);
     setSaveStatus(null);
+    setFeedbackStatus(null);
+    setHasSubmittedFeedback(false);
+    setFeltLikeMe(null);
+    setPerceivedStrength(null);
+    setSimilarNotes('');
+    setWrongNotes('');
 
     if (color === 'black' && styleRecord) {
       setTimeout(() => {
@@ -583,6 +608,30 @@ export default function Mirror() {
     }
   };
 
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!styleRecord || !currentMatchId || !feltLikeMe || !perceivedStrength) return;
+
+    setFeedbackStatus('Saving feedback...');
+    try {
+      await saveFeedbackRecord({
+        id: makeId('feedback'),
+        player_id: styleRecord.player_id,
+        mirror_match_id: currentMatchId,
+        style_vector_id: styleRecord.id,
+        felt_like_me: feltLikeMe,
+        perceived_strength: perceivedStrength,
+        similar_notes: similarNotes,
+        wrong_notes: wrongNotes,
+        created_at: new Date().toISOString(),
+      });
+      setHasSubmittedFeedback(true);
+      setFeedbackStatus('Feedback saved. Thank you!');
+    } catch (error) {
+      setFeedbackStatus(error instanceof Error ? `Failed to save feedback: ${error.message}` : 'Failed to save feedback.');
+    }
+  };
+
   const statusLabel = useMemo(() => {
     if (isLoading) return 'Loading style vector...';
     if (loadError) return 'Could not load Mirror';
@@ -598,14 +647,22 @@ export default function Mirror() {
         <p className="home-eyebrow">Mirror match</p>
         <h1>Play the opponent built from your style vector.</h1>
         {loadError ? <p className="mirror-alert">{loadError}</p> : null}
-        {!isLoading && !loadError && !styleRecord ? (
+        {!activePlayerId ? (
+          <p>Please create a player profile before playing Mirror.</p>
+        ) : !isLoading && !loadError && !styleRecord ? (
           <p>Finish calibration once, then the Mirror can load your latest local style vector.</p>
         ) : null}
         {isLoading ? <p>Loading your local calibration...</p> : null}
         <div className="home-actions">
-          <Link to="/calibration" className="btn btn-primary">
-            Begin Calibration
-          </Link>
+          {!activePlayerId ? (
+            <Link to="/onboarding" className="btn btn-primary">
+              Create Profile
+            </Link>
+          ) : (
+            <Link to="/calibration" className="btn btn-primary">
+              Begin Calibration
+            </Link>
+          )}
           <Link to="/play" className="btn btn-ghost">
             Free play
           </Link>
@@ -739,16 +796,45 @@ export default function Mirror() {
           </section>
         ) : null}
 
-        <section className="mirror-panel">
-          <h3>Feedback</h3>
-          {FEEDBACK_FORM_URL ? (
-            <a className="btn btn-ghost" href={FEEDBACK_FORM_URL} target="_blank" rel="noreferrer">
-              Send feedback
-            </a>
-          ) : (
-            <p>Feedback form link pending human URL.</p>
-          )}
-        </section>
+        {status === 'game-over' && currentMatchId ? (
+          <section className="mirror-panel">
+            <h3>Mirror Match Feedback</h3>
+            {hasSubmittedFeedback ? (
+              <p className="play-note">✅ {feedbackStatus}</p>
+            ) : (
+              <form onSubmit={handleFeedbackSubmit} className="feedback-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <fieldset>
+                  <legend>Did this opponent feel like you?</legend>
+                  <label><input type="radio" name="feltLikeMe" value="yes" checked={feltLikeMe === 'yes'} onChange={() => setFeltLikeMe('yes')} required /> Yes</label>
+                  <label><input type="radio" name="feltLikeMe" value="somewhat" checked={feltLikeMe === 'somewhat'} onChange={() => setFeltLikeMe('somewhat')} /> Somewhat</label>
+                  <label><input type="radio" name="feltLikeMe" value="no" checked={feltLikeMe === 'no'} onChange={() => setFeltLikeMe('no')} /> No</label>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Did it feel weaker, equal, or stronger?</legend>
+                  <label><input type="radio" name="perceivedStrength" value="weaker" checked={perceivedStrength === 'weaker'} onChange={() => setPerceivedStrength('weaker')} required /> Weaker</label>
+                  <label><input type="radio" name="perceivedStrength" value="equal" checked={perceivedStrength === 'equal'} onChange={() => setPerceivedStrength('equal')} /> Equal</label>
+                  <label><input type="radio" name="perceivedStrength" value="stronger" checked={perceivedStrength === 'stronger'} onChange={() => setPerceivedStrength('stronger')} /> Stronger</label>
+                </fieldset>
+
+                <label style={{ display: 'flex', flexDirection: 'column' }}>
+                  What felt similar?
+                  <textarea value={similarNotes} onChange={(e) => setSimilarNotes(e.target.value)} rows={2}></textarea>
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column' }}>
+                  What felt wrong?
+                  <textarea value={wrongNotes} onChange={(e) => setWrongNotes(e.target.value)} rows={2}></textarea>
+                </label>
+
+                <button type="submit" className="btn btn-primary" disabled={!feltLikeMe || !perceivedStrength}>
+                  Submit Feedback
+                </button>
+                {feedbackStatus && <p className="play-note">{feedbackStatus}</p>}
+              </form>
+            )}
+          </section>
+        ) : null}
 
         {saveStatus ? (
           <p className="play-note">
