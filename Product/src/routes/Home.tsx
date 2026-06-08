@@ -68,12 +68,22 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ background: 'var(--surface-sunken, #eaeaea)', padding: '1rem', borderRadius: 8, margin: '2rem 0', textAlign: 'center' }}>
-          <h2 style={{ margin: '0 0 0.5rem 0' }}>Clue Chess</h2>
-          <p style={{ margin: '0 0 1rem 0' }}>Train with adaptive hints based on your style.</p>
-          <Link to="/clue-chess" className="btn btn-secondary">
-            Play Clue Chess
-          </Link>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' }}>
+          <div style={{ background: 'var(--surface-sunken, #eaeaea)', padding: '1rem', borderRadius: 8, textAlign: 'center' }}>
+            <h2 style={{ margin: '0 0 0.5rem 0' }}>Story Mode</h2>
+            <p style={{ margin: '0 0 1rem 0' }}>Begin the apprentice's path through Kurukshetra.</p>
+            <Link to="/story" className="btn btn-secondary">
+              Play Story Mode
+            </Link>
+          </div>
+
+          <div style={{ background: 'var(--surface-sunken, #eaeaea)', padding: '1rem', borderRadius: 8, textAlign: 'center' }}>
+            <h2 style={{ margin: '0 0 0.5rem 0' }}>Clue Chess</h2>
+            <p style={{ margin: '0 0 1rem 0' }}>Train with adaptive hints based on your style.</p>
+            <Link to="/clue-chess" className="btn btn-secondary">
+              Play Clue Chess
+            </Link>
+          </div>
         </div>
 
         <p className="home-privacy">

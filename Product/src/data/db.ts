@@ -4,7 +4,7 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 4;
+export const MIRROR_DB_VERSION = 5;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
@@ -168,6 +168,9 @@ export interface ClueAttemptRecord {
   metadata?: Record<string, unknown>;
 }
 
+import type { StoryProgressRecord } from '../story/storyTypes';
+export type { StoryProgressRecord };
+
 export interface MirrorDB extends DBSchema {
   players: {
     key: string;
@@ -223,6 +226,16 @@ export interface MirrorDB extends DBSchema {
       solved: number; // indexeddb doesn't index booleans well, but we can store true/false and use string/number
     };
   };
+  story_progress: {
+    key: string;
+    value: StoryProgressRecord;
+    indexes: {
+      player_id: string;
+      chapter_id: string;
+      status: string;
+      updated_at: string;
+    };
+  };
 }
 
 const dbCache = new Map<string, Promise<IDBPDatabase<MirrorDB>>>();
@@ -244,6 +257,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 4) {
         createV4Schema(db);
+      }
+      if (oldVersion < 5) {
+        createV5Schema(db);
       }
     },
   });
@@ -648,13 +664,21 @@ function createV3Schema(db: IDBPDatabase<MirrorDB>): void {
   analyses.createIndex('created_at', 'created_at');
 }
 
-function createV4Schema(db: IDBPDatabase<MirrorDB>): void {
-  const clues = db.createObjectStore('clue_attempts', { keyPath: 'id' });
-  clues.createIndex('player_id', 'player_id');
-  clues.createIndex('puzzle_id', 'puzzle_id');
-  clues.createIndex('created_at', 'created_at');
-  clues.createIndex('motif', 'motif');
-  clues.createIndex('solved', 'solved');
+function createV4Schema(db: IDBPDatabase<MirrorDB>) {
+  const store = db.createObjectStore('clue_attempts', { keyPath: 'id' });
+  store.createIndex('player_id', 'player_id');
+  store.createIndex('puzzle_id', 'puzzle_id');
+  store.createIndex('created_at', 'created_at');
+  store.createIndex('motif', 'motif');
+  store.createIndex('solved', 'solved');
+}
+
+function createV5Schema(db: IDBPDatabase<MirrorDB>) {
+  const store = db.createObjectStore('story_progress', { keyPath: 'id' });
+  store.createIndex('player_id', 'player_id');
+  store.createIndex('chapter_id', 'chapter_id');
+  store.createIndex('status', 'status');
+  store.createIndex('updated_at', 'updated_at');
 }
 
 function makeId(prefix: string): string {
@@ -663,4 +687,85 @@ function makeId(prefix: string): string {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return `${prefix}-${randomId}`;
+}
+
+// ----------------------------------------------------------------------------
+// STORY PROGRESS HELPERS
+
+import { mahabharataStorySeed } from '../story/mahabharataStorySeed';
+
+export async function putStoryProgress(record: StoryProgressRecord): Promise<void> {
+  const db = await openMirrorDb();
+  await db.put('story_progress', record);
+}
+
+export async function getStoryProgressForPlayer(playerId: string): Promise<StoryProgressRecord[]> {
+  const db = await openMirrorDb();
+  return db.getAllFromIndex('story_progress', 'player_id', playerId);
+}
+
+export async function getStoryProgressForChapter(playerId: string, chapterId: string): Promise<StoryProgressRecord | undefined> {
+  const db = await openMirrorDb();
+  return db.get('story_progress', `${playerId}_${chapterId}`);
+}
+
+export async function initializeStoryProgressForPlayer(playerId: string): Promise<void> {
+  const db = await openMirrorDb();
+  const tx = db.transaction('story_progress', 'readwrite');
+  const store = tx.objectStore('story_progress');
+  
+  // Create an initial record for each chapter only if it doesn't exist
+  for (const chapter of mahabharataStorySeed) {
+    const recordId = `${playerId}_${chapter.id}`;
+    const existing = await store.get(recordId);
+    if (!existing) {
+      // First chapter is available, others are locked
+      const status = chapter.required_previous_chapter_id ? 'locked' : 'available';
+      await store.put({
+        id: recordId,
+        player_id: playerId,
+        chapter_id: chapter.id,
+        status,
+        attempts: 0,
+        updated_at: new Date().toISOString()
+      });
+    }
+  }
+  await tx.done;
+}
+
+export async function completeStoryChapter(
+  playerId: string, 
+  chapterId: string, 
+  result?: 'win' | 'loss' | 'draw'
+): Promise<void> {
+  const db = await openMirrorDb();
+  const tx = db.transaction('story_progress', 'readwrite');
+  const store = tx.objectStore('story_progress');
+
+  const recordId = `${playerId}_${chapterId}`;
+  const existing = await store.get(recordId);
+  
+  if (existing) {
+    existing.status = 'complete';
+    existing.attempts += 1;
+    if (result && !existing.best_result) existing.best_result = result;
+    if (!existing.completed_at) existing.completed_at = new Date().toISOString();
+    existing.updated_at = new Date().toISOString();
+    await store.put(existing);
+  }
+
+  // Find the next chapter that requires this chapter and unlock it
+  const nextChapter = mahabharataStorySeed.find(c => c.required_previous_chapter_id === chapterId);
+  if (nextChapter) {
+    const nextRecordId = `${playerId}_${nextChapter.id}`;
+    const nextExisting = await store.get(nextRecordId);
+    if (nextExisting && nextExisting.status === 'locked') {
+      nextExisting.status = 'available';
+      nextExisting.updated_at = new Date().toISOString();
+      await store.put(nextExisting);
+    }
+  }
+
+  await tx.done;
 }

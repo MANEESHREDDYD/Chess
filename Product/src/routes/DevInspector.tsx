@@ -7,6 +7,7 @@ import {
   getAnalysesForPlayer,
   getClueAttemptsForPlayer,
   getClueStatsForPlayer,
+  getStoryProgressForPlayer,
   openMirrorDb,
 } from '../data/db';
 
@@ -24,6 +25,7 @@ export default function DevInspector() {
     recentAnalyses: [],
     recentClueAttempts: [],
     clueStats: null,
+    storyProgress: [],
     feedbackRecords: [],
   });
 
@@ -56,6 +58,8 @@ export default function DevInspector() {
       const clues = await getClueAttemptsForPlayer(activePlayerId);
       const clueStats = await getClueStatsForPlayer(activePlayerId);
 
+      const storyProgress = await getStoryProgressForPlayer(activePlayerId);
+
       setData({
         activePlayerId: activePlayerId || null,
         activePlayer,
@@ -67,6 +71,7 @@ export default function DevInspector() {
         recentAnalyses: analyses.slice(-5),
         recentClueAttempts: clues.slice(0, 5),
         clueStats,
+        storyProgress,
         feedbackRecords: feedback,
       });
     }
