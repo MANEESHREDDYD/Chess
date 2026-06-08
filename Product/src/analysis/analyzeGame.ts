@@ -24,7 +24,7 @@ function getClassification(cpLoss: number): AnalysisMove['classification'] {
   return 'blunder';
 }
 
-function getPersonalizedNote(classification: string, cpLoss: number, styleVector?: StyleVector, move?: string): string | undefined {
+function getPersonalizedNote(classification: string, _cpLoss: number, styleVector?: StyleVector, _move?: string): string | undefined {
   if (!styleVector || (classification !== 'mistake' && classification !== 'blunder')) {
     return undefined;
   }
@@ -33,7 +33,7 @@ function getPersonalizedNote(classification: string, cpLoss: number, styleVector
     return "This may match your calibration pattern: tactical accuracy drops under time pressure.";
   }
   
-  if (styleVector.removing_the_defender < 0.4 || styleVector.discovery < 0.4) {
+  if (styleVector.motif_blindness.removing_the_defender > 0.6 || styleVector.motif_blindness.fork > 0.6) {
     return "This may be related to a motif you struggled with during calibration.";
   }
   

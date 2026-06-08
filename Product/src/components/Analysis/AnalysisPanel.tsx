@@ -38,8 +38,8 @@ export function AnalysisPanel({ pgn, playerId, matchId, matchType, styleVector }
       });
       await putAnalysisRecord(result);
       setRecord(result);
-    } catch (err: any) {
-      setError(err.message || 'Analysis failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }

@@ -52,6 +52,7 @@ describe('openMirrorDb', () => {
       'local_matches',
       'mirror_matches',
       'players',
+      'saved_analyses',
       'style_vectors',
     ]);
 

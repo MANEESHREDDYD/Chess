@@ -14,6 +14,7 @@ const dbMocks = vi.hoisted(() => ({
   putMirrorMatchRecord: vi.fn(),
   putStyleVectorRecord: vi.fn(),
   setCurrentStyleVector: vi.fn(),
+  getAnalysisForMatch: vi.fn().mockResolvedValue(undefined),
 }));
 
 const opponentMocks = vi.hoisted(() => ({
@@ -33,6 +34,7 @@ vi.mock('../data/db', () => ({
   putMirrorMatchRecord: dbMocks.putMirrorMatchRecord,
   putStyleVectorRecord: dbMocks.putStyleVectorRecord,
   setCurrentStyleVector: dbMocks.setCurrentStyleVector,
+  getAnalysisForMatch: dbMocks.getAnalysisForMatch,
 }));
 
 vi.mock('../engine/mirrorOpponent', () => ({
