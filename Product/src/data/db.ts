@@ -4,7 +4,7 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 2;
+export const MIRROR_DB_VERSION = 3;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
@@ -98,6 +98,57 @@ export interface FeedbackRecord {
   metadata?: Record<string, unknown>;
 }
 
+export interface AnalysisSummary {
+  total_moves: number;
+  analyzed_moves: number;
+  average_cp_loss: number;
+  accuracy_estimate?: number;
+  best_count: number;
+  good_count: number;
+  inaccuracy_count: number;
+  mistake_count: number;
+  blunder_count: number;
+  missed_tactic_count?: number;
+  opening_phase_moves?: number;
+  middlegame_phase_moves?: number;
+  endgame_phase_moves?: number;
+}
+
+export interface AnalysisMove {
+  ply: number;
+  move_number: number;
+  color: "white" | "black";
+  san: string;
+  uci?: string;
+  fen_before: string;
+  fen_after: string;
+  best_eval_cp?: number;
+  played_eval_cp?: number;
+  cp_loss?: number;
+  classification: "best" | "good" | "inaccuracy" | "mistake" | "blunder" | "book" | "forced" | "unknown";
+  best_move?: string;
+  best_line?: string[];
+  note?: string;
+}
+
+// USER-OWNED / MIRROR
+export interface AnalysisRecord {
+  id: string;
+  player_id: string;
+  match_id: string;
+  match_type: "computer" | "mirror";
+  source: "local_stockfish";
+  engine_depth: number;
+  engine_version?: string;
+  status: "pending" | "complete" | "failed";
+  created_at: string;
+  completed_at?: string;
+  pgn: string;
+  summary: AnalysisSummary;
+  moves: AnalysisMove[];
+  metadata?: Record<string, unknown>;
+}
+
 export interface MirrorDB extends DBSchema {
   players: {
     key: string;
@@ -132,6 +183,16 @@ export interface MirrorDB extends DBSchema {
       created_at: string;
     };
   };
+  saved_analyses: {
+    key: string;
+    value: AnalysisRecord;
+    indexes: {
+      player_id: string;
+      match_id: string;
+      match_type: string;
+      created_at: string;
+    };
+  };
 }
 
 const dbCache = new Map<string, Promise<IDBPDatabase<MirrorDB>>>();
@@ -147,6 +208,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 2) {
         createV2Schema(db);
+      }
+      if (oldVersion < 3) {
+        createV3Schema(db);
       }
     },
   });
@@ -419,6 +483,41 @@ export async function getRecentLocalMatches(
   return rows;
 }
 
+// -----------------------------------------------------------------------------
+// ANALYSIS API
+// -----------------------------------------------------------------------------
+
+export async function putAnalysisRecord(record: AnalysisRecord, dbName = MIRROR_DB_NAME): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('saved_analyses', record);
+}
+
+export async function getAnalysisForMatch(matchId: string, dbName = MIRROR_DB_NAME): Promise<AnalysisRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  // Match ID is unique per game
+  const records = await db.getAllFromIndex('saved_analyses', 'match_id');
+  return records.find(r => r.match_id === matchId);
+}
+
+export async function getAnalysesForPlayer(playerId: string, limit?: number, dbName = MIRROR_DB_NAME): Promise<AnalysisRecord[]> {
+  const db = await openMirrorDb(dbName);
+  let rows = await db.getAllFromIndex('saved_analyses', 'player_id', playerId);
+  rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (limit) {
+    rows = rows.slice(0, limit);
+  }
+  return rows;
+}
+
+export async function updateAnalysisRecord(id: string, patch: Partial<AnalysisRecord>, dbName = MIRROR_DB_NAME): Promise<AnalysisRecord> {
+  const db = await openMirrorDb(dbName);
+  const existing = await db.get('saved_analyses', id);
+  if (!existing) throw new Error('Analysis record not found');
+  const updated = { ...existing, ...patch };
+  await db.put('saved_analyses', updated);
+  return updated;
+}
+
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
   db.createObjectStore('players', { keyPath: 'id' });
 
@@ -435,6 +534,14 @@ function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
 function createV2Schema(db: IDBPDatabase<MirrorDB>): void {
   const localMatches = db.createObjectStore('local_matches', { keyPath: 'id' });
   localMatches.createIndex('created_at', 'created_at');
+}
+
+function createV3Schema(db: IDBPDatabase<MirrorDB>): void {
+  const analyses = db.createObjectStore('saved_analyses', { keyPath: 'id' });
+  analyses.createIndex('player_id', 'player_id');
+  analyses.createIndex('match_id', 'match_id');
+  analyses.createIndex('match_type', 'match_type');
+  analyses.createIndex('created_at', 'created_at');
 }
 
 function makeId(prefix: string): string {
