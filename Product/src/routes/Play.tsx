@@ -5,6 +5,7 @@ import { useSettingsStore } from '../state/settingsStore';
 import { getLocalMatchesForPlayer, type LocalMatchRecord } from '../data/db';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { usePlayerStore } from '../state/playerStore';
+import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
 
 export default function Play() {
   const status = useGameStore((s) => s.status);
@@ -185,6 +186,11 @@ export default function Play() {
           <button className="btn btn-secondary" onClick={() => startGame('random', selectedDifficulty)}>
             New game · Random
           </button>
+          {status === 'game-over' && (
+            <div style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>
+              Game Over - {result}
+            </div>
+          )}
           {status === 'playing' && (
             <>
               <button className="btn btn-warn" onClick={resign}>
@@ -227,6 +233,15 @@ export default function Play() {
           themeManifest={themeManifest}
           themeError={themeError}
         />
+        
+        {status === 'game-over' && activePlayerId && useGameStore.getState().savedRecordId && (
+          <AnalysisPanel
+            pgn={exportPgn()}
+            playerId={activePlayerId}
+            matchId={useGameStore.getState().savedRecordId!}
+            matchType="computer"
+          />
+        )}
         
         {localMatches.length > 0 && (
           <div style={{ marginTop: '2rem', borderTop: '1px solid #ccc', paddingTop: '1rem' }}>

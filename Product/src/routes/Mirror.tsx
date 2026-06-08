@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Chess } from 'chess.js';
+import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
 import { BoardView } from '../components/Board/BoardView';
 import {
   buildSelfRecognitionChallenge,
@@ -835,6 +836,16 @@ export default function Mirror() {
             )}
           </section>
         ) : null}
+
+        {status === 'game-over' && currentMatchId && activePlayerId && styleRecord && (
+          <AnalysisPanel
+            pgn={gameRef.current.pgn()}
+            playerId={activePlayerId}
+            matchId={currentMatchId}
+            matchType="mirror"
+            styleVector={styleRecord.vector}
+          />
+        )}
 
         {saveStatus ? (
           <p className="play-note">

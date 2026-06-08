@@ -22,6 +22,7 @@ interface GameState {
   engineError: string | null;
   gameId: number;
   savedMatchId: number | null;
+  savedRecordId: string | null;
   difficulty: Difficulty;
   history: string[];
 
@@ -79,6 +80,7 @@ async function saveLocalMatch(game: Chess, selectedSide: 'white'|'black'|'random
     created_at: new Date().toISOString(),
     completed_at: new Date().toISOString()
   };
+  useGameStore.setState({ savedRecordId: record.id });
   putLocalMatchRecord(record).catch(err => console.error('Failed to save local match:', err));
 }
 
@@ -94,6 +96,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   engineError: null,
   gameId: 0,
   savedMatchId: null,
+  savedRecordId: null,
   difficulty: 'Club',
   history: [],
 
@@ -118,6 +121,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       engineError: null,
       gameId,
       savedMatchId: null,
+      savedRecordId: null,
       difficulty,
       history: []
     });

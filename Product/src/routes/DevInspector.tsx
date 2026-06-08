@@ -4,6 +4,7 @@ import {
   getFeedbackRecords,
   getLocalMatchesForPlayer,
   getMirrorMatchesForPlayer,
+  getAnalysesForPlayer,
   openMirrorDb,
 } from '../data/db';
 
@@ -18,6 +19,7 @@ export default function DevInspector() {
     currentStyleVector: null,
     recentLocalMatches: [],
     recentMirrorMatches: [],
+    recentAnalyses: [],
     feedbackRecords: [],
   });
 
@@ -43,6 +45,9 @@ export default function DevInspector() {
       // Feedback
       const feedback = await getFeedbackRecords();
 
+      // Analyses
+      const analyses = await getAnalysesForPlayer(activePlayerId);
+
       setData({
         activePlayerId: activePlayerId || null,
         activePlayer,
@@ -51,6 +56,7 @@ export default function DevInspector() {
         currentStyleVector,
         recentLocalMatches: localMatches.slice(-5),
         recentMirrorMatches: mirrorMatches.slice(-5),
+        recentAnalyses: analyses.slice(-5),
         feedbackRecords: feedback,
       });
     }
