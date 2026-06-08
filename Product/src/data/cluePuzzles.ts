@@ -329,5 +329,69 @@ export const seedPuzzles: CluePuzzle[] = [
       "A check on the 8th rank would be fatal.",
       "Move the rook to the back rank."
     ]
+  },
+  {
+    id: "seed-mate-bhima",
+    fen: "r1b2k1r/pppp1p1p/2n4B/8/8/8/PPP2PPP/R3R1K1 w - - 0 1",
+    solution_moves: ["e1e8"],
+    motif: "mate",
+    difficulty: "beginner",
+    title: "The Direct Path",
+    explanation: "The bishop controls the escape squares. The rook delivers the final blow.",
+    clue_levels: [
+      "Look for a forcing check.",
+      "The black king is trapped by your bishop.",
+      "The e8 square is unguarded by black pieces.",
+      "Bring the rook to the back rank.",
+      "Play Re8#."
+    ]
+  },
+  {
+    id: "seed-defense-drona",
+    fen: "8/p7/1k6/8/8/8/1K6/R6q w - - 0 1",
+    solution_moves: ["a1h1"],
+    motif: "hanging_piece",
+    difficulty: "beginner",
+    title: "See the Whole Board",
+    explanation: "The enemy queen has strayed too far and is completely unprotected.",
+    clue_levels: [
+      "Look at every piece on the board.",
+      "Is there a piece in danger?",
+      "The black queen is isolated.",
+      "Your rook can reach the other side of the board.",
+      "Capture the hanging queen with Rxh1."
+    ]
+  },
+  {
+    id: "seed-tactics-karna",
+    fen: "k7/2p5/1p6/pP1p4/P2P4/8/3K4/2Q5 w - - 0 1",
+    solution_moves: ["c1c6"],
+    motif: "endgame",
+    difficulty: "casual",
+    title: "The Risk of Recklessness",
+    explanation: "Capturing the c7 pawn immediately results in a stalemate. You must check the king first.",
+    clue_levels: [
+      "Look for a forcing move.",
+      "Beware of stalemate if you capture blindly.",
+      "The black king has very few squares.",
+      "Force the king to move before capturing.",
+      "Play Qc6+."
+    ]
+  },
+  {
+    id: "seed-strategy-krishna",
+    fen: "4r1k1/5ppp/8/3Q4/8/8/4q1PP/5R1K w - - 0 1",
+    solution_moves: ["d5f7"],
+    motif: "mate",
+    difficulty: "club",
+    title: "The Difficult Choice",
+    explanation: "Sacrificing the queen will eventually lead to a forced back-rank mate.",
+    clue_levels: [
+      "Look at the weakness on f7 and the back rank.",
+      "Your queen and rook coordinate on f7.",
+      "A check on f7 forces the king into the corner.",
+      "Sometimes the most valuable piece must be given up.",
+      "Play Qxf7+."
+    ]
   }
 ];

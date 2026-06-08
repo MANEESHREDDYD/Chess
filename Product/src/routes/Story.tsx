@@ -248,6 +248,7 @@ export default function Story() {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '2rem' }}>
       <h1 style={{ marginBottom: '0.5rem' }}>The Kurukshetra Campaign</h1>
+      <h3 style={{ marginTop: 0, marginBottom: '2rem', color: 'var(--ink-soft)' }}>Act I: The Gathering</h3>
       
       {activePlayer.calibration_status !== 'complete' && (
         <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 4, marginBottom: '2rem' }}>
@@ -281,9 +282,11 @@ export default function Story() {
                 <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: '0.25rem' }}>
                   Chapter {chapter.chapter_number}
                 </div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{chapter.title}</h3>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: status === 'locked' ? 'var(--ink-soft)' : 'inherit' }}>
+                  {chapter.title}
+                </h3>
                 <div style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
-                  {chapter.character}
+                  <strong>{chapter.character}</strong> • {chapter.location}
                 </div>
               </div>
               
