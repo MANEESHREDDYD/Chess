@@ -73,22 +73,25 @@ function pickRandom<T>(items: T[], seed?: number): T {
  */
 export function getNextClue(
   puzzle: CluePuzzle,
+  currentStepIndex: number,
   currentHintLevel: number,
   previousClues: string[],
   styleVector?: StyleVector
 ): { clue: string; newHintLevel: number } {
   let level = currentHintLevel;
-  if (level >= puzzle.clue_levels.length) {
-    level = puzzle.clue_levels.length - 1;
+  const cluesArray = (puzzle.step_clues && puzzle.step_clues[currentStepIndex]) ? puzzle.step_clues[currentStepIndex] : puzzle.clue_levels;
+
+  if (level >= cluesArray.length) {
+    level = cluesArray.length - 1;
   }
   if (level < 0) level = 0;
 
-  let baseClue = puzzle.clue_levels[level];
+  let baseClue = cluesArray[level];
   
   // Avoid exact duplicates
-  while (previousClues.includes(baseClue) && level < puzzle.clue_levels.length - 1) {
+  while (previousClues.includes(baseClue) && level < cluesArray.length - 1) {
     level++;
-    baseClue = puzzle.clue_levels[level];
+    baseClue = cluesArray[level];
   }
 
   // Personalized appendix
@@ -110,14 +113,28 @@ export function getNextClue(
  * Normalizes a move and evaluates if it is the correct solution.
  * Handles SAN or UCI input.
  */
-export function evaluateClueMove(puzzle: CluePuzzle, moveInput: string): { valid: boolean; correct: boolean; normalizedMove?: string } {
-  const chess = new Chess(puzzle.fen);
+export function evaluateClueMove(
+  puzzle: CluePuzzle, 
+  moveInput: string,
+  fenContext: string,
+  currentStepIndex: number = 0
+): { valid: boolean; correct: boolean; normalizedMove?: string } {
+  const chess = new Chess(fenContext);
   
   try {
     const m = chess.move(moveInput);
     if (!m) return { valid: false, correct: false };
     
-    const isCorrect = puzzle.solution_moves.includes(m.lan) || puzzle.solution_moves.includes(m.san);
+    let isCorrect = false;
+    if (puzzle.solution_line && puzzle.solution_line.length > 0) {
+      const expectedMove = puzzle.solution_line[currentStepIndex];
+      if (expectedMove && expectedMove.side === 'user') {
+        isCorrect = expectedMove.move === m.lan || expectedMove.san === m.san;
+      }
+    } else {
+      isCorrect = puzzle.solution_moves.includes(m.lan) || puzzle.solution_moves.includes(m.san);
+    }
+
     return { valid: true, correct: isCorrect, normalizedMove: m.lan };
   } catch (e) {
     // invalid move

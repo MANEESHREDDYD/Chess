@@ -57,9 +57,27 @@ vi.mock('../engine/stockfishBridge', () => ({
   stopThinking: vi.fn(),
 }));
 
+const settingsMocks = vi.hoisted(() => {
+  const mockSettingsState = {
+    activeTheme: 'standard',
+    setActiveTheme: vi.fn(),
+    audioEnabled: true,
+    audioVolume: 0.5,
+  };
+
+  const storeMock: any = <T,>(selector: (state: typeof mockSettingsState) => T): T => {
+    if (typeof selector === 'function') {
+      return selector(mockSettingsState);
+    }
+    return mockSettingsState as any;
+  };
+  storeMock.getState = () => mockSettingsState;
+  
+  return { storeMock };
+});
+
 vi.mock('../state/settingsStore', () => ({
-  useSettingsStore: <T,>(selector: (state: { activeTheme: string; setActiveTheme: (themeId: string) => void }) => T): T =>
-    selector({ activeTheme: 'standard', setActiveTheme: vi.fn() }),
+  useSettingsStore: settingsMocks.storeMock,
 }));
 
 describe('Mirror match persistence failure recovery', () => {

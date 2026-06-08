@@ -59,7 +59,6 @@ describe('Story Progress', () => {
         chapter_id,
         status: chapter_id === 'ch1_apprentice_arrives' ? 'complete' : 'available', // Let's say ch1 is complete
         attempts: 1,
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
     }

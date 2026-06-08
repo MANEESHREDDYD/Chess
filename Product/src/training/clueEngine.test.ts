@@ -43,13 +43,13 @@ describe('clueEngine', () => {
 
   it('getNextClue increments clue level', () => {
     const puzzle = seedPuzzles[0];
-    const { newHintLevel } = getNextClue(puzzle, 0, []);
+    const { newHintLevel } = getNextClue(puzzle, 0, 0, []);
     expect(newHintLevel).toBe(1);
   });
 
   it('getNextClue avoids exact duplicate clue text', () => {
     const puzzle = seedPuzzles[0];
-    const { clue, newHintLevel } = getNextClue(puzzle, 0, [puzzle.clue_levels[0]]);
+    const { clue, newHintLevel } = getNextClue(puzzle, 0, 0, [puzzle.clue_levels[0]]);
     // Should skip level 0 because it's in previousClues
     expect(clue.trim()).toBe(puzzle.clue_levels[1]);
     expect(newHintLevel).toBe(2);
@@ -57,28 +57,28 @@ describe('clueEngine', () => {
 
   it('getNextClue adds time pressure appendix for high blunder rate', () => {
     const puzzle = seedPuzzles[0];
-    const { clue } = getNextClue(puzzle, 0, [], mockStyleVector);
+    const { clue } = getNextClue(puzzle, 0, 0, [], mockStyleVector);
     expect(clue).toContain('Take your time');
   });
 
   it('evaluateClueMove accepts correct move', () => {
     // using seed-mate-1: 6k1/5ppp/8/8/8/8/8/1R4K1 w - - 0 1 -> b1b8
     const puzzle = seedPuzzles.find(p => p.id === 'seed-mate-1')!;
-    const res = evaluateClueMove(puzzle, 'b1b8');
+    const res = evaluateClueMove(puzzle, 'b1b8', puzzle.fen);
     expect(res.valid).toBe(true);
     expect(res.correct).toBe(true);
   });
 
   it('evaluateClueMove rejects wrong move', () => {
     const puzzle = seedPuzzles.find(p => p.id === 'seed-mate-1')!;
-    const res = evaluateClueMove(puzzle, 'g1h1');
+    const res = evaluateClueMove(puzzle, 'g1h1', puzzle.fen);
     expect(res.valid).toBe(true);
     expect(res.correct).toBe(false);
   });
 
   it('evaluateClueMove rejects illegal move', () => {
     const puzzle = seedPuzzles.find(p => p.id === 'seed-mate-1')!;
-    const res = evaluateClueMove(puzzle, 'a1a2'); // no piece on a1
+    const res = evaluateClueMove(puzzle, 'a1a2', puzzle.fen); // no piece on a1
     expect(res.valid).toBe(false);
   });
 });

@@ -165,6 +165,11 @@ export interface ClueAttemptRecord {
   started_at: string;
   completed_at?: string;
   created_at: string;
+  current_step?: number;
+  solved_steps?: number;
+  total_steps?: number;
+  line_attempts?: string[];
+  failed_step?: number;
   metadata?: Record<string, unknown>;
 }
 

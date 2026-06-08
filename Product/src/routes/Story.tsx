@@ -7,8 +7,8 @@ import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { BoardView } from '../components/Board/BoardView';
 import { Link } from 'react-router-dom';
 import { seedPuzzles } from '../data/cluePuzzles';
-import { getNextClue, evaluateClueMove } from '../training/clueEngine';
-import { Chess } from 'chess.js';
+import { usePuzzleSequence } from '../training/usePuzzleSequence';
+
 import { useGameStore } from '../state/gameStore';
 import { useAudioFx } from '../audio/useAudioFx';
 import { audioEngine } from '../audio/audioEngine';
@@ -55,18 +55,30 @@ function StoryEncounterView({
   useAudioFx(history);
 
   // -- Clue Puzzle State --
-  const [puzzleFen, setPuzzleFen] = useState('');
-  const [puzzleSolved, setPuzzleSolved] = useState(false);
-  const [puzzleFailed, setPuzzleFailed] = useState(false);
-  const [cluesRevealed, setCluesRevealed] = useState<string[]>([]);
-  const [hintLevel, setHintLevel] = useState(0);
-  
+  // -- Clue Puzzle State --
   const puzzle = useMemo(() => {
     if (encounter.type === 'clue_puzzle' && encounter.puzzle_id) {
-      return seedPuzzles.find(p => p.id === encounter.puzzle_id);
+      return seedPuzzles.find(p => p.id === encounter.puzzle_id) || null;
     }
     return null;
   }, [encounter]);
+
+  const {
+    fen: puzzleFen,
+    currentStepIndex,
+    totalSteps,
+    isMultiMove,
+    solved: puzzleSolved,
+    failed: puzzleFailed,
+    opponentReply,
+    cluesRevealed,
+    hintLevel,
+    handleGetClue,
+    handleUserMove,
+    restart
+  } = usePuzzleSequence(puzzle);
+  
+
 
   useEffect(() => {
     if (encounter.type === 'play_engine' && !hasStartedEngineRef.current) {
@@ -75,11 +87,7 @@ function StoryEncounterView({
     }
   }, [encounter, startGame]);
 
-  useEffect(() => {
-    if (puzzle && !puzzleFen) {
-      setPuzzleFen(puzzle.fen);
-    }
-  }, [puzzle, puzzleFen]);
+
 
   // Check Play Engine completion (e.g. survive max_moves)
   useEffect(() => {
@@ -96,39 +104,18 @@ function StoryEncounterView({
 
   const handlePieceDrop = (sourceSquare: string, targetSquare: string, promotion?: string) => {
     if (encounter.type === 'play_engine') {
-      return makePlayerMove(sourceSquare, targetSquare, promotion);
+      return makePlayerMove(sourceSquare, targetSquare, promotion as "b" | "q" | "r" | "n" | undefined);
     } 
     
     if (encounter.type === 'clue_puzzle' && puzzle && !puzzleSolved) {
       const moveStr = `${sourceSquare}${targetSquare}${promotion || ''}`;
-      const { valid, correct } = evaluateClueMove(puzzle, moveStr);
-      if (!valid) return false;
-      
-      if (correct) {
-        const chess = new Chess(puzzleFen);
-        chess.move(moveStr);
-        setPuzzleFen(chess.fen());
-        setPuzzleSolved(true);
-        setPuzzleFailed(false);
-        const { audioEnabled, audioVolume } = useSettingsStore.getState();
-        if (audioEnabled) audioEngine.playPuzzleSuccessSound({ theme: activeTheme, volume: audioVolume });
-      } else {
-        setPuzzleFailed(true);
-        const { audioEnabled, audioVolume } = useSettingsStore.getState();
-        if (audioEnabled) audioEngine.playPuzzleFailureSound({ theme: activeTheme, volume: audioVolume });
-      }
-      return correct;
+      return handleUserMove(moveStr);
     }
     
     return false;
   };
 
-  const handleGetClue = () => {
-    if (!puzzle || puzzleSolved) return;
-    const { clue, newHintLevel } = getNextClue(puzzle, hintLevel, cluesRevealed, undefined);
-    setCluesRevealed([...cluesRevealed, clue]);
-    setHintLevel(newHintLevel);
-  };
+
 
   const isComplete = (encounter.type === 'play_engine' && (Math.floor(history.length / 2) + (history.length % 2) >= (encounter.max_moves || 999))) || puzzleSolved;
 
@@ -194,12 +181,29 @@ function StoryEncounterView({
               </ul>
               <button 
                 onClick={handleGetClue}
-                disabled={!puzzle || hintLevel >= puzzle.clue_levels.length}
+                disabled={!puzzle || hintLevel >= ((puzzle.step_clues && puzzle.step_clues[currentStepIndex]) ? puzzle.step_clues[currentStepIndex].length : puzzle.clue_levels.length)}
                 className="btn btn-ghost"
               >
                 Get Clue
               </button>
-              {puzzleFailed && <div style={{ color: 'var(--danger-color)', marginTop: '0.5rem', fontSize: '0.9rem' }}>Incorrect move.</div>}
+              {puzzleFailed && (
+                <div style={{ color: 'var(--danger-color)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                  Incorrect move.
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button onClick={restart} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}>Restart Sequence</button>
+                  </div>
+                </div>
+              )}
+              {isMultiMove && (
+                <div style={{ marginTop: '1rem', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                  Step {currentStepIndex + 1} of {totalSteps}
+                </div>
+              )}
+              {opponentReply && (
+                <div style={{ marginTop: '0.5rem', fontStyle: 'italic', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+                  Opponent replies: {opponentReply}
+                </div>
+              )}
             </div>
           )}
         </div>

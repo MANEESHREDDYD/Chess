@@ -57,6 +57,7 @@ describe('openMirrorDb', () => {
       'mirror_matches',
       'players',
       'saved_analyses',
+      'story_progress',
       'style_vectors',
     ]);
 

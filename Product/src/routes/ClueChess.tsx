@@ -3,11 +3,10 @@ import { usePlayerStore } from '../state/playerStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { BoardView } from '../components/Board/BoardView';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
-import { selectCluePuzzle, getNextClue, evaluateClueMove } from '../training/clueEngine';
-import { audioEngine } from '../audio/audioEngine';
+import { selectCluePuzzle } from '../training/clueEngine';
+import { usePuzzleSequence } from '../training/usePuzzleSequence';
 import type { CluePuzzle } from '../data/cluePuzzles';
 import { putClueAttempt, getClueAttemptsForPlayer, getClueStatsForPlayer, type ClueAttemptRecord } from '../data/db';
-import { Chess } from 'chess.js';
 
 export default function ClueChess() {
   const { activePlayer } = usePlayerStore();
@@ -42,12 +41,23 @@ export default function ClueChess() {
   }, [activeTheme]);
 
   const [puzzle, setPuzzle] = useState<CluePuzzle | null>(null);
-  const [fen, setFen] = useState('');
-  const [attempts, setAttempts] = useState<string[]>([]);
-  const [cluesRevealed, setCluesRevealed] = useState<string[]>([]);
-  const [hintLevel, setHintLevel] = useState(0);
-  const [solved, setSolved] = useState(false);
-  const [failed, setFailed] = useState(false);
+  
+  const {
+    fen,
+    currentStepIndex,
+    totalSteps,
+    isMultiMove,
+    solved,
+    failed,
+    opponentReply,
+    cluesRevealed,
+    hintLevel,
+    attempts,
+    handleGetClue,
+    handleUserMove,
+    restart
+  } = usePuzzleSequence(puzzle);
+
   const [stats, setStats] = useState<{ attempt_count: number; solved_rate: number } | null>(null);
   const [previousAttempts, setPreviousAttempts] = useState<ClueAttemptRecord[]>([]);
   const [attemptRecord, setAttemptRecord] = useState<Partial<ClueAttemptRecord> | null>(null);
@@ -70,12 +80,6 @@ export default function ClueChess() {
     // We already have their recent analysis info.
     const nextPuzzle = selectCluePuzzle(activePlayer?.id || 'guest', undefined, previousAttempts);
     setPuzzle(nextPuzzle);
-    setFen(nextPuzzle.fen);
-    setAttempts([]);
-    setCluesRevealed([]);
-    setHintLevel(0);
-    setSolved(false);
-    setFailed(false);
     setStartedAt(Date.now());
     
     setAttemptRecord({
@@ -97,12 +101,7 @@ export default function ClueChess() {
     }
   }, [puzzle, activePlayer, startNextPuzzle]);
 
-  const handleGetClue = () => {
-    if (!puzzle || solved) return;
-    const { clue, newHintLevel } = getNextClue(puzzle, hintLevel, cluesRevealed, undefined);
-    setCluesRevealed((prev) => [...prev, clue]);
-    setHintLevel(newHintLevel);
-  };
+
 
   const finalizeAttempt = async (isSolved: boolean) => {
     if (!attemptRecord || !activePlayer) return;
@@ -116,6 +115,11 @@ export default function ClueChess() {
       time_spent_ms: now - startedAt,
       completed_at: new Date(now).toISOString(),
       created_at: new Date(now).toISOString(),
+      current_step: currentStepIndex,
+      solved_steps: isSolved ? totalSteps : currentStepIndex,
+      total_steps: totalSteps,
+      line_attempts: attempts,
+      failed_step: failed ? currentStepIndex : undefined
     } as ClueAttemptRecord;
     
     await putClueAttempt(finalRecord);
@@ -125,53 +129,24 @@ export default function ClueChess() {
   const handlePieceDrop = (sourceSquare: string, targetSquare: string, promotion?: string) => {
     if (!puzzle || solved) return false;
     
-    // We construct the move
     const moveStr = `${sourceSquare}${targetSquare}${promotion || ''}`;
-    
-    const { valid, correct, normalizedMove } = evaluateClueMove(puzzle, moveStr);
-    
-    if (!valid) {
-      // Invalid move string or illegal move for this FEN
-      return false;
-    }
+    const correct = handleUserMove(moveStr);
 
-    const moveRecord = normalizedMove || moveStr;
-    const newAttempts = [...attempts, moveRecord];
-    setAttempts(newAttempts);
-    
-    if (correct) {
-      setSolved(true);
-      setFailed(false);
-      
-      const { audioEnabled, audioVolume } = useSettingsStore.getState();
-      if (audioEnabled) audioEngine.playPuzzleSuccessSound({ theme: activeTheme, volume: audioVolume });
-
-      // Play move on board
-      const chess = new Chess(fen);
-      chess.move(moveStr);
-      setFen(chess.fen());
-      
-      if (attemptRecord) {
-        setAttemptRecord(prev => prev ? { ...prev, attempted_moves: newAttempts } : null);
-      }
-      
-      if (activePlayer) {
-        // use setImmediate or similar if we want to not block render, but async is fine
-        finalizeAttempt(true).catch(console.error);
-      }
-      return true;
-    } else {
-      setFailed(true);
-      
-      const { audioEnabled, audioVolume } = useSettingsStore.getState();
-      if (audioEnabled) audioEngine.playPuzzleFailureSound({ theme: activeTheme, volume: audioVolume });
-      
-      if (attemptRecord) {
-        setAttemptRecord(prev => prev ? { ...prev, attempted_moves: newAttempts } : null);
-      }
-      return false;
+    if (attemptRecord) {
+      setAttemptRecord(prev => prev ? { ...prev, attempted_moves: [...attempts, moveStr] } : null);
     }
+    
+    // Auto finalize if solved
+    // React state for `solved` hasn't updated yet, so we have to check what handleUserMove returned and the step count
+    // But it's easier to use a useEffect on `solved`
+    return correct;
   };
+
+  useEffect(() => {
+    if (solved && activePlayer) {
+      finalizeAttempt(true).catch(console.error);
+    }
+  }, [solved, activePlayer]);
 
   if (!puzzle) {
     return <div style={{ padding: '2rem' }}>Loading puzzle...</div>;
@@ -224,11 +199,21 @@ export default function ClueChess() {
             {!solved && (
               <button 
                 onClick={handleGetClue}
-                disabled={hintLevel >= puzzle.clue_levels.length}
+                disabled={hintLevel >= ((puzzle.step_clues && puzzle.step_clues[currentStepIndex]) ? puzzle.step_clues[currentStepIndex].length : puzzle.clue_levels.length)}
                 style={{ background: 'var(--primary-color)', color: 'white', padding: '0.5rem 1rem', border: 'none', borderRadius: 4, cursor: 'pointer', marginTop: '1rem' }}
               >
-                {hintLevel >= puzzle.clue_levels.length ? 'No more hints' : 'Get Clue'}
+                Get Clue
               </button>
+            )}
+            {isMultiMove && !solved && (
+              <div style={{ marginTop: '1rem', fontWeight: 'bold' }}>
+                Step {currentStepIndex + 1} of {totalSteps}
+              </div>
+            )}
+            {opponentReply && !solved && (
+              <div style={{ marginTop: '0.5rem', fontStyle: 'italic', color: 'var(--ink-soft)' }}>
+                Opponent replies: {opponentReply}
+              </div>
             )}
           </div>
 
@@ -236,6 +221,9 @@ export default function ClueChess() {
             {failed && !solved && (
               <div style={{ color: 'var(--danger-color)', fontWeight: 'bold' }}>
                 Incorrect move. Try again or get a clue!
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button onClick={restart} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}>Restart Sequence</button>
+                </div>
               </div>
             )}
             {solved && (

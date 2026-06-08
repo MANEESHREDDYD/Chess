@@ -174,7 +174,7 @@ export const mahabharataStorySeed: StoryChapter[] = [
       type: 'clue_puzzle',
       side: 'white',
       objective: 'Sacrifice the queen to force checkmate.',
-      puzzle_id: 'seed-strategy-krishna'
+      puzzle_id: 'seed-multi-mate-1'
     },
     theme: 'mahabharata'
   }
