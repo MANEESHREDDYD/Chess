@@ -45,3 +45,17 @@
   --space-8: 32px;
   --space-12: 48px;
 }
+
+.theme-mahabharata {
+  --bg: #ecd7b7; /* Sandy warm tone */
+  --bg-deep: #e1c7a1;
+  --paper: #f7eedb;
+  --paper-warm: #ebdcb9;
+
+  --ink: #2a1b12;
+  --ink-soft: #4a3627;
+  --ink-faded: #7d6551;
+
+  --rule: #c8a379;
+  --rule-soft: #dac4a8;
+}

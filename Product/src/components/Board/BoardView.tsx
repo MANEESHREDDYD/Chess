@@ -35,6 +35,20 @@ export function BoardView({
 }: BoardViewProps) {
   const boardFrameRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(520);
+  const [flashCapture, setFlashCapture] = useState(false);
+  const prevFenRef = useRef(fen);
+
+  useEffect(() => {
+    if (fen !== prevFenRef.current) {
+      // Check if piece count decreased
+      const countPieces = (f: string) => f.split(' ')[0].replace(/[^a-zA-Z]/g, '').length;
+      if (countPieces(fen) < countPieces(prevFenRef.current)) {
+        setFlashCapture(true);
+        setTimeout(() => setFlashCapture(false), 400);
+      }
+      prevFenRef.current = fen;
+    }
+  }, [fen]);
 
   useEffect(() => {
     const frame = boardFrameRef.current;
@@ -79,10 +93,12 @@ export function BoardView({
     ? {
         borderRadius: '4px',
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        backgroundImage: `url(${getThemeAssetUrl(themeManifest.id, themeManifest.board.background)})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        ...(themeManifest.board.background ? {
+          backgroundImage: `url(${getThemeAssetUrl(themeManifest.id, themeManifest.board.background)})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        } : {})
       }
     : {
         borderRadius: '4px',
@@ -94,23 +110,37 @@ export function BoardView({
     return onPieceDrop(sourceSquare, targetSquare);
   };
 
+  const isMahabharata = themeManifest?.id === 'mahabharata';
+
   return (
-    <div className="board-frame" ref={boardFrameRef}>
-      {themeError ? <p className="board-theme-error">Theme load failed: {themeError}</p> : null}
-      <Chessboard
-        position={fen}
-        onPieceDrop={handleDrop}
-        onPromotionCheck={onPromotionCheck}
-        onPromotionPieceSelect={onPromotionPieceSelect}
-        boardOrientation={playerColor}
-        boardWidth={boardWidth}
-        customBoardStyle={boardStyle}
-        customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: '#5c3e2a' }}
-        customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: '#e8dcc4' }}
-        customPieces={customPieces}
-        animationDuration={240}
-        arePremovesAllowed={false}
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '520px' }}>
+      {isMahabharata && (
+        <div style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: 600, textAlign: playerColor === 'white' ? 'left' : 'right', opacity: 0.8 }}>
+          {playerColor === 'white' ? 'Kaurava (Black)' : 'Pandava (White)'}
+        </div>
+      )}
+      <div className={`board-frame ${flashCapture ? 'capture-flash' : ''}`} ref={boardFrameRef}>
+        {themeError ? <p className="board-theme-error">Theme load failed: {themeError}</p> : null}
+        <Chessboard
+          position={fen}
+          onPieceDrop={handleDrop}
+          onPromotionCheck={onPromotionCheck}
+          onPromotionPieceSelect={onPromotionPieceSelect}
+          boardOrientation={playerColor}
+          boardWidth={boardWidth}
+          customBoardStyle={boardStyle}
+          customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: '#5c3e2a' }}
+          customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: '#e8dcc4' }}
+          customPieces={customPieces}
+          animationDuration={240}
+          arePremovesAllowed={false}
+        />
+      </div>
+      {isMahabharata && (
+        <div style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: 600, textAlign: playerColor === 'white' ? 'right' : 'left', opacity: 0.8 }}>
+          {playerColor === 'white' ? 'Pandava (White)' : 'Kaurava (Black)'}
+        </div>
+      )}
     </div>
   );
 }

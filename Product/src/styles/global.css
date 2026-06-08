@@ -229,7 +229,23 @@ body {
   justify-content: center;
 }
 
-.board-frame { width: 100%; max-width: 520px; }
+.board-frame { 
+  width: 100%; 
+  max-width: 520px; 
+  border-radius: 4px;
+  transition: box-shadow 0.3s ease-out;
+}
+
+@keyframes capture-flash {
+  0% { box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0px 0px rgba(230, 180, 100, 0); }
+  50% { box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 30px 10px rgba(230, 180, 100, 0.6); }
+  100% { box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0px 0px rgba(230, 180, 100, 0); }
+}
+
+.capture-flash {
+  animation: capture-flash 0.4s ease-out;
+}
+
 
 /* ---------- Mirror ---------- */
 

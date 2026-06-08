@@ -10,16 +10,18 @@ import DevMirrorVerification from './routes/DevMirrorVerification';
 import DevInspector from './routes/DevInspector';
 import { useEffect } from 'react';
 import { usePlayerStore } from './state/playerStore';
+import { useSettingsStore } from './state/settingsStore';
 
 export default function App() {
   const loadActivePlayer = usePlayerStore(s => s.loadActivePlayer);
+  const { activeTheme, setActiveTheme } = useSettingsStore();
 
   useEffect(() => {
     void loadActivePlayer();
   }, [loadActivePlayer]);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${activeTheme === 'mahabharata' ? 'theme-mahabharata' : ''}`}>
       <header className="app-header">
         <Link to="/" className="brand">
           MIRROR
@@ -31,6 +33,17 @@ export default function App() {
           <Link to="/play">Play</Link>
           <Link to="/about">About</Link>
         </nav>
+        <div className="theme-toggle" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Theme:</span>
+          <select 
+            value={activeTheme} 
+            onChange={(e) => setActiveTheme(e.target.value)}
+            style={{ padding: '0.2rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--surface-color)' }}
+          >
+            <option value="standard">Classic</option>
+            <option value="mahabharata">Kurukshetra</option>
+          </select>
+        </div>
       </header>
       <main className="app-main">
         <Routes>

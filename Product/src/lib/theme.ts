@@ -39,11 +39,19 @@ export function getThemeManifestUrl(themeId: string): string {
 }
 
 export function getThemeAssetUrl(themeId: string, assetPath: string): string {
+  if (assetPath.startsWith('data:') || assetPath.startsWith('http')) {
+    return assetPath;
+  }
   return `${THEME_ROOT}/${themeId}/${assetPath}`;
 }
 
 export async function loadThemeManifest(themeId: ThemeId): Promise<ThemeManifest | null> {
   if (themeId === 'standard') return null;
+
+  if (themeId === 'mahabharata') {
+    const { mahabharataManifest } = await import('../theme/mahabharataTheme');
+    return mahabharataManifest;
+  }
 
   const response = await fetch(getThemeManifestUrl(themeId));
   if (!response.ok) {

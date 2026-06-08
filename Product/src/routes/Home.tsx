@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { usePlayerStore } from '../state/playerStore';
+import { useSettingsStore } from '../state/settingsStore';
 import { getLocalMatchesForPlayer } from '../data/db';
 
 export default function Home() {
   const { activePlayer, clearActivePlayer } = usePlayerStore();
+  const { activeTheme } = useSettingsStore();
   const [matchCount, setMatchCount] = useState(0);
 
   useEffect(() => {
@@ -13,18 +15,21 @@ export default function Home() {
     }
   }, [activePlayer]);
 
+  const isKurukshetra = activeTheme === 'mahabharata';
+
   return (
     <div className="home">
       <div className="home-hero">
-        <div className="home-eyebrow">A local-first chess prototype</div>
+        <div className="home-eyebrow">
+          {isKurukshetra ? '✦ Kurukshetra Theme Active ✦' : 'A local-first chess prototype'}
+        </div>
         <h1 className="home-title">
           Play a chess opponent <br /> built from how <em>you</em> play.
         </h1>
         <p className="home-lede">
           MIRROR is an experiment. We are testing whether a chess opponent calibrated to your
           specific style - your openings, your time pressure, your tactical blind spots - actually
-          feels like you. The current MVP includes calibration, free play, the Mirror match, and an
-          optional Kurukshetra board theme. No signup; games stay on your device.
+          feels like you.
         </p>
         
         {activePlayer ? (
