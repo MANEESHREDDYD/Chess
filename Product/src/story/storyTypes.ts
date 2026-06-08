@@ -20,6 +20,8 @@ export interface StoryEncounter {
 
 export interface StoryChapter {
   id: string;
+  act_number?: number;
+  act_title?: string;
   chapter_number: number;
   title: string;
   subtitle?: string;

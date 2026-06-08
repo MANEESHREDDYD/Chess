@@ -3,6 +3,8 @@ import type { StoryChapter } from './storyTypes';
 export const mahabharataStorySeed: StoryChapter[] = [
   {
     id: 'ch1_apprentice_arrives',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 1,
     title: 'The Apprentice Arrives',
     subtitle: 'The Frame of the Epic',
@@ -30,6 +32,8 @@ export const mahabharataStorySeed: StoryChapter[] = [
   },
   {
     id: 'ch2_honest_move',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 2,
     title: 'The Honest Move',
     subtitle: 'A Lesson in Principle',
@@ -53,6 +57,8 @@ export const mahabharataStorySeed: StoryChapter[] = [
   },
   {
     id: 'ch3_fork_in_field',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 3,
     title: 'The Fork in the Field',
     subtitle: 'The Archer\'s Dilemma',
@@ -76,6 +82,8 @@ export const mahabharataStorySeed: StoryChapter[] = [
   },
   {
     id: 'ch4_direct_path',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 4,
     title: 'The Direct Path',
     subtitle: 'The Mace\'s Strike',
@@ -102,6 +110,8 @@ export const mahabharataStorySeed: StoryChapter[] = [
   },
   {
     id: 'ch5_teachers_position',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 5,
     title: 'The Teacher\'s Position',
     subtitle: 'Seeing the Whole Board',
@@ -128,6 +138,8 @@ export const mahabharataStorySeed: StoryChapter[] = [
   },
   {
     id: 'ch6_risk_of_fire',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 6,
     title: 'The Risk of Fire',
     subtitle: 'Courage and Calculation',
@@ -154,6 +166,8 @@ export const mahabharataStorySeed: StoryChapter[] = [
   },
   {
     id: 'ch7_difficult_choice',
+    act_number: 1,
+    act_title: 'Act I',
     chapter_number: 7,
     title: 'The Difficult Choice',
     subtitle: 'Sacrifice and Duty',
@@ -177,5 +191,146 @@ export const mahabharataStorySeed: StoryChapter[] = [
       puzzle_id: 'seed-multi-mate-1'
     },
     theme: 'mahabharata'
+  },
+  {
+    id: 'ch8_circle_narrows',
+    act_number: 2,
+    act_title: 'Act II',
+    chapter_number: 8,
+    title: 'The Circle Narrows',
+    subtitle: 'Courage and Awareness',
+    character: 'Abhimanyu',
+    location: 'The Chakravyuha',
+    required_previous_chapter_id: 'ch7_difficult_choice',
+    intro_dialogue: [
+      { speaker: 'Abhimanyu', text: 'To enter the formation requires courage. To survive it requires sight.', tone: 'teacher' },
+      { speaker: 'Abhimanyu', text: 'You are surrounded. Every enemy piece converges on you. Find the precise defense to weather the storm.', tone: 'narrator' }
+    ],
+    win_dialogue: [
+      { speaker: 'Abhimanyu', text: 'You held the line. Courage is nothing without the calculation to sustain it.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Abhimanyu', text: 'You panicked under pressure. Look calmly at the board.', tone: 'teacher' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Defend the pinned piece and prepare for the trade.',
+      puzzle_id: 'seed-multi-defense-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch9_unbroken_vow',
+    act_number: 2,
+    act_title: 'Act II',
+    chapter_number: 9,
+    title: 'The Unbroken Vow',
+    subtitle: 'Resilience',
+    character: 'Draupadi',
+    location: 'The Royal Court',
+    required_previous_chapter_id: 'ch8_circle_narrows',
+    intro_dialogue: [
+      { speaker: 'Draupadi', text: 'There are moments when the position seems utterly lost, when humiliation feels certain.', tone: 'narrator' },
+      { speaker: 'Draupadi', text: 'But true resilience is finding the single move that maintains your dignity. Find the exact defensive resource.', tone: 'teacher' }
+    ],
+    win_dialogue: [
+      { speaker: 'Draupadi', text: 'You did not break. The game continues.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Draupadi', text: 'You yielded too easily. There is always a resource if you look for it.', tone: 'teacher' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Find the only precise move to block the check.',
+      puzzle_id: 'seed-defensive-resource-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch10_night_tactic',
+    act_number: 2,
+    act_title: 'Act II',
+    chapter_number: 10,
+    title: 'The Night Tactic',
+    subtitle: 'Disruption',
+    character: 'Ghatotkacha',
+    location: 'The Night Camp',
+    required_previous_chapter_id: 'ch9_unbroken_vow',
+    intro_dialogue: [
+      { speaker: 'Ghatotkacha', text: 'When the enemy feels safe, that is when you tear down their illusions.', tone: 'teacher' },
+      { speaker: 'Ghatotkacha', text: 'Sacrifice what you must. Disrupt their lines. Give them no time to breathe.', tone: 'narrator' }
+    ],
+    win_dialogue: [
+      { speaker: 'Ghatotkacha', text: 'A brilliant disruption! The enemy structure is shattered.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Ghatotkacha', text: 'Too hesitant. In the chaos of night, you must act decisively.', tone: 'teacher' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Sacrifice the queen for a smothered mate.',
+      puzzle_id: 'seed-multi-disrupt-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch11_hidden_file',
+    act_number: 2,
+    act_title: 'Act II',
+    chapter_number: 11,
+    title: 'The Hidden File',
+    subtitle: 'Discovered Alignments',
+    character: 'Shikhandi',
+    location: 'Behind the Vanguard',
+    required_previous_chapter_id: 'ch10_night_tactic',
+    intro_dialogue: [
+      { speaker: 'Shikhandi', text: 'The most lethal attack is the one the enemy cannot see until it is too late.', tone: 'narrator' },
+      { speaker: 'Shikhandi', text: 'Your pieces align, but the threat is masked. Remove the mask and strike.', tone: 'teacher' }
+    ],
+    win_dialogue: [
+      { speaker: 'Shikhandi', text: 'Perfectly executed. The true threat was there all along.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Shikhandi', text: 'You revealed your hand without consequence. Look for the double threat.', tone: 'teacher' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Execute the discovered attack to win material.',
+      puzzle_id: 'seed-discovered-attack-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch12_field_before_dawn',
+    act_number: 2,
+    act_title: 'Act II',
+    chapter_number: 12,
+    title: 'The Field Before Dawn',
+    subtitle: 'Synthesis',
+    character: 'Vyasa',
+    location: 'The Hermitage',
+    required_previous_chapter_id: 'ch11_hidden_file',
+    intro_dialogue: [
+      { speaker: 'Vyasa', text: 'You have seen defense, sacrifice, disruption, and discovery.', tone: 'narrator' },
+      { speaker: 'Vyasa', text: 'Now, synthesize these lessons. The patterns are everywhere if you know how to look.', tone: 'teacher' }
+    ],
+    win_dialogue: [
+      { speaker: 'Vyasa', text: 'You begin to see the board as it truly is. We are ready for the next phase.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Vyasa', text: 'You have forgotten the lessons. Start again.', tone: 'teacher' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Deliver the final back-rank mate.',
+      puzzle_id: 'seed-mixed-motif-1'
+    },
+    theme: 'mahabharata'
   }
 ];
+

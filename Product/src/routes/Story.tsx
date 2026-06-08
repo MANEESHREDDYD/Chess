@@ -266,7 +266,6 @@ export default function Story() {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '2rem' }}>
       <h1 style={{ marginBottom: '0.5rem' }}>The Kurukshetra Campaign</h1>
-      <h3 style={{ marginTop: 0, marginBottom: '2rem', color: 'var(--ink-soft)' }}>Act I: The Gathering</h3>
       
       {activePlayer.calibration_status !== 'complete' && (
         <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 4, marginBottom: '2rem' }}>
@@ -280,42 +279,56 @@ export default function Story() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {mahabharataStorySeed.map(chapter => {
-          const rec = progress.find(p => p.chapter_id === chapter.id);
-          const status = rec?.status || 'locked';
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+        {Array.from(new Set(mahabharataStorySeed.map(c => c.act_number || 1))).map(actNum => {
+          const chaptersInAct = mahabharataStorySeed.filter(c => (c.act_number || 1) === actNum);
+          const actTitle = chaptersInAct[0]?.act_title || `Act ${actNum}`;
           
           return (
-            <div key={chapter.id} style={{ 
-              padding: '1.5rem', 
-              background: status === 'locked' ? 'var(--surface-sunken)' : 'var(--paper)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 8,
-              opacity: status === 'locked' ? 0.6 : 1,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: '0.25rem' }}>
-                  Chapter {chapter.chapter_number}
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: status === 'locked' ? 'var(--ink-soft)' : 'inherit' }}>
-                  {chapter.title}
-                </h3>
-                <div style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
-                  <strong>{chapter.character}</strong> • {chapter.location}
-                </div>
-              </div>
-              
-              <div>
-                {status === 'complete' && <span style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Complete</span>}
-                {status === 'locked' && <span style={{ color: 'var(--ink-soft)' }}>Locked</span>}
-                {status === 'available' && (
-                  <button onClick={() => setActiveChapterId(chapter.id)} className="btn btn-primary">
-                    Begin
-                  </button>
-                )}
+            <div key={actNum}>
+              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--ink-soft)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                {actTitle}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {chaptersInAct.map(chapter => {
+                  const rec = progress.find(p => p.chapter_id === chapter.id);
+                  const status = rec?.status || 'locked';
+                  
+                  return (
+                    <div key={chapter.id} style={{ 
+                      padding: '1.5rem', 
+                      background: status === 'locked' ? 'var(--surface-sunken)' : 'var(--paper)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 8,
+                      opacity: status === 'locked' ? 0.6 : 1,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: '0.25rem' }}>
+                          Chapter {chapter.chapter_number}
+                        </div>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: status === 'locked' ? 'var(--ink-soft)' : 'inherit' }}>
+                          {chapter.title}
+                        </h3>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
+                          <strong>{chapter.character}</strong> • {chapter.location}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        {status === 'complete' && <span style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Complete</span>}
+                        {status === 'locked' && <span style={{ color: 'var(--ink-soft)' }}>Locked</span>}
+                        {status === 'available' && (
+                          <button onClick={() => setActiveChapterId(chapter.id)} className="btn btn-primary">
+                            Begin
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );

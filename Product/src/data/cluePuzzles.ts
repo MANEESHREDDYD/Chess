@@ -11,7 +11,7 @@ export interface CluePuzzle {
   fen: string;
   solution_moves: string[];
   solution_line?: PuzzleLineStep[];
-  motif: "fork" | "pin" | "skewer" | "removing_the_defender" | "mate" | "hanging_piece" | "endgame" | "opening" | "unknown";
+  motif: "fork" | "pin" | "skewer" | "removing_the_defender" | "mate" | "hanging_piece" | "endgame" | "opening" | "defense" | "sacrifice" | "discovered_attack" | "unknown";
   difficulty: "beginner" | "casual" | "club" | "strong";
   title: string;
   explanation: string;
@@ -499,5 +499,103 @@ export const seedPuzzles: CluePuzzle[] = [
       0: ["Deliver a check with the bishop.", "Bxf7+ forces the king out."],
       2: ["Now jump in with the knight for checkmate.", "Nd5 covers all escape squares."]
     }
+  },
+  {
+    id: "seed-multi-defense-1",
+    fen: "6k1/p4ppp/8/8/8/8/5PPP/r3N1K1 w - - 0 1",
+    solution_moves: ["g1f1"],
+    solution_line: [
+      { ply: 1, side: "user", move: "g1f1", san: "Kf1" },
+      { ply: 2, side: "opponent", move: "a1e1", san: "Rxe1+" },
+      { ply: 3, side: "user", move: "f1e1", san: "Kxe1" }
+    ],
+    motif: "defense",
+    difficulty: "casual",
+    title: "The Circle Narrows",
+    explanation: "Defend the pinned knight with your king, preparing for the inevitable trade.",
+    clue_levels: [
+      "Your knight is pinned and under attack.",
+      "You cannot save the knight by moving it.",
+      "Defend it with your king."
+    ],
+    step_clues: {
+      0: ["Bring your king to defend the knight on e1.", "Play Kf1."],
+      2: ["Recapture the rook.", "Play Kxe1."]
+    }
+  },
+  {
+    id: "seed-defensive-resource-1",
+    fen: "6k1/p4ppp/8/3q4/8/8/5PKP/8 w - - 0 1",
+    solution_moves: ["f2f3"],
+    motif: "defense",
+    difficulty: "casual",
+    title: "The Unbroken Vow",
+    explanation: "The white king is in check. Blocking with the f-pawn is the only precise defense.",
+    clue_levels: [
+      "You are in check from the queen on d5.",
+      "Moving the king leads to disaster.",
+      "Block the diagonal.",
+      "Push the f-pawn."
+    ]
+  },
+  {
+    id: "seed-multi-disrupt-1",
+    fen: "r1b2r1k/1pp3pp/p7/4Np2/2Q5/8/PP3PPP/R5K1 w - - 0 1",
+    solution_moves: ["e5f7"],
+    solution_line: [
+      { ply: 1, side: "user", move: "e5f7", san: "Nf7+" },
+      { ply: 2, side: "opponent", move: "h8g8", san: "Kg8" },
+      { ply: 3, side: "user", move: "f7h6", san: "Nh6+" },
+      { ply: 4, side: "opponent", move: "g8h8", san: "Kh8" },
+      { ply: 5, side: "user", move: "c4g8", san: "Qg8+" },
+      { ply: 6, side: "opponent", move: "f8g8", san: "Rxg8" },
+      { ply: 7, side: "user", move: "h6f7", san: "Nf7#" }
+    ],
+    motif: "sacrifice",
+    difficulty: "strong",
+    title: "The Night Tactic",
+    explanation: "A classic smothered mate sequence involving a double check and a beautiful queen sacrifice.",
+    clue_levels: [
+      "Look for a forced sequence starting with a knight check.",
+      "You can force the king into the corner.",
+      "Prepare a double check.",
+      "Sacrifice your queen to smother the king."
+    ],
+    step_clues: {
+      0: ["Check with the knight on f7.", "Play Nf7+."],
+      2: ["Deliver a double check with the knight.", "Play Nh6+."],
+      4: ["Sacrifice the queen to force the rook away from the back rank.", "Play Qg8+."],
+      6: ["The king is smothered. Deliver the final blow.", "Play Nf7#."]
+    }
+  },
+  {
+    id: "seed-discovered-attack-1",
+    fen: "6k1/p2q1ppp/8/8/3B4/8/5PPP/3R2K1 w - - 0 1",
+    solution_moves: ["d4g7"],
+    motif: "discovered_attack",
+    difficulty: "casual",
+    title: "The Hidden File",
+    explanation: "Moving the bishop reveals an attack from the rook on the black queen.",
+    clue_levels: [
+      "Look at the alignment on the d-file.",
+      "Your bishop is blocking your rook.",
+      "Move the bishop with a threat.",
+      "Play Bxg7 to win material."
+    ]
+  },
+  {
+    id: "seed-mixed-motif-1",
+    fen: "6k1/p4ppp/1q6/8/8/8/5PPP/2R3K1 w - - 0 1",
+    solution_moves: ["c1c8"],
+    motif: "mate",
+    difficulty: "beginner",
+    title: "The Field Before Dawn",
+    explanation: "A classic back-rank mate concludes the act.",
+    clue_levels: [
+      "The black king has no escape squares.",
+      "The back rank is completely undefended.",
+      "Move your rook.",
+      "Play Rc8#."
+    ]
   }
 ];
