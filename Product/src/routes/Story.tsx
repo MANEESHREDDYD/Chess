@@ -10,6 +10,8 @@ import { seedPuzzles } from '../data/cluePuzzles';
 import { getNextClue, evaluateClueMove } from '../training/clueEngine';
 import { Chess } from 'chess.js';
 import { useGameStore } from '../state/gameStore';
+import { useAudioFx } from '../audio/useAudioFx';
+import { audioEngine } from '../audio/audioEngine';
 
 function StoryEncounterView({ 
   chapter, 
@@ -49,6 +51,8 @@ function StoryEncounterView({
   // -- Play Engine State --
   const { fen: gameFen, status: gameStatus, engineThinking, startGame, makePlayerMove, history } = useGameStore();
   const hasStartedEngineRef = useRef(false);
+
+  useAudioFx(history);
 
   // -- Clue Puzzle State --
   const [puzzleFen, setPuzzleFen] = useState('');
@@ -106,8 +110,12 @@ function StoryEncounterView({
         setPuzzleFen(chess.fen());
         setPuzzleSolved(true);
         setPuzzleFailed(false);
+        const { audioEnabled, audioVolume } = useSettingsStore.getState();
+        if (audioEnabled) audioEngine.playPuzzleSuccessSound({ theme: activeTheme, volume: audioVolume });
       } else {
         setPuzzleFailed(true);
+        const { audioEnabled, audioVolume } = useSettingsStore.getState();
+        if (audioEnabled) audioEngine.playPuzzleFailureSound({ theme: activeTheme, volume: audioVolume });
       }
       return correct;
     }
@@ -221,6 +229,12 @@ export default function Story() {
   const handleChapterComplete = async (chapterId: string, result?: 'win'|'loss'|'draw') => {
     if (!activePlayer) return;
     await completeStoryChapter(activePlayer.id, chapterId, result);
+    
+    if (result === 'win') {
+      const { audioEnabled, audioVolume } = useSettingsStore.getState();
+      if (audioEnabled) audioEngine.playStoryCompleteSound({ theme: activeTheme, volume: audioVolume });
+    }
+    
     const records = await getStoryProgressForPlayer(activePlayer.id);
     setProgress(records);
     setActiveChapterId(null);

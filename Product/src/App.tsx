@@ -15,7 +15,7 @@ import { useSettingsStore } from './state/settingsStore';
 
 export default function App() {
   const loadActivePlayer = usePlayerStore(s => s.loadActivePlayer);
-  const { activeTheme, setActiveTheme } = useSettingsStore();
+  const { activeTheme, setActiveTheme, audioEnabled, setAudioEnabled, audioVolume, setAudioVolume } = useSettingsStore();
 
   useEffect(() => {
     void loadActivePlayer();
@@ -45,6 +45,33 @@ export default function App() {
             <option value="standard">Classic</option>
             <option value="mahabharata">Kurukshetra</option>
           </select>
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 0.5rem' }} />
+          <button 
+            onClick={() => setAudioEnabled(!audioEnabled)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              padding: '0.2rem',
+              opacity: audioEnabled ? 1 : 0.5
+            }}
+            title={audioEnabled ? 'Mute Audio' : 'Enable Audio'}
+          >
+            {audioEnabled ? '🔊' : '🔇'}
+          </button>
+          {audioEnabled && (
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.05" 
+              value={audioVolume} 
+              onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+              style={{ width: '60px' }}
+              title="Volume"
+            />
+          )}
         </div>
       </header>
       <main className="app-main">

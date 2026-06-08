@@ -39,6 +39,7 @@ import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { sharpenMirrorVector } from '../ml/evolvingMirror';
 import { useSettingsStore } from '../state/settingsStore';
 import { usePlayerStore } from '../state/playerStore';
+import { useAudioFx } from '../audio/useAudioFx';
 
 type GameStatus = 'idle' | 'playing' | 'game-over';
 type MirrorResult = 'You won' | 'Mirror won' | 'Draw' | 'Game ended';
@@ -71,6 +72,9 @@ export default function Mirror() {
   const [isMirrorThinking, setIsMirrorThinking] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
+  
+  useAudioFx(gameRef.current.history());
+
   const [themeManifest, setThemeManifest] = useState<Awaited<ReturnType<typeof loadThemeManifest>>>(
     null
   );

@@ -4,6 +4,7 @@ import { useSettingsStore } from '../state/settingsStore';
 import { BoardView } from '../components/Board/BoardView';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { selectCluePuzzle, getNextClue, evaluateClueMove } from '../training/clueEngine';
+import { audioEngine } from '../audio/audioEngine';
 import type { CluePuzzle } from '../data/cluePuzzles';
 import { putClueAttempt, getClueAttemptsForPlayer, getClueStatsForPlayer, type ClueAttemptRecord } from '../data/db';
 import { Chess } from 'chess.js';
@@ -141,6 +142,10 @@ export default function ClueChess() {
     if (correct) {
       setSolved(true);
       setFailed(false);
+      
+      const { audioEnabled, audioVolume } = useSettingsStore.getState();
+      if (audioEnabled) audioEngine.playPuzzleSuccessSound({ theme: activeTheme, volume: audioVolume });
+
       // Play move on board
       const chess = new Chess(fen);
       chess.move(moveStr);
@@ -157,6 +162,10 @@ export default function ClueChess() {
       return true;
     } else {
       setFailed(true);
+      
+      const { audioEnabled, audioVolume } = useSettingsStore.getState();
+      if (audioEnabled) audioEngine.playPuzzleFailureSound({ theme: activeTheme, volume: audioVolume });
+      
       if (attemptRecord) {
         setAttemptRecord(prev => prev ? { ...prev, attempted_moves: newAttempts } : null);
       }

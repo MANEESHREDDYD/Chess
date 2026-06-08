@@ -6,6 +6,7 @@ import { getLocalMatchesForPlayer, type LocalMatchRecord } from '../data/db';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { usePlayerStore } from '../state/playerStore';
 import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
+import { useAudioFx } from '../audio/useAudioFx';
 
 export default function Play() {
   const status = useGameStore((s) => s.status);
@@ -21,6 +22,8 @@ export default function Play() {
   const fen = useGameStore((s) => s.fen);
   const history = useGameStore((s) => s.history);
   const currentDifficulty = useGameStore((s) => s.difficulty);
+
+  useAudioFx(history);
 
   const activeTheme = useSettingsStore((s) => s.activeTheme);
   const setActiveTheme = useSettingsStore((s) => s.setActiveTheme);
