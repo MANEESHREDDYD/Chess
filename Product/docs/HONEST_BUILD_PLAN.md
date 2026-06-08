@@ -98,50 +98,37 @@ Here is the honest reality of what you can build solo working 6 hours/day, 5 day
     *   *Time:* 3–4 weeks.
     *   *Sacrifices:* No interactive animations or audio narration. Cannot legally target under-13s in the US without strict, complex COPPA compliance.
 
-## SECTION 4 — A PROPOSED BUILD SEQUENCE
+## SECTION 4 — A PROPOSED BUILD SEQUENCE (UPDATED)
 
-If you are committed to the "all seven, no compromise" approach, you must build sequentially. Attempting to parallelize will break the codebase. Each step must be fully tested before moving on.
+We have successfully executed the sequence through `v1.10.0-multi-move-puzzles`, bypassing the need for heavy backend multiplayer.
 
-1.  **Step 1: The Mirror (Weeks 1–2).** Fix the engine hang. This is the core differentiator. Validate that people actually care about personalized opponents before building infrastructure.
-2.  **Step 2: Local Multiplayer (Week 3).** Low-hanging fruit, extends the core board logic.
-3.  **Step 3: Task System (Weeks 4–8).** Leverages the existing style vector math to serve personalized tactics.
-4.  **Step 4: Analysis Platform (Weeks 9–13).** Uses the existing local Stockfish worker to provide post-game feedback.
-5.  **Step 5: Cross-Device Multiplayer (Weeks 14–20).** Introduces massive complexity (Supabase Realtime, edge cases).
-6.  **Step 6: Ranked Play (Weeks 21–23).** Slapped onto the fragile multiplayer.
-7.  **Step 7: Story Mode (Weeks 24–33).** Content heavy. Do this late so engine changes don't break narrative triggers.
-8.  **Step 8: Children's Mode (Weeks 34–37).** A completely separate UX flow.
+1.  **Step 1: The Mirror** (Completed in `v1.0.0-mirror-verified`)
+2.  **Step 2: Core Chess & Pass-and-Play** (Completed in `v1.1.0-core-chess`)
+3.  **Step 3: Human-Mirror Loop** (Completed in `v1.3.0-human-mirror-loop`)
+4.  **Step 4: Basic Analysis** (Completed in `v1.4.0-basic-analysis`)
+5.  **Step 5: Clue Chess & Puzzles** (Completed in `v1.5.0` & `v1.10.0`)
+6.  **Step 6: Story Mode (Mahabharata)** (Completed Act 1 in `v1.8.0`)
+7.  **Step 7: Audio FX** (Completed in `v1.9.0-audio-fx-1`)
 
-**Cumulative Timeline:** ~37 weeks (8.5 months) of flawless execution. Realistically, accounting for AI hallucination debugging, technical debt, and burnout: **12 to 14 months.**
+**Cumulative Timeline:** We achieved this efficiently by focusing on local-first capabilities (IndexedDB, Web Worker Stockfish) and skipping heavy backend cloud requirements.
 
 ## SECTION 5 — DECISION MATRIX
 
-| System | Solo Timeline | What gets sacrificed | If skipped, what's lost |
-| :--- | :--- | :--- | :--- |
-| **Mirror Engine** | 1-2 weeks | Nothing (Core focus) | The entire unique selling point |
-| **Local Multiplayer** | 1 week | Nothing | Basic over-the-board utility |
-| **Task System** | 4-6 weeks | Database size, curation | Retention loop for solo players |
-| **Analysis Platform** | 4-6 weeks | Master DB, cloud eval | Post-game learning |
-| **Cross-Device MP** | 6-8 weeks | Stability, low latency | Playing with remote friends |
-| **Ranked Play** | 2-3 weeks | Anti-cheat (meaningless ratings) | Competitive ladder |
-| **Story Mode** | 8-10 weeks | AAA art, voice acting, authentic prose | Narrative context |
-| **Children's Mode** | 3-4 weeks | Animations, COPPA safety | Youth market |
-
-**Cumulative Total:** ~37 weeks of direct labor.
-
-**Recommendation:** In 12 months, you can either ship 1 buggy clone of chess.com that no one uses because the multiplayer crashes and the ratings are cheated, OR you can ship 1 flawless, highly-polished Mirror MVP next month that goes viral for doing one thing perfectly. 
+| System | Status | What got sacrificed |
+| :--- | :--- | :--- |
+| **Mirror Engine** | DONE | Nothing (Core focus) |
+| **Local Multiplayer** | DONE | Nothing |
+| **Task System** | DONE | Huge remote databases |
+| **Analysis Platform** | DONE | Master DB, cloud eval |
+| **Story Mode** | IN PROGRESS | AAA art, voice acting |
+| **Cross-Device MP** | SKIPPED | Stability, low latency |
+| **Ranked Play** | SKIPPED | Anti-cheat |
+| **Children's Mode** | PENDING | Animations, COPPA safety |
 
 ## SECTION 6 — WHAT TO DO WITH THE EXISTING CODEBASE
 
 **DO NOT REBUILD FROM SCRATCH.** 
 
-Starting from scratch is a destructive, emotional reaction to a localized bug, not a sound engineering decision. 
+The codebase currently represents a complete, functioning local-first application. We have built 10 successful milestones on this architecture.
 
-A survey of the existing codebase (`git log --oneline -30`, examining `src/`) reveals a highly valuable, functioning foundation:
-*   **100 Passing Tests:** The math for the 9-dimensional style vector (`eloDetect.ts`, `styleVector.ts`) is thoroughly tested and complete.
-*   **Engine Integration:** The Web Worker bridge to Stockfish 16 NNUE (`stockfishBridge.ts`, `stockfishWorkerRuntime.ts`) handles initialization, CDN fallbacks, and UCI communication. Rebuilding this async logic with AI will waste weeks.
-*   **Calibration UI:** 8 distinct tasks are fully built with complex React state management.
-*   **Theme System:** A custom CSS variables system supporting the Kurukshetra theme.
-
-The codebase currently represents roughly 4 to 6 weeks of intense, successful work. The architecture is perfectly capable of supporting the expanded spec. 
-
-**Recommendation:** Keep the existing codebase. Fix the Mirror engine bug (it is an isolated issue in the `mirrorOpponent.ts` UI/engine seam). Then, extend the architecture along the build sequence outlined in Section 4. Throwing this codebase away is the fastest way to kill the project.
+**Recommendation:** Keep the existing codebase. Continue extending the features sequentially as defined in `docs/current-status.md`.
