@@ -5,6 +5,8 @@ import {
   getLocalMatchesForPlayer,
   getMirrorMatchesForPlayer,
   getAnalysesForPlayer,
+  getClueAttemptsForPlayer,
+  getClueStatsForPlayer,
   openMirrorDb,
 } from '../data/db';
 
@@ -20,6 +22,8 @@ export default function DevInspector() {
     recentLocalMatches: [],
     recentMirrorMatches: [],
     recentAnalyses: [],
+    recentClueAttempts: [],
+    clueStats: null,
     feedbackRecords: [],
   });
 
@@ -48,6 +52,10 @@ export default function DevInspector() {
       // Analyses
       const analyses = await getAnalysesForPlayer(activePlayerId);
 
+      // Clues
+      const clues = await getClueAttemptsForPlayer(activePlayerId);
+      const clueStats = await getClueStatsForPlayer(activePlayerId);
+
       setData({
         activePlayerId: activePlayerId || null,
         activePlayer,
@@ -57,6 +65,8 @@ export default function DevInspector() {
         recentLocalMatches: localMatches.slice(-5),
         recentMirrorMatches: mirrorMatches.slice(-5),
         recentAnalyses: analyses.slice(-5),
+        recentClueAttempts: clues.slice(0, 5),
+        clueStats,
         feedbackRecords: feedback,
       });
     }

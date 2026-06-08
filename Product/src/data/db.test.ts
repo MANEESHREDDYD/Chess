@@ -14,6 +14,9 @@ import {
   putMirrorMatchRecord,
   putStyleVectorRecord,
   setCurrentStyleVector,
+  putClueAttempt,
+  getClueAttemptsForPlayer,
+  getClueStatsForPlayer,
   type PlayerRecord,
   type StyleVector,
   type StyleVectorRecord,
@@ -48,6 +51,7 @@ describe('openMirrorDb', () => {
     expect(db.version).toBe(MIRROR_DB_VERSION);
     expect(objectStoreNames(db)).toEqual([
       'calibration_runs',
+      'clue_attempts',
       'feedback',
       'local_matches',
       'mirror_matches',
@@ -297,3 +301,61 @@ function makeVector(detectedElo: number): StyleVector {
     schema_version: 1,
   };
 }
+
+describe('clue tracking', () => {
+  it('putClueAttempt saves correctly and gets filtered by player', async () => {
+    const dbName = nextDbName();
+    await putClueAttempt({
+      id: 'c1',
+      player_id: 'p1',
+      puzzle_id: 'pz1',
+      source: 'seed',
+      fen: '8/8',
+      solution_moves: ['e4'],
+      attempted_moves: [],
+      difficulty: 'beginner',
+      hints_used: 1,
+      solved: true,
+      started_at: '2026-01-01T00:00:00Z',
+      created_at: '2026-01-01T00:00:00Z'
+    }, dbName);
+    
+    await putClueAttempt({
+      id: 'c2',
+      player_id: 'p2',
+      puzzle_id: 'pz2',
+      source: 'seed',
+      fen: '8/8',
+      solution_moves: ['e4'],
+      attempted_moves: [],
+      difficulty: 'beginner',
+      hints_used: 1,
+      solved: false,
+      started_at: '2026-01-01T00:00:00Z',
+      created_at: '2026-01-01T00:00:00Z'
+    }, dbName);
+
+    const p1Clues = await getClueAttemptsForPlayer('p1', 10, dbName);
+    expect(p1Clues.length).toBe(1);
+    expect(p1Clues[0].id).toBe('c1');
+  });
+
+  it('getClueStatsForPlayer computes solved rate and average hints', async () => {
+    const dbName = nextDbName();
+    await putClueAttempt({
+      id: 'c1', player_id: 'p1', puzzle_id: 'pz1', source: 'seed', fen: '8/8', solution_moves: ['e4'], attempted_moves: [], difficulty: 'beginner',
+      hints_used: 1, solved: true, started_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', motif: 'fork'
+    }, dbName);
+    await putClueAttempt({
+      id: 'c2', player_id: 'p1', puzzle_id: 'pz2', source: 'seed', fen: '8/8', solution_moves: ['e4'], attempted_moves: [], difficulty: 'beginner',
+      hints_used: 3, solved: false, started_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', motif: 'pin'
+    }, dbName);
+
+    const stats = await getClueStatsForPlayer('p1', dbName);
+    expect(stats.attempt_count).toBe(2);
+    expect(stats.solved_count).toBe(1);
+    expect(stats.solved_rate).toBe(0.5);
+    expect(stats.average_hints_used).toBe(2);
+    expect(stats.weakest_motif).toBe('pin');
+  });
+});

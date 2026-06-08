@@ -3,6 +3,7 @@ import Home from './routes/Home';
 import Calibration from './routes/Calibration';
 import Play from './routes/Play';
 import Mirror from './routes/Mirror';
+import ClueChess from './routes/ClueChess';
 import About from './routes/About';
 import { Onboarding } from './routes/Onboarding';
 import DevMirrorVerification from './routes/DevMirrorVerification';
@@ -26,6 +27,7 @@ export default function App() {
         <nav className="app-nav">
           <Link to="/calibration">Calibration</Link>
           <Link to="/mirror">Mirror</Link>
+          <Link to="/clue-chess">Clue</Link>
           <Link to="/play">Play</Link>
           <Link to="/about">About</Link>
         </nav>
@@ -36,6 +38,7 @@ export default function App() {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/calibration" element={<Calibration />} />
           <Route path="/mirror" element={<Mirror />} />
+          <Route path="/clue-chess" element={<ClueChess />} />
           <Route path="/play" element={<Play />} />
           <Route path="/about" element={<About />} />
           {import.meta.env.DEV && (

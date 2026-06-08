@@ -4,7 +4,7 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 3;
+export const MIRROR_DB_VERSION = 4;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
@@ -149,6 +149,25 @@ export interface AnalysisRecord {
   metadata?: Record<string, unknown>;
 }
 
+export interface ClueAttemptRecord {
+  id: string;
+  player_id: string;
+  puzzle_id: string;
+  source: "seed" | "analysis_mistake" | "manual";
+  fen: string;
+  solution_moves: string[];
+  attempted_moves: string[];
+  motif?: "fork" | "pin" | "skewer" | "removing_the_defender" | "mate" | "hanging_piece" | "endgame" | "opening" | "unknown";
+  difficulty: "beginner" | "casual" | "club" | "strong";
+  hints_used: number;
+  solved: boolean;
+  time_spent_ms?: number;
+  started_at: string;
+  completed_at?: string;
+  created_at: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface MirrorDB extends DBSchema {
   players: {
     key: string;
@@ -193,6 +212,17 @@ export interface MirrorDB extends DBSchema {
       created_at: string;
     };
   };
+  clue_attempts: {
+    key: string;
+    value: ClueAttemptRecord;
+    indexes: {
+      player_id: string;
+      puzzle_id: string;
+      created_at: string;
+      motif: string;
+      solved: number; // indexeddb doesn't index booleans well, but we can store true/false and use string/number
+    };
+  };
 }
 
 const dbCache = new Map<string, Promise<IDBPDatabase<MirrorDB>>>();
@@ -211,6 +241,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 3) {
         createV3Schema(db);
+      }
+      if (oldVersion < 4) {
+        createV4Schema(db);
       }
     },
   });
@@ -518,6 +551,77 @@ export async function updateAnalysisRecord(id: string, patch: Partial<AnalysisRe
   return updated;
 }
 
+// -----------------------------------------------------------------------------
+// CLUE ATTEMPTS API
+// -----------------------------------------------------------------------------
+
+export async function putClueAttempt(record: ClueAttemptRecord, dbName = MIRROR_DB_NAME): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('clue_attempts', record);
+}
+
+export async function getClueAttemptsForPlayer(playerId: string, limit?: number, dbName = MIRROR_DB_NAME): Promise<ClueAttemptRecord[]> {
+  const db = await openMirrorDb(dbName);
+  let rows = await db.getAllFromIndex('clue_attempts', 'player_id', playerId);
+  rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (limit) rows = rows.slice(0, limit);
+  return rows;
+}
+
+export async function getRecentFailedClueAttempts(playerId: string, limit?: number, dbName = MIRROR_DB_NAME): Promise<ClueAttemptRecord[]> {
+  const db = await openMirrorDb(dbName);
+  let rows = await db.getAllFromIndex('clue_attempts', 'player_id', playerId);
+  rows = rows.filter(r => !r.solved);
+  rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (limit) rows = rows.slice(0, limit);
+  return rows;
+}
+
+export async function getClueStatsForPlayer(playerId: string, dbName = MIRROR_DB_NAME) {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('clue_attempts', 'player_id', playerId);
+  
+  let solved_count = 0;
+  let total_hints = 0;
+  const motifAttempts: Record<string, number> = {};
+  const motifFails: Record<string, number> = {};
+
+  for (const r of rows) {
+    if (r.solved) solved_count++;
+    total_hints += r.hints_used;
+    if (r.motif) {
+      motifAttempts[r.motif] = (motifAttempts[r.motif] || 0) + 1;
+      if (!r.solved) {
+        motifFails[r.motif] = (motifFails[r.motif] || 0) + 1;
+      }
+    }
+  }
+
+  const attempt_count = rows.length;
+  const solved_rate = attempt_count > 0 ? solved_count / attempt_count : 0;
+  const average_hints_used = attempt_count > 0 ? total_hints / attempt_count : 0;
+
+  let weakest_motif: string | null = null;
+  let most_attempted_motif: string | null = null;
+
+  if (attempt_count > 0) {
+    const sortedAttempts = Object.entries(motifAttempts).sort((a, b) => b[1] - a[1]);
+    if (sortedAttempts.length > 0) most_attempted_motif = sortedAttempts[0][0];
+
+    const sortedFails = Object.entries(motifFails).sort((a, b) => b[1] - a[1]);
+    if (sortedFails.length > 0) weakest_motif = sortedFails[0][0];
+  }
+
+  return {
+    attempt_count,
+    solved_count,
+    solved_rate,
+    average_hints_used,
+    weakest_motif,
+    most_attempted_motif
+  };
+}
+
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
   db.createObjectStore('players', { keyPath: 'id' });
 
@@ -542,6 +646,15 @@ function createV3Schema(db: IDBPDatabase<MirrorDB>): void {
   analyses.createIndex('match_id', 'match_id');
   analyses.createIndex('match_type', 'match_type');
   analyses.createIndex('created_at', 'created_at');
+}
+
+function createV4Schema(db: IDBPDatabase<MirrorDB>): void {
+  const clues = db.createObjectStore('clue_attempts', { keyPath: 'id' });
+  clues.createIndex('player_id', 'player_id');
+  clues.createIndex('puzzle_id', 'puzzle_id');
+  clues.createIndex('created_at', 'created_at');
+  clues.createIndex('motif', 'motif');
+  clues.createIndex('solved', 'solved');
 }
 
 function makeId(prefix: string): string {
