@@ -9,6 +9,7 @@ import About from './routes/About';
 import { Onboarding } from './routes/Onboarding';
 import { Progress } from './routes/Progress';
 import Backup from './routes/Backup';
+import { Account } from './routes/Account';
 import DevMirrorVerification from './routes/DevMirrorVerification';
 import DevInspector from './routes/DevInspector';
 import { useEffect } from 'react';
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/play" element={<Play />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/backup" element={<Backup />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/about" element={<About />} />
           {import.meta.env.DEV && (
             <>

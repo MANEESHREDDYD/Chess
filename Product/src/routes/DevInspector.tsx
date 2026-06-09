@@ -12,6 +12,7 @@ import {
 } from '../data/db';
 import { getPlayerProgressSummary } from '../progression/progression';
 import { getReviewStats } from '../training/spacedRepetition';
+import { getCurrentAuthUser, isAuthConfigured } from '../auth/authService';
 
 export default function DevInspector() {
   const activePlayerId = usePlayerStore((s) => s.activePlayerId);
@@ -32,6 +33,9 @@ export default function DevInspector() {
     reviewStats: null,
     feedbackRecords: [],
     playerProgress: null,
+    authConfigured: isAuthConfigured(),
+    authUser: getCurrentAuthUser() || null,
+    accountLinks: [],
   });
 
   useEffect(() => {
@@ -69,6 +73,13 @@ export default function DevInspector() {
       const puzzleReviews = await db.getAllFromIndex('puzzle_reviews', 'player_id', activePlayerId);
       const reviewStats = await getReviewStats(activePlayerId);
 
+      let accountLinks: any[] = [];
+      try {
+        accountLinks = await db.getAll('account_links');
+      } catch (e) {
+        console.error("No account_links yet");
+      }
+
       setData({
         activePlayerId: activePlayerId || null,
         activePlayer,
@@ -85,6 +96,9 @@ export default function DevInspector() {
         reviewStats,
         feedbackRecords: feedback,
         playerProgress,
+        authConfigured: isAuthConfigured(),
+        authUser: getCurrentAuthUser() || null,
+        accountLinks,
       });
     }
 

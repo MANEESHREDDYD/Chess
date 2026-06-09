@@ -50,6 +50,7 @@ describe('openMirrorDb', () => {
 
     expect(db.version).toBe(MIRROR_DB_VERSION);
     expect(objectStoreNames(db)).toEqual([
+      'account_links',
       'achievements',
       'calibration_runs',
       'clue_attempts',
@@ -61,7 +62,7 @@ describe('openMirrorDb', () => {
       'saved_analyses',
       'story_progress',
       'style_vectors',
-    ]);
+    ].sort());
 
     const calibrationTx = db.transaction('calibration_runs', 'readonly');
     expect(indexNames(calibrationTx.objectStore('calibration_runs'))).toEqual(['started_at']);

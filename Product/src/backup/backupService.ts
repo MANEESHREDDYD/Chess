@@ -16,6 +16,7 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     puzzle_reviews: await db.getAll('puzzle_reviews'),
     story_progress: await db.getAll('story_progress'),
     achievements: await db.getAll('achievements'),
+    account_links: await db.getAll('account_links'),
     settings: {}
   };
 
@@ -41,6 +42,9 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     data.puzzle_reviews = data.puzzle_reviews.filter(x => x.player_id === playerId);
     data.story_progress = data.story_progress.filter(x => x.player_id === playerId);
     data.achievements = data.achievements.filter(x => x.player_id === playerId);
+    if (data.account_links) {
+      data.account_links = data.account_links.filter(x => x.player_id === playerId);
+    }
   }
 
   return {
@@ -102,6 +106,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   expectArray('puzzle_reviews');
   expectArray('story_progress');
   expectArray('achievements');
+  expectArray('account_links');
 
   if (dataObj.settings && typeof dataObj.settings !== 'object') {
     throw new Error('Invalid backup file: data.settings must be an object if present.');
@@ -119,6 +124,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
     puzzle_reviews: (dataObj.puzzle_reviews as unknown as MirrorBackupData['puzzle_reviews']) || [],
     story_progress: (dataObj.story_progress as unknown as MirrorBackupData['story_progress']) || [],
     achievements: (dataObj.achievements as unknown as MirrorBackupData['achievements']) || [],
+    account_links: (dataObj.account_links as unknown as MirrorBackupData['account_links']) || [],
     settings: (dataObj.settings as Record<string, unknown>) || {}
   };
 
@@ -141,6 +147,9 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   validateIds(safeData.puzzle_reviews, 'puzzle_reviews');
   validateIds(safeData.story_progress, 'story_progress');
   validateIds(safeData.achievements, 'achievements');
+  if (safeData.account_links) {
+    validateIds(safeData.account_links, 'account_links');
+  }
 
   return {
     ...(rawObj as Record<string, unknown>),
@@ -179,7 +188,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
     const stores = [
       'players', 'local_matches', 'mirror_matches', 'calibration_runs',
       'style_vectors', 'saved_analyses', 'clue_attempts', 'puzzle_reviews',
-      'story_progress', 'achievements'
+      'story_progress', 'achievements', 'account_links'
     ] as const;
 
     for (const storeName of stores) {
@@ -285,6 +294,10 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
   // Achievements: Idempotent. If both exist, they are conceptually the same achievement.
   // Standard merge (which keeps local by default) is fine.
   await mergeRecords('achievements', data.achievements);
+
+  if (data.account_links) {
+    await mergeRecords('account_links', data.account_links);
+  }
 
   // Settings
   if (options.importSettings && data.settings && data.settings['mirror-settings']) {

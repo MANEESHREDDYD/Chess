@@ -4,7 +4,7 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 7;
+export const MIRROR_DB_VERSION = 8;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
@@ -60,6 +60,19 @@ export interface PuzzleReviewRecord {
   solved_streak: number;
   last_result: "solved" | "failed";
   updated_at: string;
+}
+
+// USER-OWNED / SERVER-CANONICAL
+export interface AccountLinkRecord {
+  id: string; // `${player_id}:supabase:${cloud_user_id}`
+  player_id: string;
+  provider: "supabase";
+  cloud_user_id: string;
+  email?: string;
+  linked_at: string;
+  updated_at: string;
+  status: "linked" | "unlinked";
+  metadata?: Record<string, unknown>;
 }
 
 // USER-OWNED / MIRROR
@@ -291,6 +304,17 @@ export interface MirrorDB extends DBSchema {
       last_result: string;
     };
   };
+  account_links: {
+    key: string;
+    value: AccountLinkRecord;
+    indexes: {
+      player_id: string;
+      cloud_user_id: string;
+      provider: string;
+      status: string;
+      updated_at: string;
+    };
+  };
 }
 
 const dbCache = new Map<string, Promise<IDBPDatabase<MirrorDB>>>();
@@ -321,6 +345,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 7) {
         createV7Schema(db);
+      }
+      if (oldVersion < 8) {
+        createV8Schema(db);
       }
     },
   });
@@ -846,5 +873,16 @@ function createV7Schema(db: IDBPDatabase<MirrorDB>) {
     store.createIndex('next_due_at', 'next_due_at', { unique: false });
     store.createIndex('motif', 'motif', { unique: false });
     store.createIndex('last_result', 'last_result', { unique: false });
+  }
+}
+
+function createV8Schema(db: IDBPDatabase<MirrorDB>) {
+  if (!db.objectStoreNames.contains('account_links')) {
+    const store = db.createObjectStore('account_links', { keyPath: 'id' });
+    store.createIndex('player_id', 'player_id', { unique: false });
+    store.createIndex('cloud_user_id', 'cloud_user_id', { unique: false });
+    store.createIndex('provider', 'provider', { unique: false });
+    store.createIndex('status', 'status', { unique: false });
+    store.createIndex('updated_at', 'updated_at', { unique: false });
   }
 }

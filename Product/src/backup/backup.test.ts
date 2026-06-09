@@ -121,6 +121,7 @@ describe('Backup Service', () => {
         puzzle_reviews: [],
         story_progress: [],
         achievements: [],
+        account_links: [],
         settings: {}
       }
     };
@@ -153,7 +154,7 @@ describe('Backup Service', () => {
       app_name: "MIRROR" as const,
       created_at: '2020-01-02',
       data: {
-        players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], achievements: [], settings: {},
+        players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], achievements: [], account_links: [], settings: {},
         story_progress: [
           // Even though updated_at is newer, it's 'locked', so merge should reject downgrade
           { id: 'p1:c1', player_id: 'p1', chapter_id: 'c1', status: 'locked' as const, updated_at: '2020-01-02', attempts: 0 }
@@ -188,7 +189,7 @@ describe('Backup Service', () => {
       app_name: "MIRROR" as const,
       created_at: '2020-01-02',
       data: {
-        players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], puzzle_reviews: [], story_progress: [], settings: {},
+        players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], puzzle_reviews: [], story_progress: [], account_links: [], settings: {},
         achievements: [
           { id: 'p1:ach1', player_id: 'p1', achievement_id: 'ach1', title: 'T', earned_at: '2020-01-01' }
         ]

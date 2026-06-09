@@ -1,4 +1,4 @@
-import type { PlayerRecord, LocalMatchRecord, MirrorMatchRecord, CalibrationRunRecord, StyleVectorRecord, AnalysisRecord, ClueAttemptRecord, PuzzleReviewRecord, StoryProgressRecord, AchievementRecord } from '../data/db';
+import type { PlayerRecord, LocalMatchRecord, MirrorMatchRecord, CalibrationRunRecord, StyleVectorRecord, AnalysisRecord, ClueAttemptRecord, PuzzleReviewRecord, StoryProgressRecord, AchievementRecord, AccountLinkRecord } from '../data/db';
 
 export interface MirrorBackupData {
   players: PlayerRecord[];
@@ -11,6 +11,7 @@ export interface MirrorBackupData {
   puzzle_reviews: PuzzleReviewRecord[];
   story_progress: StoryProgressRecord[];
   achievements: AchievementRecord[];
+  account_links?: AccountLinkRecord[];
   settings: Record<string, unknown>;
 }
 

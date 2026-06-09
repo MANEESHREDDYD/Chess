@@ -111,6 +111,14 @@ export default function Home() {
           We don't track you. Games stay on your device unless you submit feedback.
         </p>
 
+        <div style={{ marginTop: '2rem', textAlign: 'center', background: '#e0f2fe', padding: '1.5rem', borderRadius: '8px' }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#0369a1' }}>Optional Cloud Sync (Beta)</h3>
+          <p style={{ margin: '0 0 1rem 0', color: '#0c4a6e', fontSize: '0.95rem' }}>Link your local profile to a cloud account for future sync capabilities.</p>
+          <Link to="/account" className="btn btn-secondary" style={{ background: '#0284c7', color: 'white' }}>
+            Setup Cloud Account
+          </Link>
+        </div>
+
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <Link to="/backup" style={{ color: 'var(--ink-soft)', fontSize: '0.9rem', textDecoration: 'underline' }}>
             Backup or Export Your Data

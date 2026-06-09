@@ -16,6 +16,7 @@
     "postinstall": "node scripts/setup-stockfish.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.0",
     "chess.js": "1.4.0",
     "idb": "8.0.3",
     "react": "18.3.1",
