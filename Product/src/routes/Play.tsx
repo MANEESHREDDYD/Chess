@@ -13,7 +13,9 @@ export default function Play() {
   const result = useGameStore((s) => s.result);
   const playerColor = useGameStore((s) => s.playerColor);
   const engineThinking = useGameStore((s) => s.engineThinking);
+  const enginePhase = useGameStore((s) => s.enginePhase);
   const engineError = useGameStore((s) => s.engineError);
+  const engineErrorDetails = useGameStore((s) => s.engineErrorDetails);
   const startGame = useGameStore((s) => s.startGame);
   const resign = useGameStore((s) => s.resign);
   const claimDraw = useGameStore((s) => s.claimDraw);
@@ -148,15 +150,31 @@ export default function Play() {
           <dd>{activeTheme === 'standard' ? 'Standard' : 'Kurukshetra'}</dd>
           <dt>Status</dt>
           <dd>
-            {status === 'playing' && (engineThinking ? 'Engine thinking…' : 'Your move')}
+            {status === 'playing' && (
+              enginePhase === 'unavailable' || enginePhase === 'retry-failed'
+                ? 'Engine unavailable'
+                : engineThinking
+                ? enginePhase === 'starting'
+                  ? 'Engine starting...'
+                  : enginePhase === 'restarting'
+                    ? 'Engine restarting...'
+                    : 'Engine thinking...'
+                : 'Your move'
+            )}
             {status === 'game-over' && (result ?? 'Game over')}
-            {status === 'idle' && 'Setting up…'}
+            {status === 'idle' && 'Setting up...'}
           </dd>
         </dl>
 
         {engineError && (
           <div style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem', padding: '0.5rem', background: '#ffebee', borderRadius: '4px' }}>
-            {engineError}
+            <div>{engineError}</div>
+            {import.meta.env.DEV && engineErrorDetails && (
+              <details style={{ marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+                <summary>Debug details</summary>
+                <div>{engineErrorDetails}</div>
+              </details>
+            )}
           </div>
         )}
 

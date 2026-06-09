@@ -13,6 +13,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "test": "vitest run",
     "test:watch": "vitest",
+    "stockfish:stability": "node scripts/run-stockfish-stability-check.mjs",
     "postinstall": "node scripts/setup-stockfish.js"
   },
   "dependencies": {

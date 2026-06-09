@@ -85,6 +85,23 @@ describe('stockfish worker runtime', () => {
     expect(deps.URLApi.createObjectURL).toHaveBeenCalledOnce();
     expect(sent).toEqual([{ type: 'ready' }]);
   });
+
+  it('supports explicit newgame and readiness probes after startup', () => {
+    const { deps, sent } = runtimeHarness();
+    const runtime = createStockfishWorkerRuntime((msg) => sent.push(msg), deps);
+
+    runtime.init();
+    const worker = MockEngineWorker.instances[0];
+    worker.emitLine('readyok');
+
+    runtime.handleCommand({ cmd: 'newgame' });
+    runtime.handleCommand({ cmd: 'ready', requestId: 42 });
+    worker.emitLine('readyok');
+
+    expect(worker.posted).toContain('ucinewgame');
+    expect(worker.posted).toContain('isready');
+    expect(sent).toEqual([{ type: 'ready' }, { type: 'ready', requestId: 42 }]);
+  });
 });
 
 function runtimeHarness(): { deps: StockfishWorkerRuntimeDeps; sent: object[] } {

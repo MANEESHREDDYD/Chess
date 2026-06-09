@@ -1,7 +1,30 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameStore } from './gameStore';
 
+const bridge = vi.hoisted(() => ({
+  getBestMove: vi.fn(),
+  stopThinking: vi.fn(),
+  subscribeStockfishEngineState: vi.fn(() => () => undefined),
+}));
+
+vi.mock('../engine/stockfishBridge', () => ({
+  getBestMove: bridge.getBestMove,
+  stopThinking: bridge.stopThinking,
+  subscribeStockfishEngineState: bridge.subscribeStockfishEngineState,
+  StockfishEngineError: class StockfishEngineError extends Error {
+    code = 'ENGINE_TEST';
+    retryable = false;
+    details: string | null = null;
+  },
+}));
+
 describe('gameStore', () => {
+  beforeEach(() => {
+    bridge.getBestMove.mockReset();
+    bridge.stopThinking.mockReset();
+    bridge.getBestMove.mockImplementation(async (fen: string) => (fen.includes(' w ') ? 'e2e4' : 'e7e5'));
+  });
+
   it('starts a game with side and difficulty', () => {
     useGameStore.getState().startGame('white', 'Casual');
     const state = useGameStore.getState();
@@ -10,6 +33,21 @@ describe('gameStore', () => {
     expect(state.playerColor).toBe('white');
     expect(state.difficulty).toBe('Casual');
     expect(state.engineThinking).toBe(false);
+  });
+
+  it('triggers the engine first move when the player is Black', async () => {
+    bridge.getBestMove.mockResolvedValue('e2e4');
+
+    useGameStore.getState().startGame('black', 'Club');
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const state = useGameStore.getState();
+    expect(bridge.getBestMove).toHaveBeenCalledOnce();
+    expect(state.playerColor).toBe('black');
+    expect(state.history).toEqual(['e4']);
+    expect(state.engineThinking).toBe(false);
+    expect(state.engineError).toBeNull();
   });
 
   it('side=random resolves correctly to white or black actual_side', () => {
@@ -72,3 +110,8 @@ describe('gameStore', () => {
     expect(pgn).toContain('[White "Player"]');
   });
 });
+
+async function flushMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}

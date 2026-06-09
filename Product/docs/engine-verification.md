@@ -1,6 +1,6 @@
 # Engine Verification
 
-**Date:** 2026-05-27
+**Date:** 2026-06-10
 
 ## Result
 
@@ -8,21 +8,36 @@ PASS
 
 ## Method
 
-- Started the local Vite dev server.
-- Opened the app in a browser at `http://127.0.0.1:5173/`.
+- Started or reused a local Vite dev server at `http://127.0.0.1:5173/play`.
+- Opened the app in Chromium through Puppeteer.
 - Imported `src/engine/stockfishBridge.ts` from the page context.
-- Called `getBestMove()` against a legal midgame FEN with a 10 second timeout.
+- Verified `waitForEngine()`, `getBestMove()`, `getCandidateMoves()`, `evaluatePosition()`, repeated searches, and `runStockfishHealthCheck()`.
+- Started a regular chess game as Black and verified Stockfish makes the first White move without leaving the UI stuck in an engine-thinking state.
 
-## Smoke result
+## Stability Script
 
-- Input FEN: `rn1qkbnr/pppbpppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq - 0 3`
-- Returned move: `b1c3`
+```bash
+npm run stockfish:stability
+```
 
-This is a legal white move from the position and confirms the worker path loads and returns a best move in the browser.
+Equivalent direct command:
+
+```bash
+node scripts/run-stockfish-stability-check.mjs
+```
+
+The script validates:
+
+- local Stockfish worker startup
+- UCI readiness before search
+- candidate and evaluation output
+- player-as-Black first engine move
+- duplicate/repeated search serialization
+- isolated health checks using fresh workers
 
 ## Gates
 
-- `npm run typecheck` — pass
-- `npm test` — pass
-- `npm run build` — pass
-- `npm run lint` — pass, with a TypeScript compatibility warning from `@typescript-eslint` only
+- `npm run typecheck` - pass
+- `npm run lint` - pass
+- targeted engine lifecycle tests - pass
+- `node scripts/run-stockfish-stability-check.mjs` - pass

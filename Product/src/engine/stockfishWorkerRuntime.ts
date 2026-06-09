@@ -1,5 +1,5 @@
 export interface WorkerCommand {
-  cmd?: 'init' | 'go' | 'stop' | 'setoption';
+  cmd?: 'init' | 'go' | 'stop' | 'setoption' | 'ready' | 'newgame';
   fen?: string;
   depth?: number;
   multipv?: number;
@@ -39,6 +39,7 @@ export function createStockfishWorkerRuntime(
 ): StockfishWorkerRuntime {
   let engine: Worker | null = null;
   let activeRequestId: number | null = null;
+  let activeReadyRequestId: number | null = null;
   let readySent = false;
   let cdnBlobUrl: string | null = null;
   let readyFallbackTimer: number | null = null;
@@ -55,6 +56,13 @@ export function createStockfishWorkerRuntime(
 
     if (line === 'readyok') {
       deps.console.warn('[stockfish.worker] received readyok');
+      if (activeReadyRequestId !== null) {
+        const requestId = activeReadyRequestId;
+        activeReadyRequestId = null;
+        send({ type: 'ready', requestId });
+        return;
+      }
+
       markReady();
       return;
     }
@@ -227,9 +235,15 @@ export function createStockfishWorkerRuntime(
       engine.postMessage(`go depth ${depth}`);
     } else if (data.cmd === 'setoption' && data.name) {
       engine.postMessage(formatSetOption(data.name, data.value));
+    } else if (data.cmd === 'newgame') {
+      engine.postMessage('ucinewgame');
+    } else if (data.cmd === 'ready') {
+      activeReadyRequestId = typeof data.requestId === 'number' ? data.requestId : null;
+      engine.postMessage('isready');
     } else if (data.cmd === 'stop') {
       if (typeof data.requestId !== 'number' || data.requestId === activeRequestId) {
         activeRequestId = null;
+        activeReadyRequestId = null;
         engine.postMessage('stop');
       }
     }

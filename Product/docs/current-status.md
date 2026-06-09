@@ -1,9 +1,9 @@
 # Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.18.5-local-genai-coach-safety-eval-1`
-> **Latest Completed Milestone**: `M-LOCAL-GENAI-COACH-SAFETY-EVAL-1`
-> **Current / Next Milestone**: `M-LOCAL-GENAI-COACH-RUNTIME-ADAPTER-DESIGN-1`
+> **Latest Tag**: `v1.18.6-stockfish-stability-hotfix-1`
+> **Latest Completed Milestone**: `M-STOCKFISH-STABILITY-HOTFIX-1`
+> **Current / Next Milestone**: `M-MIRROR-2-PERSONALITY-OPPONENT`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
@@ -37,11 +37,13 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.18.3-local-genai-coach-design-1`**: Local deterministic coach preview plus GenAI/agentic design docs.
 *   **`v1.18.4-local-genai-coach-stub-2`**: Deterministic local coach cards, confidence/insufficient-data summaries, and Markdown/JSON exports.
 *   **`v1.18.5-local-genai-coach-safety-eval-1`**: Deterministic safety/evaluation checks for coach cards, exports, and future prompt contexts.
+*   **`v1.18.6-stockfish-stability-hotfix-1`**: Stable Stockfish engine manager, UCI readiness lifecycle, serialized searches, one automatic worker restart, browser health check, and improved engine UI states.
 
 ## Current Implemented Features
 
 *   **Local-First Architecture**: No backend required. IndexedDB handles all persistence for players, match histories, and story progress.
 *   **Mirror Engine**: StyleVector personalization calculated from player behavior. The current code has 11 behavioral/profile fields plus `schema_version` metadata, and the Mirror uses that profile to rerank Stockfish choices.
+*   **Stable Stockfish Runtime**: shared browser engine manager serializes searches, waits for UCI readiness, auto-retries once with a fresh worker, and exposes `runStockfishHealthCheck()`.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
@@ -59,7 +61,8 @@ The following features and milestones have been successfully completed and tagge
 
 ## Next Recommended Milestones
 
-*   **M-LOCAL-GENAI-COACH-RUNTIME-ADAPTER-DESIGN-1**: Design an optional runtime adapter boundary after safety/evaluation checks, without adding live model calls yet.
-*   **M-E2EE-CLOUD-BACKUP-1**: Add end-to-end encryption for cloud backups.
-*   **M-STORY-ACT-2-IMPLEMENTATION**: Implement playable Act II story encounters on top of the existing Act II shell.
-*   **M-STORY-ACT-3-IMPLEMENTATION**: Implement playable Act III story encounters on top of the existing Act III shell.
+*   **M-MIRROR-2-PERSONALITY-OPPONENT**: Make regular chess and Mirror mode feel like the opponent is playing as current, past, aggressive, cautious, or improved versions of the user.
+*   **M-PGN-IMPORT-PIPELINE-1**: Add local PGN paste/upload/import so MIRROR can build a player chess fingerprint from outside games.
+*   **M-GAME-REVIEW-PRO-1**: Build a stronger review loop with move labels, CP-loss, best moves, retry mistakes, phase summaries, and personalized practice recommendations.
+*   **M-ADVANCED-ANALYTICS-DASHBOARD-1**: Bring weak motifs, CP-loss trends, review due counts, StyleVector charts, and recommended actions into the app UI.
+*   **Paused Until Sequenced Later**: runtime GenAI adapter, story implementation expansion, 3D visuals, multiplayer, and E2EE remain future phases rather than the immediate next milestone.

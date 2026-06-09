@@ -1,9 +1,9 @@
 # MIRROR: Personalized AI Coaching & Analytics
 
-MIRROR is an offline-first, progressive web application that reimagines chess training as a data-driven, personalized narrative experience.
+MIRROR is an offline-first, progressive web application that reimagines chess training as a personalized AI chess improvement platform with regular chess, a user-like Mirror opponent, story gameplay, adaptive training, analytics, and future multiplayer.
 
 ## Product Overview
-While superficially a chess interface, MIRROR is fundamentally a robust data engineering and analytics platform built on the client-side. It features AI-driven behavioral profiling, post-game CP-loss analytics, spaced repetition learning, and a local-first architecture with optional secure cloud syncing.
+MIRROR is not just a frontend chess board. It combines a client-side chess product with behavioral profiling, post-game CP-loss analytics, spaced repetition learning, a Mahabharata/Kurukshetra story layer, deterministic local coaching, and a local-first architecture with optional cloud backup.
 
 ## Why MIRROR is Unique
 Unlike traditional platforms, MIRROR adapts to *how* you play. The current code models StyleVector as 11 behavioral/profile fields plus `schema_version` metadata. The "Mirror Engine" reranks Stockfish evaluations against that profile to simulate your specific playstyle and expose blind spots.
@@ -16,6 +16,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - **Frontend / Product Design**: Responsive React/Vite PWA, modular state management, cohesive onboarding, and a deeply creative narrative UX.
 - **Full-Stack Architecture**: Local-first data models with seamless, optional Supabase Auth and Storage integration (enforced by RLS policies).
 - **Deployment / Security**: Environment-aware CI commands, stringent verification scripts, and a strict no-secret policy.
+- **Engine Reliability**: Stable Stockfish worker manager with UCI readiness checks, serialized searches, one automatic worker restart, health checks, and clearer engine UI states.
 
 ## Skill Showcase Map
 - **Data Engineering**: IndexedDB schema design, migrations, export/import pipeline, cloud backup schema, Supabase Storage policies, backup merge strategy.
@@ -101,6 +102,7 @@ npm test
 npm run build
 npx tsx scripts/validate-puzzles.ts
 node scripts/run-mirror-verification.mjs
+npm run stockfish:stability
 ```
 
 ## Screenshots
@@ -131,9 +133,14 @@ node scripts/run-mirror-verification.mjs
 - `v1.18.3-local-genai-coach-design-1`
 - `v1.18.4-local-genai-coach-stub-2`
 - `v1.18.5-local-genai-coach-safety-eval-1`
+- `v1.18.6-stockfish-stability-hotfix-1`
 
-## Future Roadmap
-- E2EE Cloud Backups.
-- Local GenAI coach runtime adapter design, without live model calls until privacy and safety gates are proven.
-- Optional runtime GenAI coaching integration after local context, privacy, and guardrail contracts are verified.
-- Advanced progression dashboard.
+## Market-Grade Product Roadmap
+- `M-MIRROR-2-PERSONALITY-OPPONENT`: play current, past, aggressive, cautious, and improved versions of yourself.
+- `M-PGN-IMPORT-PIPELINE-1`: import outside games locally and update StyleVector/analytics from real player history.
+- `M-GAME-REVIEW-PRO-1`: Chess.com-level review with MIRROR-specific explanations and practice recommendations.
+- `M-ADVANCED-ANALYTICS-DASHBOARD-1`: in-app analytics dashboards with every chart ending in a recommended action.
+- `M-CLUE-CHESS-ADAPTIVE-2`: deeper clue levels, adaptive difficulty, review mode, streaks, and kid-friendly wording.
+- Later phases sequence progression, invite multiplayer, random matchmaking, 3D Kurukshetra visuals, kids mode, E2EE backup, and release hardening.
+
+Runtime GenAI adapter work, story implementation expansion, 3D visuals, multiplayer, and E2EE are deliberately sequenced after core reliability and product execution milestones. Runtime GenAI coaching is still not implemented.

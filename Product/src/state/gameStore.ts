@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { Chess } from 'chess.js';
-import { getBestMove, stopThinking } from '../engine/stockfishBridge';
+import {
+  getBestMove,
+  stopThinking,
+  StockfishEngineError,
+  subscribeStockfishEngineState,
+  type StockfishEngineState,
+} from '../engine/stockfishBridge';
 import { putLocalMatchRecord, getOrCreateDefaultPlayer } from '../data/db';
 import { usePlayerStore } from './playerStore';
 
@@ -9,6 +15,7 @@ type Status = 'idle' | 'playing' | 'game-over';
 type ResultLabel = 'white_win' | 'black_win' | 'draw' | 'resigned' | 'abandoned';
 type Result = 'You won' | 'You lost' | 'Draw' | 'Game ended' | null;
 export type Difficulty = 'Beginner' | 'Casual' | 'Club' | 'Strong';
+type EnginePhase = 'idle' | 'starting' | 'thinking' | 'restarting' | 'unavailable' | 'retry-failed';
 
 interface GameState {
   _game: Chess;
@@ -19,7 +26,9 @@ interface GameState {
   playerColor: Color;
   selectedSide: 'white' | 'black' | 'random';
   engineThinking: boolean;
+  enginePhase: EnginePhase;
   engineError: string | null;
+  engineErrorDetails: string | null;
   gameId: number;
   savedMatchId: number | null;
   savedRecordId: string | null;
@@ -33,6 +42,36 @@ interface GameState {
   claimDraw: () => void;
   clearEngineError: () => void;
   exportPgn: () => string;
+}
+
+let unsubscribeStockfishState: (() => void) | null = null;
+
+function ensureStockfishStateSubscription(
+  set: (partial: Partial<GameState>) => void,
+  get: () => GameState
+): void {
+  if (unsubscribeStockfishState) return;
+
+  unsubscribeStockfishState = subscribeStockfishEngineState((state) => {
+    const current = get();
+    if (!current.engineThinking) return;
+
+    const phase = enginePhaseFromStockfishState(state, current.enginePhase);
+    if (phase) {
+      set({ enginePhase: phase });
+    }
+  });
+}
+
+function enginePhaseFromStockfishState(
+  state: StockfishEngineState,
+  currentPhase: EnginePhase
+): EnginePhase | null {
+  if (state === 'booting') return 'starting';
+  if (state === 'searching') return currentPhase === 'starting' ? 'starting' : 'thinking';
+  if (state === 'restarting') return 'restarting';
+  if (state === 'crashed') return 'unavailable';
+  return null;
 }
 
 function uciToMove(uci: string): { from: string; to: string; promotion?: string } {
@@ -84,7 +123,10 @@ async function saveLocalMatch(game: Chess, selectedSide: 'white'|'black'|'random
   putLocalMatchRecord(record).catch(err => console.error('Failed to save local match:', err));
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
+export const useGameStore = create<GameState>((set, get) => {
+  ensureStockfishStateSubscription(set, get);
+
+  return {
   _game: new Chess(),
   fen: new Chess().fen(),
   status: 'idle',
@@ -93,14 +135,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   playerColor: 'white',
   selectedSide: 'white',
   engineThinking: false,
+  enginePhase: 'idle',
   engineError: null,
+  engineErrorDetails: null,
   gameId: 0,
   savedMatchId: null,
   savedRecordId: null,
   difficulty: 'Club',
   history: [],
 
-  clearEngineError: () => set({ engineError: null }),
+  clearEngineError: () => set({ engineError: null, engineErrorDetails: null, enginePhase: 'idle' }),
 
   startGame: (side, difficulty = 'Club') => {
     stopThinking();
@@ -118,7 +162,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       playerColor,
       selectedSide: side,
       engineThinking: false,
+      enginePhase: 'idle',
       engineError: null,
+      engineErrorDetails: null,
       gameId,
       savedMatchId: null,
       savedRecordId: null,
@@ -128,6 +174,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // If the player is Black, the engine moves first.
     if (playerColor === 'black') {
+      set({ enginePhase: 'starting', engineThinking: true });
       void get().triggerEngineMove();
     }
   },
@@ -165,7 +212,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { _game, playerColor, gameId, difficulty } = get();
     if (_game.isGameOver()) return;
 
-    set({ engineThinking: true });
+    set({
+      engineThinking: true,
+      enginePhase: get().enginePhase === 'starting' ? 'starting' : 'thinking',
+      engineError: null,
+      engineErrorDetails: null,
+    });
     try {
       let depth = 10;
       switch (difficulty) {
@@ -178,8 +230,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       const current = get();
       if (current.gameId !== gameId || current.status !== 'playing') return;
       if (!uci) {
-        set({ engineThinking: false });
-        return;
+        throw new StockfishEngineError(
+          'ENGINE_TIMEOUT',
+          'Stockfish did not return a legal move.',
+          'The worker became ready but did not produce a move before the timeout.'
+        );
       }
       const move = uciToMove(uci);
       try {
@@ -194,11 +249,34 @@ export const useGameStore = create<GameState>((set, get) => ({
         saveLocalMatch(_game, get().selectedSide, playerColor, difficulty, end.resultLabel);
         set({ savedMatchId: gameId });
       }
-      set({ fen: _game.fen(), history: _game.history(), engineThinking: false, engineError: null, ...end });
+      set({
+        fen: _game.fen(),
+        history: _game.history(),
+        engineThinking: false,
+        enginePhase: 'idle',
+        engineError: null,
+        engineErrorDetails: null,
+        ...end,
+      });
     } catch (err) {
       console.error('[gameStore] engine error:', err);
       if (get().gameId === gameId) {
-        set({ engineThinking: false, engineError: 'Engine error. Please try again.' });
+        const failure = err instanceof StockfishEngineError ? err : null;
+        const retryExhausted = Boolean(failure?.code === 'ENGINE_RETRY_FAILED');
+        set({
+          engineThinking: false,
+          enginePhase: retryExhausted ? 'retry-failed' : 'unavailable',
+          engineError: retryExhausted
+            ? 'Engine unavailable after one automatic restart. Please reload or switch engine difficulty.'
+            : 'Engine unavailable. Please reload or switch engine difficulty.',
+          engineErrorDetails: import.meta.env.DEV
+            ? failure
+              ? `${failure.code}: ${failure.message}${failure.details ? `\n${failure.details}` : ''}`
+              : err instanceof Error
+                ? err.message
+                : String(err)
+            : null,
+        });
       }
     }
   },
@@ -215,6 +293,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       result: 'You lost',
       resultLabel: 'resigned',
       engineThinking: false,
+      enginePhase: 'idle',
     });
   },
 
@@ -237,6 +316,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       result: 'Draw',
       resultLabel: 'draw',
       engineThinking: false,
+      enginePhase: 'idle',
     });
   },
 
@@ -254,4 +334,5 @@ export const useGameStore = create<GameState>((set, get) => ({
     );
     return _game.pgn();
   },
-}));
+  };
+});
