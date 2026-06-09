@@ -10,6 +10,39 @@ import {
 import * as authService from '../auth/authService';
 import * as backupService from '../backup/backupService';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { MirrorBackupFile } from '../backup/backupTypes';
+
+type MockSupabase = {
+  storage: {
+    from: ReturnType<typeof vi.fn>;
+    upload: ReturnType<typeof vi.fn>;
+    list: ReturnType<typeof vi.fn>;
+    download: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+  };
+};
+
+function minimalBackup(): MirrorBackupFile {
+  return {
+    schema_version: 1,
+    app_name: "MIRROR",
+    created_at: "2023-01-01T00:00:00.000Z",
+    data: {
+      players: [],
+      local_matches: [],
+      mirror_matches: [],
+      calibration_runs: [],
+      style_vectors: [],
+      saved_analyses: [],
+      clue_attempts: [],
+      puzzle_reviews: [],
+      story_progress: [],
+      achievements: [],
+      account_links: [],
+      settings: {},
+    },
+  };
+}
 
 vi.mock('../auth/authService', () => ({
   getSupabaseClient: vi.fn(),
@@ -23,7 +56,7 @@ vi.mock('../backup/backupService', () => ({
 }));
 
 describe('cloudBackupService', () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabase;
 
   beforeEach(() => {
     mockSupabase = {
@@ -48,7 +81,7 @@ describe('cloudBackupService', () => {
   });
 
   it('signed-out user cannot upload', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     vi.mocked(authService.getCurrentAuthUser).mockReturnValue(undefined);
 
     await expect(uploadCloudBackup({ mode: 'active_player' }))
@@ -56,9 +89,9 @@ describe('cloudBackupService', () => {
   });
 
   it('upload uses existing local backup logic and paths correctly', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     vi.mocked(authService.getCurrentAuthUser).mockReturnValue({ id: 'user123', email: 'test@test.com' });
-    vi.mocked(backupService.exportMirrorBackup).mockResolvedValue({ schema_version: 1, app_name: "MIRROR", players: [] } as any);
+    vi.mocked(backupService.exportMirrorBackup).mockResolvedValue(minimalBackup());
 
     const manifest = await uploadCloudBackup({ mode: 'active_player', playerId: 'p1' });
     
@@ -70,7 +103,7 @@ describe('cloudBackupService', () => {
   });
 
   it('list handles empty backup list', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     vi.mocked(authService.getCurrentAuthUser).mockReturnValue({ id: 'user123', email: 'test@test.com' });
     
     // Override mock to return empty
@@ -81,14 +114,14 @@ describe('cloudBackupService', () => {
   });
 
   it('download validates backup before restore', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     
     // Simulate blob text() since we mocked a real Blob
     mockSupabase.storage.download.mockResolvedValue({ 
       data: { text: async () => JSON.stringify({ schema_version: 1, app_name: "MIRROR" }) }, 
       error: null 
     });
-    vi.mocked(backupService.validateBackupFile).mockReturnValue({ schema_version: 1, app_name: "MIRROR" } as any);
+    vi.mocked(backupService.validateBackupFile).mockReturnValue(minimalBackup());
 
     const backup = await downloadCloudBackup('some/path.json');
     expect(backupService.validateBackupFile).toHaveBeenCalled();
@@ -96,23 +129,23 @@ describe('cloudBackupService', () => {
   });
 
   it('restore calls importMirrorBackup', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     mockSupabase.storage.download.mockResolvedValue({ 
       data: { text: async () => JSON.stringify({ schema_version: 1, app_name: "MIRROR" }) }, 
       error: null 
     });
-    vi.mocked(backupService.validateBackupFile).mockReturnValue({ schema_version: 1, app_name: "MIRROR" } as any);
+    vi.mocked(backupService.validateBackupFile).mockReturnValue(minimalBackup());
 
     await restoreCloudBackup('some/path.json', { mode: 'merge' });
     
     expect(backupService.importMirrorBackup).toHaveBeenCalledWith(
-      { schema_version: 1, app_name: "MIRROR" },
+      expect.objectContaining({ schema_version: 1, app_name: "MIRROR" }),
       { mode: 'merge' }
     );
   });
 
   it('invalid downloaded backup is rejected', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     mockSupabase.storage.download.mockResolvedValue({ 
       data: { text: async () => 'Not a json file' }, 
       error: null 
@@ -123,7 +156,7 @@ describe('cloudBackupService', () => {
   });
   
   it('delete uses storage remove safely', async () => {
-    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as SupabaseClient);
+    vi.mocked(authService.getSupabaseClient).mockReturnValue(mockSupabase as unknown as SupabaseClient);
     
     await deleteCloudBackup('some/path.json');
     

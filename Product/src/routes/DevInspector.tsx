@@ -75,7 +75,7 @@ export default function DevInspector() {
       const puzzleReviews = await db.getAllFromIndex('puzzle_reviews', 'player_id', activePlayerId);
       const reviewStats = await getReviewStats(activePlayerId);
 
-      let accountLinks: any[] = [];
+      let accountLinks: unknown[] = [];
       try {
         accountLinks = await db.getAll('account_links');
       } catch (e) {

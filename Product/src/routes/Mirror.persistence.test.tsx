@@ -65,12 +65,17 @@ const settingsMocks = vi.hoisted(() => {
     audioVolume: 0.5,
   };
 
-  const storeMock: any = <T,>(selector: (state: typeof mockSettingsState) => T): T => {
+  type SettingsStoreMock = {
+    <T>(selector?: (state: typeof mockSettingsState) => T): T | typeof mockSettingsState;
+    getState: () => typeof mockSettingsState;
+  };
+
+  const storeMock = (<T,>(selector?: (state: typeof mockSettingsState) => T) => {
     if (typeof selector === 'function') {
       return selector(mockSettingsState);
     }
-    return mockSettingsState as any;
-  };
+    return mockSettingsState;
+  }) as SettingsStoreMock;
   storeMock.getState = () => mockSettingsState;
   
   return { storeMock };

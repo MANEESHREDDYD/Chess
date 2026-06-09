@@ -5,8 +5,14 @@ describe('audioEngine', () => {
   beforeEach(() => {
     // Clear out AudioContext if it somehow existed
     if (typeof window !== 'undefined') {
-      (window as any).AudioContext = undefined;
-      (window as any).webkitAudioContext = undefined;
+      Object.defineProperty(window, 'AudioContext', {
+        configurable: true,
+        value: undefined,
+      });
+      Object.defineProperty(window, 'webkitAudioContext', {
+        configurable: true,
+        value: undefined,
+      });
     }
   });
 

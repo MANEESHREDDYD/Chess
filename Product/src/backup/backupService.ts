@@ -1,6 +1,30 @@
 import { openMirrorDb, MIRROR_DB_NAME, type StoryProgressRecord, type PuzzleReviewRecord } from '../data/db';
 import type { MirrorBackupFile, MirrorBackupData } from './backupTypes';
 
+type BackupStoreName =
+  | 'players'
+  | 'local_matches'
+  | 'mirror_matches'
+  | 'calibration_runs'
+  | 'style_vectors'
+  | 'saved_analyses'
+  | 'clue_attempts'
+  | 'puzzle_reviews'
+  | 'story_progress'
+  | 'achievements'
+  | 'account_links';
+
+type MergeableBackupRecord = {
+  id: string;
+  player_id?: string;
+  updated_at?: string;
+  created_at?: string;
+};
+
+function hasRestorableSettings(value: unknown): value is { state: unknown } {
+  return typeof value === 'object' && value !== null && 'state' in value;
+}
+
 export async function exportMirrorBackup(playerId?: string): Promise<MirrorBackupFile> {
   const db = await openMirrorDb(MIRROR_DB_NAME);
   
@@ -200,10 +224,9 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
         } else {
           // Iterate and delete by player_id
           const all = await store.getAll();
-          for (const record of all) {
-            const anyRec = record as any;
-            if (anyRec.player_id === options.replacePlayerId) {
-              await store.delete(anyRec.id);
+          for (const record of all as MergeableBackupRecord[]) {
+            if (record.player_id === options.replacePlayerId) {
+              await store.delete(record.id);
             }
           }
         }
@@ -215,20 +238,20 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
   }
 
   // Helper for safe merging
-  const mergeRecords = async <T extends { id: string; updated_at?: string; created_at?: string }>(
-    storeName: string, 
+  const mergeRecords = async <T extends MergeableBackupRecord>(
+    storeName: BackupStoreName,
     records: T[], 
     resolveConflict?: (local: T, remote: T) => T
   ) => {
     if (!records || records.length === 0) return;
-    const tx = db.transaction(storeName as any, 'readwrite');
-    const store = tx.objectStore(storeName as any);
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
     
     for (const remote of records) {
       const local = await store.get(remote.id) as T | undefined;
       if (!local) {
         // Safe to insert
-        await store.put(remote as any);
+        await store.put(remote as never);
       } else {
         // Conflict resolution
         let merged = null;
@@ -253,7 +276,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
         }
         
         if (merged === remote) {
-          await store.put(remote as any);
+          await store.put(remote as never);
         }
       }
     }
@@ -302,8 +325,8 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
   // Settings
   if (options.importSettings && data.settings && data.settings['mirror-settings']) {
     // Basic sanity checks before restoring
-    const newSettings = data.settings['mirror-settings'] as any;
-    if (typeof newSettings === 'object' && newSettings.state) {
+    const newSettings = data.settings['mirror-settings'];
+    if (hasRestorableSettings(newSettings)) {
       localStorage.setItem('mirror-settings', JSON.stringify(newSettings));
     }
   }

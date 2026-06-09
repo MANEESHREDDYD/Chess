@@ -1,0 +1,291 @@
+{
+  "analysis_quality": [
+    {
+      "accuracy_estimate": 82.5,
+      "analysis_id": "analysis-sample-001",
+      "analyzed_moves": 8,
+      "average_cp_loss": 32.0,
+      "blunder_count": 0,
+      "cp_loss_trend_vs_previous": 0.0,
+      "created_at": "2026-05-02T15:00:00.000Z",
+      "improvement_trend": "regressing",
+      "inaccuracy_count": 1,
+      "match_id": "lm-sample-001",
+      "match_type": "computer",
+      "mistake_count": 1,
+      "player_id": "player-sample-001"
+    },
+    {
+      "accuracy_estimate": 91.2,
+      "analysis_id": "analysis-sample-002",
+      "analyzed_moves": 7,
+      "average_cp_loss": 18.0,
+      "blunder_count": 0,
+      "cp_loss_trend_vs_previous": -14.0,
+      "created_at": "2026-05-05T10:00:00.000Z",
+      "improvement_trend": "regressing",
+      "inaccuracy_count": 1,
+      "match_id": "lm-sample-002",
+      "match_type": "computer",
+      "mistake_count": 0,
+      "player_id": "player-sample-001"
+    },
+    {
+      "accuracy_estimate": 63.0,
+      "analysis_id": "analysis-sample-003",
+      "analyzed_moves": 5,
+      "average_cp_loss": 78.0,
+      "blunder_count": 1,
+      "cp_loss_trend_vs_previous": 60.0,
+      "created_at": "2026-05-07T11:00:00.000Z",
+      "improvement_trend": "regressing",
+      "inaccuracy_count": 1,
+      "match_id": "lm-sample-003",
+      "match_type": "computer",
+      "mistake_count": 1,
+      "player_id": "player-sample-001"
+    }
+  ],
+  "metadata": {
+    "app_name": "MIRROR",
+    "created_at": "2026-06-01T12:00:00.000Z",
+    "latest_known_tag": "v1.18.1-portfolio-showcase-1",
+    "schema_version": 8
+  },
+  "player_summary": [
+    {
+      "accuracy_estimate": 78.9,
+      "achievement_count": 5,
+      "active_days": 22,
+      "aggression_index": 0.3111,
+      "analyses_completed": 3,
+      "analysis_improvement_trend": "regressing",
+      "average_cp_loss": 42.6667,
+      "blunder_count": 1,
+      "clue_attempts": 10,
+      "clue_solve_rate": 0.5,
+      "detected_elo": 1350,
+      "display_name": "Arjuna_Sample",
+      "elo_band": "initiate",
+      "local_matches": 8,
+      "mirror_matches": 3,
+      "mistake_count": 2,
+      "multi_move_solve_rate": 1.0,
+      "player_id": "player-sample-001",
+      "positional_preference_summary": "Prefers knight; white openings: e4, Nf3, d4; black replies: e5, c5, d5; endgame strength: 0.65",
+      "review_due_count": 3,
+      "risk_index": 0.2625,
+      "story_chapters_available": 1,
+      "story_chapters_completed": 4,
+      "streak_estimate_days": 1,
+      "style_vector_id": "sv-sample-002",
+      "tactical_weakness_summary": "pin: 0.42",
+      "time_pressure_risk": 0.28,
+      "total_games": 11
+    }
+  ],
+  "puzzle_performance": [
+    {
+      "attempts": 1,
+      "failed_motif_count": 0,
+      "motif": "endgame",
+      "multi_move_attempts": 0,
+      "multi_move_failure_rate": 0.0,
+      "player_id": "player-sample-001",
+      "review_due_count": 0,
+      "review_lapse_count": 0,
+      "solved_count": 1,
+      "solved_rate": 1.0,
+      "strongest_motif": "fork",
+      "weakest_motif": "pin"
+    },
+    {
+      "attempts": 3,
+      "failed_motif_count": 0,
+      "motif": "fork",
+      "multi_move_attempts": 0,
+      "multi_move_failure_rate": 0.0,
+      "player_id": "player-sample-001",
+      "review_due_count": 0,
+      "review_lapse_count": 0,
+      "solved_count": 3,
+      "solved_rate": 1.0,
+      "strongest_motif": "fork",
+      "weakest_motif": "pin"
+    },
+    {
+      "attempts": 1,
+      "failed_motif_count": 0,
+      "motif": "mate",
+      "multi_move_attempts": 1,
+      "multi_move_failure_rate": 0.0,
+      "player_id": "player-sample-001",
+      "review_due_count": 0,
+      "review_lapse_count": 0,
+      "solved_count": 1,
+      "solved_rate": 1.0,
+      "strongest_motif": "fork",
+      "weakest_motif": "pin"
+    },
+    {
+      "attempts": 3,
+      "failed_motif_count": 3,
+      "motif": "pin",
+      "multi_move_attempts": 0,
+      "multi_move_failure_rate": 0.0,
+      "player_id": "player-sample-001",
+      "review_due_count": 1,
+      "review_lapse_count": 2,
+      "solved_count": 0,
+      "solved_rate": 0.0,
+      "strongest_motif": "fork",
+      "weakest_motif": "pin"
+    },
+    {
+      "attempts": 1,
+      "failed_motif_count": 1,
+      "motif": "removing_the_defender",
+      "multi_move_attempts": 0,
+      "multi_move_failure_rate": 0.0,
+      "player_id": "player-sample-001",
+      "review_due_count": 1,
+      "review_lapse_count": 2,
+      "solved_count": 0,
+      "solved_rate": 0.0,
+      "strongest_motif": "fork",
+      "weakest_motif": "pin"
+    },
+    {
+      "attempts": 1,
+      "failed_motif_count": 1,
+      "motif": "skewer",
+      "multi_move_attempts": 0,
+      "multi_move_failure_rate": 0.0,
+      "player_id": "player-sample-001",
+      "review_due_count": 1,
+      "review_lapse_count": 1,
+      "solved_count": 0,
+      "solved_rate": 0.0,
+      "strongest_motif": "fork",
+      "weakest_motif": "pin"
+    }
+  ],
+  "story_progress": [
+    {
+      "attempts": 1,
+      "best_result": "win",
+      "chapter_id": "ch01",
+      "completed_at": "2026-05-05T14:00:00.000Z",
+      "is_complete": true,
+      "player_id": "player-sample-001",
+      "status": "complete",
+      "updated_at": "2026-05-05T14:00:00.000Z"
+    },
+    {
+      "attempts": 2,
+      "best_result": "win",
+      "chapter_id": "ch02",
+      "completed_at": "2026-05-08T16:00:00.000Z",
+      "is_complete": true,
+      "player_id": "player-sample-001",
+      "status": "complete",
+      "updated_at": "2026-05-08T16:00:00.000Z"
+    },
+    {
+      "attempts": 3,
+      "best_result": "draw",
+      "chapter_id": "ch03",
+      "completed_at": "2026-05-12T11:00:00.000Z",
+      "is_complete": true,
+      "player_id": "player-sample-001",
+      "status": "complete",
+      "updated_at": "2026-05-12T11:00:00.000Z"
+    },
+    {
+      "attempts": 1,
+      "best_result": "win",
+      "chapter_id": "ch04",
+      "completed_at": "2026-05-15T09:00:00.000Z",
+      "is_complete": true,
+      "player_id": "player-sample-001",
+      "status": "complete",
+      "updated_at": "2026-05-15T09:00:00.000Z"
+    },
+    {
+      "attempts": 2,
+      "best_result": "",
+      "chapter_id": "ch05",
+      "completed_at": "",
+      "is_complete": false,
+      "player_id": "player-sample-001",
+      "status": "available",
+      "updated_at": "2026-05-18T14:00:00.000Z"
+    }
+  ],
+  "style_vectors": [
+    {
+      "id": "sv-sample-001",
+      "player_id": "player-sample-001",
+      "source": "calibration",
+      "vector": {
+        "avg_move_time_ms": 12000,
+        "detected_elo": 1280,
+        "elo_band": "initiate",
+        "endgame_strength": 0.6,
+        "exchange_willingness": 0.55,
+        "motif_blindness": {
+          "fork": 0.1,
+          "pin": 0.5,
+          "removing_the_defender": 0.2,
+          "skewer": 0.3
+        },
+        "opening_black_top3": [
+          "e5",
+          "d5",
+          "c5"
+        ],
+        "opening_white_top3": [
+          "e4",
+          "d4",
+          "Nf3"
+        ],
+        "preferred_minor": "knight",
+        "schema_version": 1,
+        "swindle_preference": "principled",
+        "time_pressure_blunder_rate": 0.35
+      }
+    },
+    {
+      "id": "sv-sample-002",
+      "player_id": "player-sample-001",
+      "source": "tuned",
+      "vector": {
+        "avg_move_time_ms": 10500,
+        "detected_elo": 1350,
+        "elo_band": "initiate",
+        "endgame_strength": 0.65,
+        "exchange_willingness": 0.6,
+        "motif_blindness": {
+          "fork": 0.08,
+          "pin": 0.42,
+          "removing_the_defender": 0.18,
+          "skewer": 0.25
+        },
+        "opening_black_top3": [
+          "e5",
+          "c5",
+          "d5"
+        ],
+        "opening_white_top3": [
+          "e4",
+          "Nf3",
+          "d4"
+        ],
+        "preferred_minor": "knight",
+        "schema_version": 1,
+        "swindle_preference": "principled",
+        "time_pressure_blunder_rate": 0.28
+      }
+    }
+  ]
+}

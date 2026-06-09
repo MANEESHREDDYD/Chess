@@ -20,6 +20,10 @@ import {
 } from '../cloud/cloudBackupService';
 import type { CloudBackupManifest } from '../cloud/cloudBackupTypes';
 
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export default function Backup() {
   const { activePlayer } = usePlayerStore();
   
@@ -57,8 +61,8 @@ export default function Backup() {
       setCloudLoading(true);
       const list = await listCloudBackups();
       setCloudBackups(list);
-    } catch (e: any) {
-      setError(e.message || 'Failed to list cloud backups.');
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Failed to list cloud backups.'));
     } finally {
       setCloudLoading(false);
     }
@@ -78,8 +82,8 @@ export default function Backup() {
       await uploadCloudBackup({ mode, playerId: activePlayer?.id });
       setSuccessMsg("Cloud backup uploaded successfully.");
       await refreshCloudBackups();
-    } catch (e: any) {
-      setError(e.message || 'Cloud upload failed.');
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Cloud upload failed.'));
     } finally {
       setCloudLoading(false);
     }
@@ -91,8 +95,8 @@ export default function Backup() {
       setError(null);
       const backup = await downloadCloudBackup(manifest.storage_path);
       setPendingBackup(backup);
-    } catch (e: any) {
-      setError(e.message || 'Failed to download cloud backup.');
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Failed to download cloud backup.'));
     } finally {
       setCloudLoading(false);
     }
@@ -106,8 +110,8 @@ export default function Backup() {
       await deleteCloudBackup(manifest.storage_path);
       setSuccessMsg("Cloud backup deleted.");
       await refreshCloudBackups();
-    } catch (e: any) {
-      setError(e.message || 'Failed to delete cloud backup.');
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Failed to delete cloud backup.'));
     } finally {
       setCloudLoading(false);
     }
@@ -122,8 +126,7 @@ export default function Backup() {
       downloadBackupJson(backup, 'active-player');
       setSuccessMsg("Export successful.");
     } catch (err: unknown) {
-      const e = err as Error;
-      setError(e.message || 'Export failed.');
+      setError(errorMessage(err, 'Export failed.'));
     }
   };
 
@@ -135,8 +138,7 @@ export default function Backup() {
       downloadBackupJson(backup, 'all-data');
       setSuccessMsg("Full export successful.");
     } catch (err: unknown) {
-      const e = err as Error;
-      setError(e.message || 'Export failed.');
+      setError(errorMessage(err, 'Export failed.'));
     }
   };
 
@@ -153,8 +155,7 @@ export default function Backup() {
         const validated = validateBackupFile(raw);
         setPendingBackup(validated);
       } catch (err: unknown) {
-        const e = err as Error;
-        setError(e.message || 'Failed to read or validate backup file.');
+        setError(errorMessage(err, 'Failed to read or validate backup file.'));
       }
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -188,8 +189,7 @@ export default function Backup() {
       }, 1500);
 
     } catch (err: unknown) {
-      const e = err as Error;
-      setError(e.message || 'Import failed.');
+      setError(errorMessage(err, 'Import failed.'));
       setImporting(false);
     }
   };

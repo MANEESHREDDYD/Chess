@@ -1,0 +1,56 @@
+# MIRROR Analytics Insights
+
+Generated from an exported MIRROR backup JSON file. This is a local-first analytics report, not runtime GenAI coaching.
+
+## Player Progress Summary
+
+Player: Arjuna_Sample (player-sample-001)
+
+- Total games: 11 (3 Mirror matches)
+- Analyses completed: 3
+- Clue solve rate: 50.0%
+- Multi-move solve rate: 100.0%
+- Active days: 22 with an estimated 1-day current streak
+- Achievements earned: 5
+
+## Weakest Motifs
+
+- Weakest motif: pin
+- Strongest motif: fork
+- endgame: 100.0% solved, 0 failed attempts, 0 review lapses
+- fork: 100.0% solved, 0 failed attempts, 0 review lapses
+- mate: 100.0% solved, 0 failed attempts, 0 review lapses
+- pin: 0.0% solved, 3 failed attempts, 2 review lapses
+- removing_the_defender: 0.0% solved, 1 failed attempts, 2 review lapses
+- skewer: 0.0% solved, 1 failed attempts, 1 review lapses
+
+## Puzzle Review Recommendations
+
+- Due review motifs: pin, removing_the_defender, skewer
+- Review due count: 3
+
+## Analysis Quality Summary
+
+- Average CP loss: 42.6667
+- Accuracy estimate: 78.9
+- Blunders: 1
+- Mistakes: 2
+- Improvement trend: regressing
+- Latest analysis CP loss delta vs previous: 60.0
+
+## Story Progress
+
+- Completed chapters: 4
+- Available chapters: 1
+
+## StyleVector Feature Summary
+
+- Aggression index: 0.3111
+- Risk index: 0.2625
+- Time-pressure risk: 0.28
+- Tactical weakness: pin: 0.42
+- Positional preference: Prefers knight; white openings: e4, Nf3, d4; black replies: e5, c5, d5; endgame strength: 0.65
+
+## Next Training Recommendation
+
+- Clear due spaced-repetition reviews first, starting with pin.

@@ -27,11 +27,24 @@ describe('Backup Service', () => {
   beforeEach(async () => {
     // Clear DB
     const db = await openMirrorDb(MIRROR_DB_NAME);
-    const storeNames = Array.from(db.objectStoreNames);
+    type StoreName =
+      | 'players'
+      | 'calibration_runs'
+      | 'style_vectors'
+      | 'mirror_matches'
+      | 'feedback'
+      | 'local_matches'
+      | 'saved_analyses'
+      | 'clue_attempts'
+      | 'story_progress'
+      | 'achievements'
+      | 'puzzle_reviews'
+      | 'account_links';
+    const storeNames = Array.from(db.objectStoreNames) as StoreName[];
     if (storeNames.length > 0) {
-      const tx = db.transaction(storeNames as any, 'readwrite');
+      const tx = db.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) {
-        await tx.objectStore(storeName as any).clear();
+        await tx.objectStore(storeName).clear();
       }
       await tx.done;
     }

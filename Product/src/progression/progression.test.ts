@@ -13,7 +13,13 @@ vi.mock('../data/db', async (importOriginal) => {
 
 describe('Player Progression', () => {
   const playerId = 'player-1';
-  let mockDb: any;
+  type MockDb = {
+    getAll: ReturnType<typeof vi.fn>;
+    getAllFromIndex: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+    transaction: ReturnType<typeof vi.fn>;
+  };
+  let mockDb: MockDb;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,7 +37,9 @@ describe('Player Progression', () => {
       })
     };
 
-    (dbModule.openMirrorDb as any).mockResolvedValue(mockDb);
+    vi.mocked(dbModule.openMirrorDb).mockResolvedValue(
+      mockDb as unknown as Awaited<ReturnType<typeof dbModule.openMirrorDb>>
+    );
   });
 
   it('calculates deterministic XP and level from empty state', async () => {

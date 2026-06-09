@@ -24,7 +24,7 @@ function getClassification(cpLoss: number): AnalysisMove['classification'] {
   return 'blunder';
 }
 
-function getPersonalizedNote(classification: string, _cpLoss: number, styleVector?: StyleVector, _move?: string): string | undefined {
+function getPersonalizedNote(classification: string, _cpLoss: number, styleVector?: StyleVector): string | undefined {
   if (!styleVector || (classification !== 'mistake' && classification !== 'blunder')) {
     return undefined;
   }
@@ -161,7 +161,7 @@ export async function analyzeGame(
       cp_loss: cpLoss,
       classification,
       best_move: bestMoveUci,
-      note: getPersonalizedNote(classification, cpLoss, styleVector, move.san)
+      note: getPersonalizedNote(classification, cpLoss, styleVector)
     };
     
     analysisMoves.push(analysisMove);

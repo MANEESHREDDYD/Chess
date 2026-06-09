@@ -3,7 +3,7 @@ import { usePlayerStore } from '../state/playerStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { getStoryProgressForPlayer, initializeStoryProgressForPlayer, completeStoryChapter, type StoryProgressRecord } from '../data/db';
 import { mahabharataStorySeed } from '../story/mahabharataStorySeed';
-import { isStandardTheme, loadThemeManifest } from '../lib/theme';
+import { isStandardTheme, loadThemeManifest, type ThemeManifest } from '../lib/theme';
 import { BoardView } from '../components/Board/BoardView';
 import { Link } from 'react-router-dom';
 import { seedPuzzles } from '../data/cluePuzzles';
@@ -23,7 +23,7 @@ function StoryEncounterView({
   onBack: () => void 
 }) {
   const { activeTheme } = useSettingsStore();
-  const [themeManifest, setThemeManifest] = useState<any>(null);
+  const [themeManifest, setThemeManifest] = useState<ThemeManifest | null>(null);
   const [themeError, setThemeError] = useState<string | null>(null);
 
   useEffect(() => {

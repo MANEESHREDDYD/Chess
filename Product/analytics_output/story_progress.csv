@@ -1,0 +1,6 @@
+player_id,chapter_id,status,best_result,attempts,completed_at,updated_at,is_complete
+player-sample-001,ch01,complete,win,1,2026-05-05T14:00:00.000Z,2026-05-05T14:00:00.000Z,True
+player-sample-001,ch02,complete,win,2,2026-05-08T16:00:00.000Z,2026-05-08T16:00:00.000Z,True
+player-sample-001,ch03,complete,draw,3,2026-05-12T11:00:00.000Z,2026-05-12T11:00:00.000Z,True
+player-sample-001,ch04,complete,win,1,2026-05-15T09:00:00.000Z,2026-05-15T09:00:00.000Z,True
+player-sample-001,ch05,available,,2,,2026-05-18T14:00:00.000Z,False

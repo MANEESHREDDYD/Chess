@@ -33,6 +33,27 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Data Architecture](docs/data-architecture.md)
 - [AI & ML Methodology](docs/ai-ml-methodology.md)
 - [Analytics & Progression](docs/analytics-and-progression.md)
+- [Data / AI Engineering Showcase](docs/data-ai-showcase.md)
+
+## Data / AI Engineering Showcase
+MIRROR includes a real local-first Python and SQL analytics layer that runs on exported backup JSON files. It does not require Supabase or any cloud service.
+
+- **Python analytics package**: `python/src/mirror_analytics` loads exported MIRROR backups, validates schema shape, computes feature tables, and generates reports.
+- **SQL marts**: `analytics/sql` models warehouse-ready player, puzzle, story, and analysis marts using portable SQL patterns.
+- **Feature engineering**: player progress, puzzle motif weakness, review due counts, multi-move solve rates, CP-loss quality, accuracy, trend, and StyleVector-derived signals.
+- **Behavioral analytics**: StyleVector is treated as MIRROR's behavioral personalization layer, with aggression, risk, time-pressure, tactical weakness, and positional preference features.
+- **Local-first pipeline**: the CLI reads local JSON and writes CSV, Markdown, and JSON artifacts without cloud credentials.
+- **Report generation**: `mirror-analytics` emits `player_summary.csv`, `puzzle_performance.csv`, `story_progress.csv`, `analysis_quality.csv`, `mirror_insights.md`, and `mirror_features.json`.
+
+Recruiter skill map:
+
+- Data Engineering: schema-aware loaders, local ETL, warehouse-style SQL, repeatable CLI outputs.
+- Data Science / Analytics: solved-rate metrics, weak motif detection, CP-loss aggregation, trend analysis, review prioritization.
+- AI / ML Thinking: StyleVector feature extraction and model-ready JSON features.
+- Forward Deployment: local-first operation, CI smoke tests, no cloud dependency.
+- Software Engineering: modular Python package, pytest coverage, CI workflow, and integration without changing gameplay.
+
+Honesty note: Stockfish is the chess engine. StyleVector is the behavioral personalization layer. Runtime GenAI conversational coaching is a future milestone unless implemented in a later release.
 
 ## Security and Privacy
 MIRROR is private by default. All match histories, telemetry, and analytics remain entirely local in your browser's IndexedDB. Optional cloud backups are stored in a private Supabase bucket secured by strict Row Level Security (RLS) policies. No `SERVICE_ROLE` keys or secrets are stored in this repository.
@@ -95,6 +116,7 @@ node scripts/run-mirror-verification.mjs
 - `v1.16.0-account-sync-design-1`
 - `v1.17.0-account-auth-local-bridge`
 - `v1.18.0-cloud-backup-sync-1`
+- `v1.18.2-data-ai-showcase-layer`
 
 ## Future Roadmap
 - E2EE Cloud Backups.

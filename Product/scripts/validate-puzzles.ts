@@ -53,7 +53,7 @@ function validatePuzzle(puzzle: typeof seedPuzzles[0]) {
     }
 
     let previousSide: string | null = null;
-    let finalChess = new Chess(puzzle.fen);
+    const finalChess = new Chess(puzzle.fen);
 
     if (hasSolutionLine) {
       puzzle.solution_line!.forEach((step, idx) => {
@@ -105,8 +105,9 @@ function validatePuzzle(puzzle: typeof seedPuzzles[0]) {
       }
     }
 
-  } catch (e: any) {
-    console.error(`Invalid FEN for puzzle ${puzzle.id}: ${puzzle.fen}. Error: ${e.message}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(`Invalid FEN for puzzle ${puzzle.id}: ${puzzle.fen}. Error: ${message}`);
     hasError = true;
   }
 }

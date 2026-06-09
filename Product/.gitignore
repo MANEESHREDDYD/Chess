@@ -37,6 +37,11 @@ mirror-cloud-backup-*.json
 
 # test
 coverage/
+.pytest_cache/
+
+# python
+__pycache__/
+*.egg-info/
 
 # local tools and source datasets
 tools/

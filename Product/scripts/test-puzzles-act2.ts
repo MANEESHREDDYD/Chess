@@ -3,7 +3,7 @@ import { Chess } from 'chess.js';
 function checkPuzzle(id: string, fen: string, line: string[]) {
   const chess = new Chess(fen);
   console.log(`Checking ${id}:`);
-  for (let move of line) {
+  for (const move of line) {
     try {
       const result = chess.move(move);
       console.log(`  Move ${move} (${result.san}) OK`);

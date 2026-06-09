@@ -1,12 +1,19 @@
 let audioCtx: AudioContext | null = null;
 
+type WebkitAudioWindow = Window &
+  typeof globalThis & {
+    webkitAudioContext?: typeof AudioContext;
+  };
+
 function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined' || !window.AudioContext && !(window as any).webkitAudioContext) {
+  const audioWindow = typeof window !== 'undefined' ? (window as WebkitAudioWindow) : null;
+  if (!audioWindow || (!audioWindow.AudioContext && !audioWindow.webkitAudioContext)) {
     return null; // Safe fallback for non-browser or unsupported environments
   }
   if (!audioCtx) {
     try {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+      const Ctx = audioWindow.AudioContext || audioWindow.webkitAudioContext;
+      if (!Ctx) return null;
       audioCtx = new Ctx();
     } catch (e) {
       console.warn('Web Audio API not supported or failed to initialize.', e);

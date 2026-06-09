@@ -1,0 +1,39 @@
+name: Python Analytics
+
+on:
+  push:
+    paths:
+      - "Product/python/**"
+      - "Product/samples/**"
+      - "Product/analytics/**"
+      - ".github/workflows/python-analytics.yml"
+  pull_request:
+    paths:
+      - "Product/python/**"
+      - "Product/samples/**"
+      - "Product/analytics/**"
+      - ".github/workflows/python-analytics.yml"
+
+jobs:
+  analytics:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Product/python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install analytics package
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run pytest
+        run: pytest
+
+      - name: CLI smoke test
+        run: python -m mirror_analytics.cli --backup ../samples/anonymized-mirror-backup.sample.json --out ../analytics_output_ci
