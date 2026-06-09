@@ -65,6 +65,10 @@ export function getCurrentAuthUser(): AuthUser | undefined {
   return currentAuthUser;
 }
 
+export function getSupabaseClient(): SupabaseClient | null {
+  return supabase;
+}
+
 export function isAuthConfigured(): boolean {
   return !!(supabaseUrl && supabaseAnonKey);
 }

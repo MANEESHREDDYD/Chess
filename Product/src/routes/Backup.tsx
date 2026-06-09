@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { usePlayerStore } from '../state/playerStore';
 import { 
   exportMirrorBackup, 
@@ -9,6 +9,16 @@ import {
   type ImportOptions 
 } from '../backup/backupService';
 import type { MirrorBackupFile } from '../backup/backupTypes';
+import { onAuthStateChange } from '../auth/authService';
+import type { AuthState } from '../auth/authTypes';
+import { 
+  isCloudBackupConfigured, 
+  uploadCloudBackup, 
+  listCloudBackups, 
+  downloadCloudBackup, 
+  deleteCloudBackup 
+} from '../cloud/cloudBackupService';
+import type { CloudBackupManifest } from '../cloud/cloudBackupTypes';
 
 export default function Backup() {
   const { activePlayer } = usePlayerStore();
@@ -22,7 +32,86 @@ export default function Backup() {
   const [importSettings, setImportSettings] = useState(false);
   const [replaceTarget, setReplaceTarget] = useState<'active' | 'all'>('active');
 
+  const [cloudConfigured] = useState(isCloudBackupConfigured());
+  const [authState, setAuthState] = useState<AuthState>({ status: 'loading' });
+  const [cloudBackups, setCloudBackups] = useState<CloudBackupManifest[]>([]);
+  const [cloudLoading, setCloudLoading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!cloudConfigured) return;
+    const unsubscribe = onAuthStateChange((state) => {
+      setAuthState(state);
+      if (state.status === 'signed_in') {
+        refreshCloudBackups();
+      } else {
+        setCloudBackups([]);
+      }
+    });
+    return unsubscribe;
+  }, [cloudConfigured]);
+
+  const refreshCloudBackups = async () => {
+    try {
+      setCloudLoading(true);
+      const list = await listCloudBackups();
+      setCloudBackups(list);
+    } catch (e: any) {
+      setError(e.message || 'Failed to list cloud backups.');
+    } finally {
+      setCloudLoading(false);
+    }
+  };
+
+  const handleCloudUpload = async (mode: 'active_player' | 'all_data') => {
+    if (mode === 'active_player' && !activePlayer) return;
+    const confirmed = window.confirm(
+      "Privacy Warning: Cloud backups are stored in your private Supabase Storage path. They are not end-to-end encrypted in this version. Only upload if you are comfortable storing your MIRROR backup in the configured Supabase project.\n\nContinue with upload?"
+    );
+    if (!confirmed) return;
+    
+    try {
+      setCloudLoading(true);
+      setError(null);
+      setSuccessMsg(null);
+      await uploadCloudBackup({ mode, playerId: activePlayer?.id });
+      setSuccessMsg("Cloud backup uploaded successfully.");
+      await refreshCloudBackups();
+    } catch (e: any) {
+      setError(e.message || 'Cloud upload failed.');
+    } finally {
+      setCloudLoading(false);
+    }
+  };
+
+  const handleCloudDownload = async (manifest: CloudBackupManifest) => {
+    try {
+      setCloudLoading(true);
+      setError(null);
+      const backup = await downloadCloudBackup(manifest.storage_path);
+      setPendingBackup(backup);
+    } catch (e: any) {
+      setError(e.message || 'Failed to download cloud backup.');
+    } finally {
+      setCloudLoading(false);
+    }
+  };
+
+  const handleCloudDelete = async (manifest: CloudBackupManifest) => {
+    if (!window.confirm(`Delete backup ${manifest.filename}?`)) return;
+    try {
+      setCloudLoading(true);
+      setError(null);
+      await deleteCloudBackup(manifest.storage_path);
+      setSuccessMsg("Cloud backup deleted.");
+      await refreshCloudBackups();
+    } catch (e: any) {
+      setError(e.message || 'Failed to delete cloud backup.');
+    } finally {
+      setCloudLoading(false);
+    }
+  };
 
   const handleExportActive = async () => {
     try {
@@ -161,6 +250,64 @@ export default function Backup() {
             </button>
           </div>
         </div>
+      </div>
+
+      <div style={{ background: 'var(--surface-sunken)', padding: '1.5rem', borderRadius: 8, marginBottom: '2rem' }}>
+        <h3 style={{ marginBottom: '1rem' }}>Cloud Backup</h3>
+        
+        {!cloudConfigured ? (
+          <p style={{ color: 'var(--ink-soft)' }}>Cloud backup not configured.</p>
+        ) : authState.status !== 'signed_in' ? (
+          <p style={{ color: 'var(--ink-soft)' }}>Sign in to use cloud backup.</p>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => handleCloudUpload('active_player')}
+                disabled={!activePlayer || cloudLoading}
+              >
+                Upload Active Player Backup
+              </button>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => handleCloudUpload('all_data')}
+                disabled={cloudLoading}
+              >
+                Upload All Local Data
+              </button>
+            </div>
+            
+            {cloudLoading && <p>Loading cloud backups...</p>}
+            
+            {!cloudLoading && cloudBackups.length === 0 && (
+              <p style={{ color: 'var(--ink-soft)' }}>No cloud backups found.</p>
+            )}
+            
+            {!cloudLoading && cloudBackups.length > 0 && (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {cloudBackups.map(b => (
+                  <li key={b.id} style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong>{b.filename}</strong>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+                        {new Date(b.created_at).toLocaleString()} • {Math.round((b.size_bytes || 0) / 1024)} KB
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btn btn-secondary" onClick={() => handleCloudDownload(b)} disabled={cloudLoading}>
+                        Restore
+                      </button>
+                      <button className="btn btn-ghost" style={{ color: 'var(--danger-color)' }} onClick={() => handleCloudDelete(b)} disabled={cloudLoading}>
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
 
       {pendingBackup && (

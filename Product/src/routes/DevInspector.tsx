@@ -13,6 +13,7 @@ import {
 import { getPlayerProgressSummary } from '../progression/progression';
 import { getReviewStats } from '../training/spacedRepetition';
 import { getCurrentAuthUser, isAuthConfigured } from '../auth/authService';
+import { isCloudBackupConfigured } from '../cloud/cloudBackupService';
 
 export default function DevInspector() {
   const activePlayerId = usePlayerStore((s) => s.activePlayerId);
@@ -36,6 +37,7 @@ export default function DevInspector() {
     authConfigured: isAuthConfigured(),
     authUser: getCurrentAuthUser() || null,
     accountLinks: [],
+    cloudBackupConfigured: isCloudBackupConfigured(),
   });
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function DevInspector() {
         authConfigured: isAuthConfigured(),
         authUser: getCurrentAuthUser() || null,
         accountLinks,
+        cloudBackupConfigured: isCloudBackupConfigured(),
       });
     }
 
