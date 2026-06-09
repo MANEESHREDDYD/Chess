@@ -8,6 +8,7 @@ import Story from './routes/Story';
 import About from './routes/About';
 import { Onboarding } from './routes/Onboarding';
 import { Progress } from './routes/Progress';
+import Backup from './routes/Backup';
 import DevMirrorVerification from './routes/DevMirrorVerification';
 import DevInspector from './routes/DevInspector';
 import { useEffect } from 'react';
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/clue-chess" element={<ClueChess />} />
           <Route path="/play" element={<Play />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/backup" element={<Backup />} />
           <Route path="/about" element={<About />} />
           {import.meta.env.DEV && (
             <>

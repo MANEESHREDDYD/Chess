@@ -110,6 +110,12 @@ export default function Home() {
         <p className="home-privacy">
           We don't track you. Games stay on your device unless you submit feedback.
         </p>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <Link to="/backup" style={{ color: 'var(--ink-soft)', fontSize: '0.9rem', textDecoration: 'underline' }}>
+            Backup or Export Your Data
+          </Link>
+        </div>
       </div>
     </div>
   );

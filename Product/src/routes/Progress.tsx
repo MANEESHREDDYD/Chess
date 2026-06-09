@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { usePlayerStore } from '../state/playerStore';
 import { 
   getPlayerProgressSummary, 
@@ -58,6 +58,12 @@ export const Progress: React.FC = () => {
           >
             Back Home
           </button>
+        </div>
+
+        <div className="flex justify-end">
+          <Link to="/backup" className="text-sm text-[var(--ink-soft)] underline hover:text-[var(--primary-color)]">
+            Backup your progress
+          </Link>
         </div>
 
         {/* Level and XP */}
