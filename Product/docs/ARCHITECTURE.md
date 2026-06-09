@@ -103,7 +103,7 @@ This document maps the codebase today, names the seams where the seven future sy
 | `src/engine/calibrationOpponent.ts` | Skill-capped opponent for calibration | `init`, `move`, `dispose` | Tasks 3 and 8 |
 | `src/lib/theme.ts` | Theme manifest fetch + URL helpers | `ThemeManifest`, `ThemeId`, `PieceKey`, `loadThemeManifest`, `isStandardTheme`, `getThemeManifestUrl`, `getThemeAssetUrl` | `Board.tsx`, `BoardView.tsx` |
 | `src/lib/eloDetect.ts` | Detected-Elo heuristic with band thresholds | `computeDetectedElo`, `computeDetectedEloFromScores`, `eloBandFromRating`, `DetectedElo` | `ml/styleVector.ts` |
-| `src/ml/styleVector.ts` | 9-dimension style vector computation, NaN-safe | `computeStyleVector`, `STYLE_VECTOR_SCHEMA_VERSION`, `MOTIFS`, all types | `calibrationStore`, `data/db.ts` (type re-export), tests |
+| `src/ml/styleVector.ts` | StyleVector computation with 11 behavioral/profile fields plus schema metadata, NaN-safe | `computeStyleVector`, `STYLE_VECTOR_SCHEMA_VERSION`, `MOTIFS`, all types | `calibrationStore`, `data/db.ts` (type re-export), tests |
 | `src/data/db.ts` | IndexedDB schema + open/close/delete helpers | `MIRROR_DB_NAME`, `MIRROR_DB_VERSION`, all record types, `openMirrorDb`, `closeMirrorDb`, `deleteMirrorDb` | `calibrationStore`, tests |
 | `src/data/calibrationPositions.json` | Static authored content for 8 tasks | _(consumed via `taskData.ts`)_ | `taskData.ts` |
 | `src/styles/tokens.css` | Design tokens (colors, type, spacing) | _(no JS exports)_ | `main.tsx` |
@@ -135,7 +135,7 @@ style_vectors                  (keyPath: id, index computed_at)
 ├── player_id: string          → players.id
 ├── calibration_run_id?: string  → calibration_runs.id
 ├── source: 'calibration' | 'tuned'
-├── vector: StyleVector        — 9 dimensions + detected_elo + elo_band + schema_version
+├── vector: StyleVector        — 11 behavioral/profile fields + schema_version metadata
 ├── computed_at: string
 └── previous_vector_id?: string  → style_vectors.id  (chain for tuning history)
 

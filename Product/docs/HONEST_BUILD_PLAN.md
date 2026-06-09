@@ -51,7 +51,7 @@ If a funded startup were to build this exact 8-feature spec to compete directly 
 Here is the honest reality of what you can build solo working 6 hours/day, 5 days/week using AI agents and free-tier infrastructure.
 
 1.  **AI Mirror Opponent:**
-    *   *Achievable:* A fully functional, locally-run Stockfish opponent driven by the 9-dimensional style vector. (Largely already built).
+    *   *Achievable:* A fully functional, locally-run Stockfish opponent driven by the current StyleVector profile. The code has 11 behavioral/profile fields plus schema metadata. (Largely already built).
     *   *Grade:* 9/10 (Unique market differentiator).
     *   *Time:* 1–2 weeks to fix bugs and polish.
     *   *Sacrifices:* Relies on client-side WebAssembly, draining mobile batteries.

@@ -12,7 +12,7 @@ c3f768a (HEAD -> main) feat(data): 8 calibration tasks with verified positions
 d1b3c87 feat(state): calibration store with resume support
 22c8e8f feat(engine): isolated calibration opponent
 da56241 feat(ml): detected_elo heuristic with band assignment
-cd91d94 feat(ml): style vector with 9 dimensions + fixture-based tests
+cd91d94 feat(ml): style vector profile with fixture-based tests
 d5f6af8 feat(db): IndexedDB schema for calibration + style vectors
 1543687 docs: adjust phase 1 plan per human review — testing-library, position sourcing, board decoupling
 f0e63be docs: phase 1 implementation plan (build order + risks)

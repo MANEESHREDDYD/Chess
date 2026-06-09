@@ -6,7 +6,7 @@ MIRROR is an offline-first, progressive web application that reimagines chess tr
 While superficially a chess interface, MIRROR is fundamentally a robust data engineering and analytics platform built on the client-side. It features AI-driven behavioral profiling, post-game CP-loss analytics, spaced repetition learning, and a local-first architecture with optional secure cloud syncing.
 
 ## Why MIRROR is Unique
-Unlike traditional platforms, MIRROR adapts to *how* you play. By measuring 12 dimensions of player behavior (e.g., aggression, complexity), the "Mirror Engine" reranks Stockfish evaluations to simulate your specific playstyle, exposing your blind spots.
+Unlike traditional platforms, MIRROR adapts to *how* you play. The current code models StyleVector as 11 behavioral/profile fields plus `schema_version` metadata. The "Mirror Engine" reranks Stockfish evaluations against that profile to simulate your specific playstyle and expose blind spots.
 
 ## Recruiter / Hiring Manager Summary
 This repository demonstrates professional-grade engineering across multiple domains:
@@ -34,6 +34,10 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [AI & ML Methodology](docs/ai-ml-methodology.md)
 - [Analytics & Progression](docs/analytics-and-progression.md)
 - [Data / AI Engineering Showcase](docs/data-ai-showcase.md)
+- [Local GenAI Coach Design](docs/local-genai-coach-design.md)
+- [Coach Context Schema](docs/coach-context-schema.md)
+- [GenAI Prompt Contracts](docs/genai-prompt-contracts.md)
+- [Agentic Coach Workflows](docs/agentic-coach-workflows.md)
 
 ## Data / AI Engineering Showcase
 MIRROR includes a real local-first Python and SQL analytics layer that runs on exported backup JSON files. It does not require Supabase or any cloud service.
@@ -44,6 +48,8 @@ MIRROR includes a real local-first Python and SQL analytics layer that runs on e
 - **Behavioral analytics**: StyleVector is treated as MIRROR's behavioral personalization layer, with aggression, risk, time-pressure, tactical weakness, and positional preference features.
 - **Local-first pipeline**: the CLI reads local JSON and writes CSV, Markdown, and JSON artifacts without cloud credentials.
 - **Report generation**: `mirror-analytics` emits `player_summary.csv`, `puzzle_performance.csv`, `story_progress.csv`, `analysis_quality.csv`, `mirror_insights.md`, and `mirror_features.json`.
+- **Local Coach Preview**: `/coach-preview` renders a deterministic rule-based coach from local IndexedDB summaries as a bridge toward future optional GenAI.
+- **GenAI / Agentic design docs**: coach architecture, context schema, prompt contracts, and future agent workflows are documented without claiming runtime LLM coaching.
 
 Recruiter skill map:
 
@@ -117,8 +123,9 @@ node scripts/run-mirror-verification.mjs
 - `v1.17.0-account-auth-local-bridge`
 - `v1.18.0-cloud-backup-sync-1`
 - `v1.18.2-data-ai-showcase-layer`
+- `v1.18.3-local-genai-coach-design-1`
 
 ## Future Roadmap
 - E2EE Cloud Backups.
-- GenAI Conversational Coaching integration.
+- Optional runtime GenAI coaching integration after local context, privacy, and guardrail contracts are verified.
 - Advanced progression dashboard.

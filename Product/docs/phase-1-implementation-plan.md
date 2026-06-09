@@ -24,10 +24,10 @@ Each commit boundary runs all 4 gates (typecheck/lint/test/build). If any fails,
 
 ### Commit 2 — `src/ml/styleVector.ts` + fixtures + tests
 - **Files created:**
-  - `src/ml/styleVector.ts` (~250 lines): the `StyleVector` interface (9 dimensions per locked §0), `CalibrationRunData` input type, `computeStyleVector(data)` function with NaN-safe defaults for every edge case.
+  - `src/ml/styleVector.ts` (~250 lines): the `StyleVector` interface, `CalibrationRunData` input type, `computeStyleVector(data)` function with NaN-safe defaults for every edge case. Current code has 11 behavioral/profile fields plus schema metadata.
   - `src/ml/__fixtures__/aggressiveCalibration.json` (~80 lines): hand-crafted aggressive-style calibration_run output (`1.e4` opener, sub-5s avg move time, accepts all trades, blunders under pressure in Task 4, picks swindle in Task 5, keeps bishops in Task 7, weak Task 3 endgame, loses Task 8 to Stockfish 8/d6 with avg_cp_loss≈180).
   - `src/ml/__fixtures__/defensiveCalibration.json` (~80 lines): mirror image. `1.d4` opener, 15s+ avg move time, declines exchanges, picks principled in Task 5, keeps knights, converts Task 3 endgame, draws Task 8 with avg_cp_loss≈45.
-  - `src/ml/styleVector.test.ts` (~150 lines): 8 tests covering happy path, 2 NaN edge cases (timeout-everything, resign-Task-8-in-3-plies), **the differentiation test** (≥4 of 9 dimensions differ between aggressive and defensive — assert which), Elo band boundary tests at 1199/1200/1499/1500/1799/1800.
+  - `src/ml/styleVector.test.ts` (~150 lines): 8 tests covering happy path, 2 NaN edge cases (timeout-everything, resign-Task-8-in-3-plies), **the differentiation test** (multiple behavioral fields differ between aggressive and defensive fixtures), Elo band boundary tests at 1199/1200/1499/1500/1799/1800.
 - **Vitest config dependency:** to make `__fixtures__/*.json` importable, ensure `tsconfig.json` has `resolveJsonModule: true` (it does). No new config needed.
 - **Time estimate:** 4 hours. Fixture authoring is the bulk — needs careful balancing so the ≥4 dimensions differ but no NaN sneaks through.
 - **Risk:** the differentiation test may fail on first run if `motif_blindness` is the same across both fixtures (since I'm controlling task outputs not motif outcomes). Mitigation: aggressive fixture has motif_blindness fork=0.75, pin=0.5, skewer=0.5, rm_def=0.75; defensive has fork=0.25 across the board. Two dimensions differ on motif_blindness alone (fork and rm_def), plus opening, avg_time, exchange_willingness, endgame_strength, swindle_preference = 7 dimensions differing. Safe.
@@ -328,7 +328,7 @@ Before tagging `v0.2.0-agent-b`:
 - [ ] `npm run lint` exit 0
 - [ ] `npm test` all green, ≥18 tests passing (current 11 + new ~7)
 - [ ] `npm run build` exit 0
-- [ ] Differentiation test passes (≥4 of 9 dimensions differ between aggressive/defensive)
+- [ ] Differentiation test passes (multiple behavioral fields differ between aggressive/defensive)
 - [ ] Manual: Home → Begin Calibration → 8 tasks → /profile, 12–18 min wall clock
 - [ ] Refresh /profile → radar persists
 - [ ] Drag a radar axis → new style_vectors row with `source: 'tuned'`; original calibration row preserved

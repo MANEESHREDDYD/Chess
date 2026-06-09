@@ -24,9 +24,9 @@ export const AboutProject: React.FC = () => {
         <section className="space-y-4">
           <h2 className="text-2xl font-bold border-b border-rule pb-2">AI Personalization (StyleVector)</h2>
           <p>
-            Unlike traditional platforms that rely purely on ELO ratings, MIRROR uses a proprietary 12-dimensional 
-            <strong> StyleVector</strong> to build a behavioral fingerprint of your playstyle. It tracks aggression, 
-            complexity preference, patience, and more. When you face your "Mirror" opponent, a custom algorithmic 
+            Unlike traditional platforms that rely purely on ELO ratings, MIRROR uses a proprietary
+            <strong> StyleVector</strong> with 11 behavioral/profile fields plus schema metadata to build a behavioral fingerprint of your playstyle. It tracks opening preferences,
+            motif blindness, time-pressure risk, exchange decisions, and more. When you face your "Mirror" opponent, a custom algorithmic
             layer reranks top Stockfish engine evaluations to simulate your specific human tendencies.
           </p>
         </section>

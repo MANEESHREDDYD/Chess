@@ -1,8 +1,8 @@
 # Current Status
 
 > **Date**: June 09, 2026
-> **Latest Tag**: `v1.18.0-cloud-backup-sync-1`
-> **Current Milestone**: `M-PORTFOLIO-SHOWCASE-1`
+> **Latest Tag**: `v1.18.3-local-genai-coach-design-1`
+> **Current Milestone**: `M-LOCAL-GENAI-COACH-DESIGN-1`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
@@ -31,24 +31,29 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.16.0-account-sync-design-1`**: Design architecture for cloud sync.
 *   **`v1.17.0-account-auth-local-bridge`**: Supabase authentication bridge.
 *   **`v1.18.0-cloud-backup-sync-1`**: Optional, user-triggered cloud backup storage without structured sync.
+*   **`v1.18.2-data-ai-showcase-layer`**: Local Python and SQL analytics layer for exported MIRROR backup JSON.
+*   **`v1.18.3-local-genai-coach-design-1`**: Local deterministic coach preview plus GenAI/agentic design docs.
 
 ## Current Implemented Features
 
 *   **Local-First Architecture**: No backend required. IndexedDB handles all persistence for players, match histories, and story progress.
-*   **Mirror Engine**: 12-dimensional Style Vector calculated from player behavior, dynamically overriding Stockfish's top choices to mimic human playstyles.
+*   **Mirror Engine**: StyleVector personalization calculated from player behavior. The current code has 11 behavioral/profile fields plus `schema_version` metadata, and the Mirror uses that profile to rerank Stockfish choices.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
+*   **Local Coach Preview**: `/coach-preview` provides deterministic, local-only training focus, weak motif, review queue, and story recommendations.
+*   **Data / AI Showcase Layer**: Python analytics, SQL marts, anonymized sample backup data, generated reports, and `mirror_features.json`.
 
 ## Known Limitations
 
 *   **No Cross-Device Sync**: Progress is strictly local to the browser's IndexedDB.
 *   **No Real-Time Multiplayer**: Currently restricted to playing against the Engine or Local Pass-and-Play.
 *   **Placeholder Art Assets**: The Mahabharata theme relies on procedural CSS and data-URI SVG pieces pending final art.
+*   **No Runtime GenAI Coach Yet**: GenAI and agentic coaching are designed, but the app currently uses deterministic local coach rules only.
 
 ## Next Recommended Milestones
 
-*   **M-PORTFOLIO-SHOWCASE-1**: Present MIRROR as a data engineering and AI full-stack product.
+*   **M-LOCAL-GENAI-COACH-STUB-2**: Expand local coach context export and safety verifier without adding cloud inference.
 *   **M-E2EE-CLOUD-BACKUP-1**: Add end-to-end encryption for cloud backups.
 *   **M-STORY-ACT-2**: Expand the narrative campaign with Chapters 8-14.
 *   **M-STORY-ACT-3-IMPLEMENTATION**: Narrative and chess encounters for Act III.

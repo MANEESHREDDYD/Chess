@@ -321,10 +321,10 @@ This means the missing modules aren't dangling imports — they simply have not 
 
 | Item | Status | Evidence |
 | --- | --- | --- |
-| `styleVector.ts` exists with the 9-dimension interface | **PLANNED** | No `src/ml/` directory exists |
+| `styleVector.ts` exists with the StyleVector interface | **PLANNED** | No `src/ml/` directory exists |
 | `computeStyleVector` never returns NaN under edge-case inputs | **PLANNED** | Function not implemented |
 | Aggressive and defensive fixtures exist | **PLANNED** | No `src/ml/__fixtures__/` directory exists |
-| Differentiation test asserts ≥4 of 9 dimensions differ | **PLANNED** | Test not implemented |
+| Differentiation test asserts multiple behavioral fields differ | **PLANNED** | Test not implemented |
 | `eloDetect` produces detected_elo and band correctly at all 4 boundaries | **PLANNED** | No `src/lib/eloDetect.ts` exists |
 | `swindle_preference` correctly null when Task 5 skipped | **PLANNED** | Field not implemented; would live in unwritten `styleVector.ts` |
 
@@ -434,6 +434,6 @@ All **PLANNED**. No code present for: Coach (Gemini, Drona voice, puzzle drills)
 ## SECTION 8 — Next gate
 
 - **Next milestone tag:** `v0.2.0-agent-b`.
-- **Single concrete acceptance criterion:** a user can run `npm run dev`, navigate Home → Begin Calibration → complete 8 tasks → land on `/profile` with a populated 8/9-axis radar (or sliders on mobile), reload, see the radar still there, drag an axis, see the vector update; two run-throughs with deliberately different styles produce visibly different radars. (Underlying gates: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` all exit 0 with the new code, and the differentiation test asserts ≥4 of 9 dimensions differ between aggressive and defensive fixtures.)
+- **Single concrete acceptance criterion:** a user can run `npm run dev`, navigate Home → Begin Calibration → complete 8 tasks → land on `/profile` with a populated StyleVector radar (or sliders on mobile), reload, see the radar still there, drag an axis, see the vector update; two run-throughs with deliberately different styles produce visibly different summaries. (Underlying gates: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` all exit 0 with the new code, and the differentiation test asserts multiple behavioral fields differ between aggressive and defensive fixtures.)
 - **Honest estimate of working days until that gate, if nothing surprises me:** 5–7 focused working days at ~5–6 hours each. The plan in `docs/phase-1-plan.md §10` budgeted ~30–35 hours. That estimate still looks right.
 - **What I would do if something surprises me:** if the surprise is the Stockfish worker actually being broken under the new nested-Worker pattern (i.e., Phase 1 can't even use the engine for Task 8 position verification or the calibration match), I'd stop, restore the CDN fallback as a Phase 0.5 fix, get the engine back to verifiable working, then resume. If the surprise is in `idb`/IndexedDB behavior (Phase 1 storage), I'd add a small smoke test before continuing — the cost of debugging persistence bugs against a half-built calibration UI is much higher than a one-hour smoke test. If the surprise is the Maia question above (which would only surface in Phase 2), I'd stop and force a spike: load Maia weights in a worker, measure latency, decide whether to keep Maia or fall back to a perturbed-Stockfish-only Mirror. The whole staging plan depends on that question; better to learn the answer in week 2 than week 12.

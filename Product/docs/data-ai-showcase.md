@@ -18,6 +18,8 @@ The package reads the same backup envelope produced by the app:
 
 It validates the backup shape, converts records into typed Python dataclasses, computes feature tables, and writes local reports. No Supabase project, cloud database, token, service key, or private user data is required.
 
+The app also includes a Local Coach Preview route that consumes local summaries deterministically. It is a bridge toward future optional GenAI coaching, not runtime LLM coaching.
+
 ## Data Engineering Proof
 
 This is a real extract-and-transform layer over app data:
@@ -55,6 +57,8 @@ StyleVector is MIRROR's behavioral personalization layer. It turns player behavi
 - endgame strength
 - swindle preference
 - detected Elo band
+
+The current code defines 11 behavioral/profile fields plus `schema_version` metadata. Docs should not describe this as a 12-dimensional behavioral vector.
 
 The Python layer turns StyleVector records into engineered features:
 
@@ -108,8 +112,24 @@ A future GenAI coach or agent system could build on this layer by:
 - generating training plans from transparent feature data
 - keeping human-visible Markdown explanations
 - routing recommendations through local-first privacy controls
+- using `MirrorCoachContext` as a consent-gated summary object
+- passing outputs through deterministic safety and privacy guards
 
-That future coach is not implemented here. This milestone only supplies the honest analytics and feature pipeline that such a system would need.
+Runtime GenAI coaching is not implemented here. The current app has a deterministic Local Coach Preview and design docs for the future optional GenAI path.
+
+## Local Coach And Agentic Readiness
+
+Added design surfaces:
+
+- `docs/local-genai-coach-design.md`
+- `docs/coach-context-schema.md`
+- `docs/genai-prompt-contracts.md`
+- `docs/agentic-coach-workflows.md`
+
+Runtime surface:
+
+- `/coach-preview` uses local deterministic rules.
+- No LLM calls, paid APIs, cloud inference, login, or gameplay upload are required.
 
 ## Recruiter Skill Map
 

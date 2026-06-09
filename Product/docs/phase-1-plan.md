@@ -30,7 +30,7 @@ This plan no longer blocks on approval. Implementation proceeds in the exact seq
 ### Exact commit sequence
 
 1. `feat(db): IndexedDB schema for calibration + style vectors`
-2. `feat(ml): style vector with 9 dimensions + fixture-based tests`
+2. `feat(ml): style vector profile with fixture-based tests`
 3. `feat(ml): detected_elo heuristic with band assignment`
 4. `feat(engine): isolated calibration opponent`
 5. `feat(state): calibration store with resume support`

@@ -176,7 +176,7 @@ Tracked files in `Product/` per `git ls-files | wc -l`: **282**.
   - The final `middlegame_opening` fallback is reachable both via the explicit `materialBalance === 1` test and the default `return`. Both return the same trigger; not a bug. **LOW**.
 
 ### `src/components/Mirror/StyleVectorRadar.tsx` (310 lines)
-- Purpose: radar / sliders editor for the 8-dimensional style vector.
+- Purpose: radar / sliders editor for the current StyleVector profile.
 - Issues: none. `useSyncExternalStore` for `matchMedia` is correctly defensive against SSR. `pointerup` cleanup in effect return.
 
 ### `src/components/Mirror/styleSummary.ts` (28 lines)

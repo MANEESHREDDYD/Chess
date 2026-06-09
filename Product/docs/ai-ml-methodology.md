@@ -6,15 +6,21 @@ MIRROR provides a deeply personalized AI chess experience. While we currently us
 **Honesty Clause:** MIRROR does *not* train a custom neural network from scratch to evaluate chess positions. We utilize **Stockfish** (running as a WebAssembly Web Worker) to evaluate board states. Stockfish is an engine, not a custom ML model. 
 
 ## The StyleVector (Personalization Layer)
-The core of MIRROR's AI is the **StyleVector**, a 12-dimensional continuous array that profiles human behavioral tendencies:
-- `aggression` (preference for checks/captures vs quiet moves)
-- `complexity` (preference for high piece-tension and branching factors)
-- `endgame_preference` (willingness to trade queens and simplify)
-- `defensive_patience` (tolerance for cramped positions without lashing out)
-- ...and others.
+The core of MIRROR's AI is the **StyleVector**, a local behavioral personalization record. The current TypeScript interface has 11 behavioral/profile fields plus `schema_version` metadata:
+
+- opening preferences as white and black
+- average move time
+- time-pressure blunder rate
+- exchange willingness
+- preferred minor piece
+- motif blindness
+- endgame strength
+- swindle preference
+- detected Elo
+- Elo band
 
 ### Calibration Method
-When a user plays calibration games, the system analyzes every move they make. We compare the user's chosen move against Stockfish's top 5 evaluations (MultiPV). If the user chooses a slightly sub-optimal move that leads to higher tension, their `complexity` vector score increases. Over time, this builds a behavioral fingerprint.
+When a user completes calibration, MIRROR converts task outputs into StyleVector fields. These include tactical motif results, time-pressure behavior, exchange decisions, opening choices, endgame outcome, and detected Elo band. Over time, this builds a behavioral fingerprint for local personalization.
 
 ## Mirror Opponent Behavior
 When the user plays against their "Mirror", the engine does not just play the best move.
@@ -27,5 +33,6 @@ When the user plays against their "Mirror", the engine does not just play the be
 During training puzzles, MIRROR uses the StyleVector to identify the user's "Motif Blindness" (e.g., they often miss discovered attacks). It curates Clue Hints based on these specific algorithmic weaknesses rather than generic tooltips.
 
 ## Limitations & Future GenAI Coach
-Currently, the coaching feedback is rule-based and triggered by CP-loss thresholds. 
-**GenAI-Readiness**: The analytics data model is designed to be fully compatible with LLM-based coaching. A future milestone will integrate a GenAI Coach that reads the `saved_analyses` and `StyleVector` to provide natural language, conversational advice. *A runtime GenAI coach is currently planned, but not yet implemented.*
+Currently, coaching feedback is rule-based and local. The Local Coach Preview uses deterministic summaries from local data; it does not call an LLM.
+
+**GenAI-Readiness**: The analytics and coach context models are designed to be compatible with future optional LLM-based coaching. The design docs define prompt contracts, context boundaries, and agentic workflows. A runtime GenAI coach is planned for a future milestone, but it is not implemented yet.

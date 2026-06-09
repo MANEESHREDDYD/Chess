@@ -10,7 +10,7 @@ MIRROR relies on a robust IndexedDB schema to handle complex relational data loc
 | `local_matches` | Pass-and-play match history. | `id`, `player_id`, `pgn`, `result`, `created_at` |
 | `mirror_matches` | Human vs Mirror match history. | `id`, `player_id`, `pgn`, `result`, `analysis_data` |
 | `calibration_runs` | Logs of StyleVector calculations. | `id`, `player_id`, `status`, `style_vector_id` |
-| `style_vectors` | 12-dimensional vector profiling player style. | `id`, `player_id`, `aggression`, `complexity`, etc. |
+| `style_vectors` | Behavioral personalization record with 11 profile fields plus schema metadata. | `id`, `player_id`, `vector`, `computed_at`, `source` |
 | `saved_analyses` | Post-game CP-loss engine evaluations. | `id`, `match_id`, `move_evaluations`, `blunder_count` |
 | `clue_attempts` | Puzzle resolution metrics. | `id`, `player_id`, `puzzle_id`, `success`, `time_taken_ms` |
 | `puzzle_reviews` | Spaced repetition schedule queue. | `id`, `player_id`, `puzzle_id`, `next_review_at`, `interval` |

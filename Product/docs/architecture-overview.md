@@ -34,7 +34,7 @@ All progression, analytics, match history, and style vectors are stored locally 
 ## Mirror Engine Flow
 
 1. **Player makes a move** -> The UI records the move and calculates basic metadata.
-2. **Post-Match Calibration** -> A background task analyzes the player's game against Stockfish evaluations, extracting a 12-dimensional `StyleVector` (aggression, complexity, endgame preference, etc.).
+2. **StyleVector Personalization** -> Calibration task outputs produce the local `StyleVector`. The current code has 11 behavioral/profile fields plus `schema_version` metadata.
 3. **Playing the Mirror** -> When playing against the "Mirror", the local Stockfish engine generates a MultiPV search. The custom `MirrorOpponent` logic reranks Stockfish's top moves based on their alignment with the player's `StyleVector`.
 
 ## Cloud Backup Flow
