@@ -1,5 +1,5 @@
 export type StoryChapterStatus = 'locked' | 'available' | 'complete';
-export type DialogueTone = 'narrator' | 'teacher' | 'rival' | 'reflection';
+export type DialogueTone = 'narrator' | 'teacher' | 'rival' | 'reflection' | 'hostile' | 'mocking' | 'angry';
 export type EncounterType = 'fixed_position' | 'play_engine' | 'clue_puzzle';
 
 export interface StoryDialogueLine {

@@ -23,8 +23,8 @@ describe('Story Progress', () => {
     await initializeStoryProgressForPlayer(TEST_PLAYER_ID);
     const progress = await getStoryProgressForPlayer(TEST_PLAYER_ID);
     
-    // We expect exactly 12 seeded chapters from mahabharataStorySeed
-    expect(progress.length).toBe(12);
+    // We expect exactly 16 seeded chapters from mahabharataStorySeed
+    expect(progress.length).toBe(16);
     
     const ch1 = progress.find(p => p.chapter_id === 'ch1_apprentice_arrives');
     expect(ch1?.status).toBe('available');
@@ -36,14 +36,14 @@ describe('Story Progress', () => {
   it('initializeStoryProgressForPlayer does not create duplicate progress rows when called twice', async () => {
     await initializeStoryProgressForPlayer(TEST_PLAYER_ID);
     const firstProgress = await getStoryProgressForPlayer(TEST_PLAYER_ID);
-    expect(firstProgress.length).toBe(12);
+    expect(firstProgress.length).toBe(16);
 
     // Call it again
     await initializeStoryProgressForPlayer(TEST_PLAYER_ID);
     const secondProgress = await getStoryProgressForPlayer(TEST_PLAYER_ID);
     
-    // Should still be exactly 12
-    expect(secondProgress.length).toBe(12);
+    // Should still be exactly 16
+    expect(secondProgress.length).toBe(16);
   });
 
   it('safely handles migration for existing players with 3-chapter progress', async () => {
@@ -72,9 +72,9 @@ describe('Story Progress', () => {
     // 2. Call the initialize function, simulating the player opening the app after the Act 1 update
     await initializeStoryProgressForPlayer(TEST_PLAYER_ID);
 
-    // 3. Verify they now have 12 chapters and old progress was retained
+    // 3. Verify they now have 16 chapters and old progress was retained
     const newProgress = await getStoryProgressForPlayer(TEST_PLAYER_ID);
-    expect(newProgress.length).toBe(12);
+    expect(newProgress.length).toBe(16);
     
     const ch1 = newProgress.find(p => p.chapter_id === 'ch1_apprentice_arrives');
     expect(ch1?.status).toBe('complete'); // Ensure old progress wasn't overwritten
@@ -124,5 +124,11 @@ describe('Story Progress', () => {
     const afterCh8Progress = await getStoryProgressForPlayer(TEST_PLAYER_ID);
     const ch9 = afterCh8Progress.find(p => p.chapter_id === 'ch9_unbroken_vow');
     expect(ch9?.status).toBe('available');
+    
+    // Test Act 3
+    await completeStoryChapter(TEST_PLAYER_ID, 'ch12_field_before_dawn', 'win');
+    const act3Progress = await getStoryProgressForPlayer(TEST_PLAYER_ID);
+    const ch13 = act3Progress.find(p => p.chapter_id === 'ch13_bhishma_line');
+    expect(ch13?.status).toBe('available');
   });
 });

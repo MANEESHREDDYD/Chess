@@ -597,5 +597,75 @@ export const seedPuzzles: CluePuzzle[] = [
       "Move your rook.",
       "Play Rc8#."
     ]
+  },
+  {
+    id: "seed-act3-defense-line-1",
+    fen: "3r2k1/p4ppp/8/8/8/8/PP1q1PPP/3R2K1 w - - 0 1",
+    solution_moves: ["d1d2"],
+    motif: "defense",
+    difficulty: "casual",
+    title: "The Line That Holds",
+    explanation: "Defend against the threat by liquidating the attacking pieces.",
+    clue_levels: [
+      "Your back rank is under pressure.",
+      "Look for a capture.",
+      "Trading queens simplifies the position safely.",
+      "Take the black queen."
+    ]
+  },
+  {
+    id: "seed-act3-poisoned-gain-1",
+    fen: "3r2k1/p4ppp/8/8/8/1Q2q3/PP4PP/3R3K w - - 0 1",
+    solution_moves: ["d1d8"],
+    solution_line: [
+      { ply: 1, side: "user", move: "d1d8", san: "Rxd8+" },
+      { ply: 2, side: "opponent", move: "e3e8", san: "Qe8" },
+      { ply: 3, side: "user", move: "d8e8", san: "Rxe8#" }
+    ],
+    motif: "sacrifice",
+    difficulty: "strong",
+    title: "The Poisoned Gain",
+    explanation: "Taking the queen immediately loses to a back-rank mate. Instead, initiate a forced sequence that wins safely.",
+    clue_levels: [
+      "The obvious capture is a trap.",
+      "Look for a check.",
+      "Force the black queen to block on the back rank.",
+      "Play Rxd8+."
+    ]
+  },
+  {
+    id: "seed-act3-open-file-1",
+    fen: "4q1k1/p4ppp/8/8/4B3/8/PP3PPP/4R1K1 w - - 0 1",
+    solution_moves: ["e4h7"],
+    motif: "discovered_attack",
+    difficulty: "casual",
+    title: "The Open File",
+    explanation: "Use a discovered attack with check to win the unprotected queen.",
+    clue_levels: [
+      "Your bishop is blocking your rook.",
+      "Find a check.",
+      "Sacrifice the bishop on h7.",
+      "Play Bxh7+ to attack the queen."
+    ]
+  },
+  {
+    id: "seed-act3-calculation-1",
+    fen: "r5k1/p4ppp/8/4Q3/8/8/PP3PPP/4R1K1 w - - 0 1",
+    solution_moves: ["e5e8"],
+    solution_line: [
+      { ply: 1, side: "user", move: "e5e8", san: "Qe8+" },
+      { ply: 2, side: "opponent", move: "a8e8", san: "Rxe8" },
+      { ply: 3, side: "user", move: "e1e8", san: "Rxe8#" }
+    ],
+    motif: "mate",
+    difficulty: "casual",
+    title: "The Unquiet Calculation",
+    explanation: "A forced sequence utilizing the weak back rank.",
+    clue_levels: [
+      "Look at the back rank.",
+      "Sacrifice to open the file.",
+      "The queen can be offered on e8.",
+      "Play Qe8+ to force mate."
+    ]
   }
 ];

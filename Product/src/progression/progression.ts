@@ -318,6 +318,7 @@ export async function scanAndGrantAchievements(playerId: string): Promise<void> 
 
   const act1Chapters = mahabharataStorySeed.filter(c => c.act_number === 1).map(c => c.id);
   const act2Chapters = mahabharataStorySeed.filter(c => c.act_number === 2).map(c => c.id);
+  const act3Chapters = mahabharataStorySeed.filter(c => c.act_number === 3).map(c => c.id);
   
   if (act1Chapters.every(id => completedIds.has(id))) {
     await grant('act_1_complete', 'Act I Complete', 'Finished the first act of the story campaign.');
@@ -331,6 +332,12 @@ export async function scanAndGrantAchievements(playerId: string): Promise<void> 
 
   if (act2Chapters.every(id => completedIds.has(id))) {
     await grant('act_2_complete', 'Act II Complete', 'Finished the second act of the story campaign.');
+  }
+
+  // Act III Started
+  if (act3Chapters.length > 0 && (completedIds.has(act3Chapters[0]) || 
+     ((await db.get('story_progress', `${playerId}_${act3Chapters[0]}`))?.attempts || 0) > 0)) {
+    await grant('act_3_started', 'Act III Started', 'Entered the third act of the story campaign.');
   }
 
   if (summary.current_streak_days >= 3) {

@@ -331,6 +331,118 @@ export const mahabharataStorySeed: StoryChapter[] = [
       puzzle_id: 'seed-mixed-motif-1'
     },
     theme: 'mahabharata'
+  },
+  {
+    id: 'ch13_bhishma_line',
+    act_number: 3,
+    act_title: 'Act III',
+    chapter_number: 13,
+    title: 'The Line That Holds',
+    subtitle: 'The Patriarch\'s Vow',
+    character: 'Bhishma',
+    location: 'The Trenches of Kurukshetra',
+    required_previous_chapter_id: 'ch12_field_before_dawn',
+    intro_dialogue: [
+      { speaker: 'Bhishma', text: 'You have come far, but stamina alone will not save you here. The battle has hardened.', tone: 'teacher' },
+      { speaker: 'Bhishma', text: 'To survive against an overwhelming force, you must know what lines to hold and what pieces to exchange. Defend your back rank.', tone: 'narrator' }
+    ],
+    win_dialogue: [
+      { speaker: 'Bhishma', text: 'A wise trade. You possess the restraint needed to endure.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Bhishma', text: 'Your line broke. Restraint is as vital as the attack.', tone: 'narrator' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Defend against the attack by simplifying the position.',
+      puzzle_id: 'seed-act3-defense-line-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch14_duryodhana_poisoned',
+    act_number: 3,
+    act_title: 'Act III',
+    chapter_number: 14,
+    title: 'The Poisoned Gain',
+    subtitle: 'The Crown Prince\'s Greed',
+    character: 'Duryodhana',
+    location: 'The Kuru Encampment',
+    required_previous_chapter_id: 'ch13_bhishma_line',
+    intro_dialogue: [
+      { speaker: 'Duryodhana', text: 'You think you are clever, snatching whatever falls into your path. But power is not always what it seems.', tone: 'hostile' },
+      { speaker: 'Duryodhana', text: 'Go ahead. Take the prize. Or are you finally learning to see the trap beneath the gold?', tone: 'mocking' }
+    ],
+    win_dialogue: [
+      { speaker: 'Duryodhana', text: 'You refused the bait... and struck where it hurt. I underestimated you.', tone: 'angry' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Duryodhana', text: 'Greed is a predictable master. You fell right into it.', tone: 'hostile' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Avoid the trap and calculate the winning sequence.',
+      puzzle_id: 'seed-act3-poisoned-gain-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch15_satyaki_open_file',
+    act_number: 3,
+    act_title: 'Act III',
+    chapter_number: 15,
+    title: 'The Open File',
+    subtitle: 'The Untiring Warrior',
+    character: 'Satyaki',
+    location: 'The Eastern Flank',
+    required_previous_chapter_id: 'ch14_duryodhana_poisoned',
+    intro_dialogue: [
+      { speaker: 'Satyaki', text: 'We do not wait for the enemy to show their weaknesses. We carve them open!', tone: 'teacher' },
+      { speaker: 'Satyaki', text: 'Find the hidden alignment. A single sacrifice can tear the battlefield wide open.', tone: 'narrator' }
+    ],
+    win_dialogue: [
+      { speaker: 'Satyaki', text: 'Excellent! The initiative is everything.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Satyaki', text: 'You were too hesitant. The moment closed as quickly as it appeared.', tone: 'narrator' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Execute a discovered attack to win material.',
+      puzzle_id: 'seed-act3-open-file-1'
+    },
+    theme: 'mahabharata'
+  },
+  {
+    id: 'ch16_ashwatthama_calculation',
+    act_number: 3,
+    act_title: 'Act III',
+    chapter_number: 16,
+    title: 'The Unquiet Calculation',
+    subtitle: 'The Night\'s Fury',
+    character: 'Ashwatthama',
+    location: 'The Shadowed Camp',
+    required_previous_chapter_id: 'ch15_satyaki_open_file',
+    intro_dialogue: [
+      { speaker: 'Ashwatthama', text: 'Everything is lost, and so everything is permitted. I will leave no piece standing.', tone: 'hostile' },
+      { speaker: 'Ashwatthama', text: 'Can you see through the chaos? Calculate to the end, or be swept away in the storm.', tone: 'angry' }
+    ],
+    win_dialogue: [
+      { speaker: 'Ashwatthama', text: 'You saw through the blood... your mind remains unclouded.', tone: 'reflection' }
+    ],
+    loss_dialogue: [
+      { speaker: 'Ashwatthama', text: 'Urgency blinded you. The dark takes another.', tone: 'hostile' }
+    ],
+    encounter: {
+      type: 'clue_puzzle',
+      side: 'white',
+      objective: 'Force a sequence leading to checkmate.',
+      puzzle_id: 'seed-act3-calculation-1'
+    },
+    theme: 'mahabharata'
   }
 ];
 
