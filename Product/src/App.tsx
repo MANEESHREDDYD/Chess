@@ -7,6 +7,7 @@ import ClueChess from './routes/ClueChess';
 import Story from './routes/Story';
 import About from './routes/About';
 import { Onboarding } from './routes/Onboarding';
+import { Progress } from './routes/Progress';
 import DevMirrorVerification from './routes/DevMirrorVerification';
 import DevInspector from './routes/DevInspector';
 import { useEffect } from 'react';
@@ -33,6 +34,7 @@ export default function App() {
           <Link to="/story">Story</Link>
           <Link to="/clue-chess">Clue</Link>
           <Link to="/play">Play</Link>
+          <Link to="/progress">Progress</Link>
           <Link to="/about">About</Link>
         </nav>
         <div className="theme-toggle" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -83,6 +85,7 @@ export default function App() {
           <Route path="/story" element={<Story />} />
           <Route path="/clue-chess" element={<ClueChess />} />
           <Route path="/play" element={<Play />} />
+          <Route path="/progress" element={<Progress />} />
           <Route path="/about" element={<About />} />
           {import.meta.env.DEV && (
             <>

@@ -4,7 +4,7 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 5;
+export const MIRROR_DB_VERSION = 7;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned';
@@ -30,6 +30,36 @@ export interface PlayerRecord {
   settings?: Record<string, unknown>;
   detected_elo?: number;
   elo_band?: EloBand;
+}
+
+// USER-OWNED / LOCAL ONLY
+export interface AchievementRecord {
+  id: string; // `${player_id}:${achievement_id}`
+  player_id: string;
+  achievement_id: string;
+  title: string;
+  description?: string;
+  earned_at: string;
+  metadata?: Record<string, unknown>;
+}
+
+// USER-OWNED / MIRROR
+export interface PuzzleReviewRecord {
+  id: string; // `${player_id}:${puzzle_id}`
+  player_id: string;
+  puzzle_id: string;
+  motif: string;
+  difficulty?: string;
+  is_multi_move?: boolean;
+  last_attempt_at?: string;
+  next_due_at: string;
+  interval_days: number;
+  ease: number;
+  attempts: number;
+  lapses: number;
+  solved_streak: number;
+  last_result: "solved" | "failed";
+  updated_at: string;
 }
 
 // USER-OWNED / MIRROR
@@ -157,7 +187,7 @@ export interface ClueAttemptRecord {
   fen: string;
   solution_moves: string[];
   attempted_moves: string[];
-  motif?: "fork" | "pin" | "skewer" | "removing_the_defender" | "mate" | "hanging_piece" | "endgame" | "opening" | "unknown";
+  motif?: "fork" | "pin" | "skewer" | "removing_the_defender" | "mate" | "hanging_piece" | "endgame" | "opening" | "defense" | "sacrifice" | "discovered_attack" | "unknown";
   difficulty: "beginner" | "casual" | "club" | "strong";
   hints_used: number;
   solved: boolean;
@@ -241,6 +271,26 @@ export interface MirrorDB extends DBSchema {
       updated_at: string;
     };
   };
+  achievements: {
+    key: string;
+    value: AchievementRecord;
+    indexes: {
+      player_id: string;
+      achievement_id: string;
+      earned_at: string;
+    };
+  };
+  puzzle_reviews: {
+    key: string;
+    value: PuzzleReviewRecord;
+    indexes: {
+      player_id: string;
+      puzzle_id: string;
+      next_due_at: string;
+      motif: string;
+      last_result: string;
+    };
+  };
 }
 
 const dbCache = new Map<string, Promise<IDBPDatabase<MirrorDB>>>();
@@ -265,6 +315,12 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 5) {
         createV5Schema(db);
+      }
+      if (oldVersion < 6) {
+        createV6Schema(db);
+      }
+      if (oldVersion < 7) {
+        createV7Schema(db);
       }
     },
   });
@@ -686,6 +742,13 @@ function createV5Schema(db: IDBPDatabase<MirrorDB>) {
   store.createIndex('updated_at', 'updated_at');
 }
 
+function createV6Schema(db: IDBPDatabase<MirrorDB>) {
+  const store = db.createObjectStore('achievements', { keyPath: 'id' });
+  store.createIndex('player_id', 'player_id');
+  store.createIndex('achievement_id', 'achievement_id');
+  store.createIndex('earned_at', 'earned_at');
+}
+
 function makeId(prefix: string): string {
   const randomId =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -773,4 +836,15 @@ export async function completeStoryChapter(
   }
 
   await tx.done;
+}
+
+function createV7Schema(db: IDBPDatabase<MirrorDB>) {
+  if (!db.objectStoreNames.contains('puzzle_reviews')) {
+    const store = db.createObjectStore('puzzle_reviews', { keyPath: 'id' });
+    store.createIndex('player_id', 'player_id', { unique: false });
+    store.createIndex('puzzle_id', 'puzzle_id', { unique: false });
+    store.createIndex('next_due_at', 'next_due_at', { unique: false });
+    store.createIndex('motif', 'motif', { unique: false });
+    store.createIndex('last_result', 'last_result', { unique: false });
+  }
 }

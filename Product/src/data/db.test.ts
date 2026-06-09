@@ -50,12 +50,14 @@ describe('openMirrorDb', () => {
 
     expect(db.version).toBe(MIRROR_DB_VERSION);
     expect(objectStoreNames(db)).toEqual([
+      'achievements',
       'calibration_runs',
       'clue_attempts',
       'feedback',
       'local_matches',
       'mirror_matches',
       'players',
+      'puzzle_reviews',
       'saved_analyses',
       'story_progress',
       'style_vectors',

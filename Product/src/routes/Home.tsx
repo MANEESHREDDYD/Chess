@@ -3,15 +3,22 @@ import { useEffect, useState } from 'react';
 import { usePlayerStore } from '../state/playerStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { getLocalMatchesForPlayer } from '../data/db';
+import { getPlayerProgressSummary, scanAndGrantAchievements, type PlayerProgressSummary } from '../progression/progression';
 
 export default function Home() {
   const { activePlayer, clearActivePlayer } = usePlayerStore();
   const { activeTheme } = useSettingsStore();
   const [matchCount, setMatchCount] = useState(0);
+  const [progress, setProgress] = useState<PlayerProgressSummary | null>(null);
 
   useEffect(() => {
     if (activePlayer) {
       getLocalMatchesForPlayer(activePlayer.id).then(m => setMatchCount(m.length));
+      scanAndGrantAchievements(activePlayer.id).then(() => {
+        getPlayerProgressSummary(activePlayer.id).then(setProgress);
+      });
+    } else {
+      setProgress(null);
     }
   }, [activePlayer]);
 
@@ -39,21 +46,35 @@ export default function Home() {
               <button className="btn btn-ghost" onClick={clearActivePlayer} style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}>Switch Profile</button>
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', lineHeight: 1.6 }}>
-              <li><strong>Calibration Status:</strong> {activePlayer.calibration_status}</li>
-              {activePlayer.detected_elo !== undefined && (
-                <li><strong>Detected Elo:</strong> {activePlayer.detected_elo} ({activePlayer.elo_band})</li>
+              {progress ? (
+                <>
+                  <li><strong>Level:</strong> {progress.level} ({progress.total_xp} XP)</li>
+                  <li><strong>Current Streak:</strong> {progress.current_streak_days} days</li>
+                  <li><strong>Story Progress:</strong> {progress.story_chapters_complete} / {progress.story_total_chapters} chapters</li>
+                  {progress.weakest_motif && <li><strong>Weakest Motif:</strong> <span className="capitalize">{progress.weakest_motif.replace(/_/g, ' ')}</span></li>}
+                  <li style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--primary-color)', color: 'white', borderRadius: '4px' }}>
+                    <strong>Suggested Action:</strong> {progress.next_action}
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li><strong>Calibration Status:</strong> {activePlayer.calibration_status}</li>
+                  {activePlayer.detected_elo !== undefined && (
+                    <li><strong>Detected Elo:</strong> {activePlayer.detected_elo} ({activePlayer.elo_band})</li>
+                  )}
+                  <li><strong>Local Games Played:</strong> {matchCount}</li>
+                </>
               )}
-              <li><strong>Local Games Played:</strong> {matchCount}</li>
             </ul>
             <div className="home-actions" style={{ justifyContent: 'flex-start' }}>
-              <Link to="/calibration" className="btn btn-primary">
+              <Link to="/progress" className="btn btn-primary">
+                View Full Progression
+              </Link>
+              <Link to="/calibration" className="btn btn-secondary">
                 {activePlayer.calibration_status === 'complete' ? 'Recalibrate' : 'Start Calibration'}
               </Link>
-              <Link to="/mirror" className="btn btn-secondary">
+              <Link to="/mirror" className="btn btn-ghost">
                 Play Mirror
-              </Link>
-              <Link to="/play" className="btn btn-ghost">
-                Play Computer
               </Link>
             </div>
           </div>

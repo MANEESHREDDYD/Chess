@@ -10,6 +10,8 @@ import {
   getStoryProgressForPlayer,
   openMirrorDb,
 } from '../data/db';
+import { getPlayerProgressSummary } from '../progression/progression';
+import { getReviewStats } from '../training/spacedRepetition';
 
 export default function DevInspector() {
   const activePlayerId = usePlayerStore((s) => s.activePlayerId);
@@ -26,7 +28,10 @@ export default function DevInspector() {
     recentClueAttempts: [],
     clueStats: null,
     storyProgress: [],
+    puzzleReviews: [],
+    reviewStats: null,
     feedbackRecords: [],
+    playerProgress: null,
   });
 
   useEffect(() => {
@@ -59,6 +64,10 @@ export default function DevInspector() {
       const clueStats = await getClueStatsForPlayer(activePlayerId);
 
       const storyProgress = await getStoryProgressForPlayer(activePlayerId);
+      const playerProgress = await getPlayerProgressSummary(activePlayerId);
+      
+      const puzzleReviews = await db.getAllFromIndex('puzzle_reviews', 'player_id', activePlayerId);
+      const reviewStats = await getReviewStats(activePlayerId);
 
       setData({
         activePlayerId: activePlayerId || null,
@@ -72,7 +81,10 @@ export default function DevInspector() {
         recentClueAttempts: clues.slice(0, 5),
         clueStats,
         storyProgress,
+        puzzleReviews,
+        reviewStats,
         feedbackRecords: feedback,
+        playerProgress,
       });
     }
 
