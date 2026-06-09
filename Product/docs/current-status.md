@@ -43,3 +43,4 @@ The following features and milestones have been successfully completed and tagge
 *   **M-STORY-ACT-2**: Expand the narrative campaign with Chapters 8-14, introducing mid-game complexities and multi-path dialogue options.
 *   **M-VISUAL-ASSETS-2**: Replace placeholder SVGs with higher-fidelity board designs and distinct character portraits.
 *   **M-ANALYSIS-UPGRADE**: Improve the post-match coach feedback with clearer, natural-language explanations of critical blunders.
+*   **M-ACCOUNT-AUTH-LOCAL-BRIDGE**: Implement Supabase Auth and link local profiles to cloud accounts as the first step toward the architecture defined in M-ACCOUNT-SYNC-DESIGN-1.
