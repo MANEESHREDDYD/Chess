@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { usePlayerStore } from '../state/playerStore';
 import {
   buildCoachContextFromLocalData,
+  buildCoachContextJson,
+  buildCoachReportMarkdown,
   generateLocalTrainingPlan,
   generateNextActionSummary,
   generateWeaknessSummary,
+  getCoachExportDate,
 } from '../coach/localCoach';
 import type { LocalTrainingPlan, MirrorCoachContext } from '../coach/coachTypes';
 
@@ -90,17 +93,108 @@ export default function CoachPreview() {
   }
 
   const { context, plan, weaknessSummary, nextActionSummary } = state;
-  const weakestMotif = context.puzzle_weakness_summary.weakest_motif || 'Insufficient data';
-  const dueReviews = context.spaced_repetition_summary.due_reviews_count;
+  const exportDate = getCoachExportDate(context.generated_at);
+  const insufficientFlags = context.coach_summary.insufficient_data_flags;
 
   return (
-    <div style={{ maxWidth: 920, margin: '0 auto', padding: '2rem' }}>
-      <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+    <div style={{ maxWidth: 1040, margin: '0 auto', padding: '2rem' }}>
+      <header style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+        <p style={{ margin: '0 0 0.35rem', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
+          This coach is deterministic and local-only. GenAI coaching is a future optional feature.
+        </p>
         <h1 style={{ marginBottom: '0.5rem' }}>Local Coach Preview</h1>
         <p style={{ margin: 0, color: 'var(--ink-soft)' }}>
-          This version uses a local deterministic coach. GenAI coaching is planned as a future optional feature.
+          {context.coach_summary.recommended_focus_area} with {context.coach_summary.confidence_level} confidence.
         </p>
-      </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() =>
+              downloadTextFile(
+                `mirror-coach-report-${exportDate}.md`,
+                buildCoachReportMarkdown(context),
+                'text/markdown;charset=utf-8'
+              )
+            }
+          >
+            Export Markdown
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() =>
+              downloadTextFile(
+                `mirror-coach-context-${exportDate}.json`,
+                buildCoachContextJson(context),
+                'application/json;charset=utf-8'
+              )
+            }
+          >
+            Export JSON Context
+          </button>
+        </div>
+      </header>
+
+      <section style={{ marginBottom: '1.5rem' }}>
+        <h2>Coach summary</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+          <Metric label="Focus" value={context.coach_summary.recommended_focus_area} />
+          <Metric label="Weakest motif" value={formatValue(context.coach_summary.weakest_motif)} />
+          <Metric label="Strongest motif" value={formatValue(context.coach_summary.strongest_motif)} />
+          <Metric label="Due reviews" value={String(context.coach_summary.review_due_count)} />
+          <Metric label="Achievements" value={String(context.coach_summary.achievement_count)} />
+          <Metric label="StyleVector" value={context.coach_summary.style_vector_available ? 'available' : 'missing'} />
+        </div>
+      </section>
+
+      {insufficientFlags.length > 0 && (
+        <section style={{ marginBottom: '1.5rem', borderLeft: '4px solid var(--warning-color, #fbbf24)', paddingLeft: '1rem' }}>
+          <h2>Insufficient data warnings</h2>
+          <ul>
+            {insufficientFlags.map((flag) => (
+              <li key={flag}>{flag.replace(/_/g, ' ')}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section style={{ marginBottom: '1.5rem' }}>
+        <h2>Prioritized coach cards</h2>
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {context.coach_cards.map((card) => (
+            <article
+              key={card.id}
+              style={{
+                border: '1px solid var(--border-color)',
+                borderRadius: 8,
+                padding: '1rem',
+                background: 'var(--surface-color)',
+              }}
+            >
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <div>
+                  <p style={{ margin: '0 0 0.25rem', color: 'var(--ink-soft)', fontSize: '0.85rem' }}>
+                    Priority {card.priority} | {card.type} | {card.confidence} confidence
+                  </p>
+                  <h3 style={{ margin: 0 }}>{card.title}</h3>
+                </div>
+                <span style={{ color: 'var(--ink-soft)', fontSize: '0.85rem' }}>{card.source}</span>
+              </div>
+              <p>{card.summary}</p>
+              <p><strong>Recommendation:</strong> {card.recommendation}</p>
+              <details>
+                <summary>Evidence</summary>
+                <ul>
+                  {card.evidence.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </details>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section style={{ marginBottom: '1.5rem' }}>
         <h2>Current training focus</h2>
@@ -113,43 +207,47 @@ export default function CoachPreview() {
       </section>
 
       <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Weakest motif</h2>
-        <p>{weakestMotif.replace(/_/g, ' ')}</p>
-        <p style={{ color: 'var(--ink-soft)' }}>{weaknessSummary}</p>
-      </section>
-
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Suggested next action</h2>
+        <h2>Evidence section</h2>
+        <p>{weaknessSummary}</p>
         <p>{nextActionSummary}</p>
-      </section>
-
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Review queue summary</h2>
-        <p>
-          {dueReviews} due review{dueReviews === 1 ? '' : 's'} from {context.spaced_repetition_summary.total_reviews} total review records.
-        </p>
-        {context.spaced_repetition_summary.due_motifs.length > 0 && (
-          <p style={{ color: 'var(--ink-soft)' }}>
-            Due motifs: {context.spaced_repetition_summary.due_motifs.map((motif) => motif.replace(/_/g, ' ')).join(', ')}
-          </p>
-        )}
-      </section>
-
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Story progress recommendation</h2>
-        <p>{context.story_progress_summary.recommendation}</p>
         <p style={{ color: 'var(--ink-soft)' }}>
-          Completed {context.story_progress_summary.completed_chapters} of {context.story_progress_summary.total_chapters} chapters.
+          Recent analysis quality: {context.analysis_quality_summary.analyses_completed} completed analyses,
+          average CP loss {context.analysis_quality_summary.average_cp_loss}, trend {context.analysis_quality_summary.trend}.
         </p>
       </section>
 
       <section style={{ background: 'var(--surface-sunken)', padding: '1rem', borderRadius: 8 }}>
         <h2>Future GenAI coach note</h2>
         <p>
-          A future optional GenAI coach can consume the summarized context shape after explicit user consent.
-          Raw PGN, FEN, account links, and backup files remain local-private by default.
+          A future optional GenAI coach can use this same summarized context after explicit user consent.
+          Runtime GenAI coaching is not implemented here, and raw PGN, FEN, account links, and backup files remain local-private by default.
         </p>
       </section>
     </div>
   );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ border: '1px solid var(--border-color)', borderRadius: 8, padding: '0.75rem' }}>
+      <p style={{ margin: '0 0 0.25rem', color: 'var(--ink-soft)', fontSize: '0.85rem' }}>{label}</p>
+      <p style={{ margin: 0, fontWeight: 700 }}>{value}</p>
+    </div>
+  );
+}
+
+function formatValue(value?: string): string {
+  return value ? value.replace(/_/g, ' ') : 'insufficient data';
+}
+
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }

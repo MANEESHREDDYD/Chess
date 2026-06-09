@@ -1,8 +1,8 @@
 # Current Status
 
-> **Date**: June 09, 2026
-> **Latest Tag**: `v1.18.3-local-genai-coach-design-1`
-> **Current Milestone**: `M-LOCAL-GENAI-COACH-DESIGN-1`
+> **Date**: June 10, 2026
+> **Latest Tag**: `v1.18.4-local-genai-coach-stub-2`
+> **Current Milestone**: `M-LOCAL-GENAI-COACH-STUB-2`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
@@ -33,6 +33,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.18.0-cloud-backup-sync-1`**: Optional, user-triggered cloud backup storage without structured sync.
 *   **`v1.18.2-data-ai-showcase-layer`**: Local Python and SQL analytics layer for exported MIRROR backup JSON.
 *   **`v1.18.3-local-genai-coach-design-1`**: Local deterministic coach preview plus GenAI/agentic design docs.
+*   **`v1.18.4-local-genai-coach-stub-2`**: Deterministic local coach cards, confidence/insufficient-data summaries, and Markdown/JSON exports.
 
 ## Current Implemented Features
 
@@ -41,7 +42,7 @@ The following features and milestones have been successfully completed and tagge
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
-*   **Local Coach Preview**: `/coach-preview` provides deterministic, local-only training focus, weak motif, review queue, and story recommendations.
+*   **Local Coach Preview**: `/coach-preview` provides deterministic, local-only training focus, weak motif, review queue, story recommendations, prioritized coach cards, evidence, and local exports.
 *   **Data / AI Showcase Layer**: Python analytics, SQL marts, anonymized sample backup data, generated reports, and `mirror_features.json`.
 
 ## Known Limitations
@@ -50,10 +51,11 @@ The following features and milestones have been successfully completed and tagge
 *   **No Real-Time Multiplayer**: Currently restricted to playing against the Engine or Local Pass-and-Play.
 *   **Placeholder Art Assets**: The Mahabharata theme relies on procedural CSS and data-URI SVG pieces pending final art.
 *   **No Runtime GenAI Coach Yet**: GenAI and agentic coaching are designed, but the app currently uses deterministic local coach rules only.
+*   **Coach Export Is Local Only**: Markdown and JSON exports are generated in the browser from summaries; they are not uploaded by MIRROR.
 
 ## Next Recommended Milestones
 
-*   **M-LOCAL-GENAI-COACH-STUB-2**: Expand local coach context export and safety verifier without adding cloud inference.
+*   **M-LOCAL-GENAI-COACH-SAFETY-EVAL-1**: Add deterministic safety/evaluation checks for coach cards, exports, and future prompt contexts before any runtime GenAI integration.
 *   **M-E2EE-CLOUD-BACKUP-1**: Add end-to-end encryption for cloud backups.
 *   **M-STORY-ACT-2**: Expand the narrative campaign with Chapters 8-14.
 *   **M-STORY-ACT-3-IMPLEMENTATION**: Narrative and chess encounters for Act III.

@@ -2,6 +2,22 @@
 
 This document designs possible future agents for MIRROR's optional coaching system. No runtime agents or LLM calls are implemented in this milestone.
 
+The current runtime implementation is deterministic and local-only. It builds `MirrorCoachContext`, emits prioritized `CoachCard` records, and exports Markdown/JSON summaries without cloud inference or private data upload.
+
+## Current Deterministic Agent Analog
+
+The local coach stub maps future agent responsibilities onto deterministic cards:
+
+- Data Profiler Agent maps to the context builder and `data_quality` cards.
+- Weakness Diagnosis Agent maps to `weakness` cards.
+- Training Plan Agent maps to the local training plan and top recommendation.
+- Puzzle Recommendation Agent maps to `review` cards and due motif evidence.
+- Post-Game Explanation Agent maps to `analysis` cards.
+- Story Mentor Agent maps to `story` cards.
+- Safety/Privacy Guard Agent maps to privacy flags, insufficient-data flags, and export redaction rules.
+
+This proves the interface and product behavior before any optional GenAI runtime exists.
+
 ## Data Profiler Agent
 
 Inputs:
@@ -15,6 +31,7 @@ Inputs:
 Outputs:
 
 - `MirrorCoachContext`
+- deterministic `data_quality` cards
 - privacy flags
 - data gap list
 
@@ -49,6 +66,7 @@ Outputs:
 
 - weakest motif
 - strongest motif
+- deterministic `weakness` cards
 - confidence note
 - insufficient-data note
 
@@ -86,6 +104,7 @@ Outputs:
 - weekly training plan
 - daily practice blocks
 - next action
+- prioritized card list
 
 Tools/data sources:
 
@@ -118,6 +137,7 @@ Outputs:
 - next review motif
 - next new puzzle motif
 - reason for priority
+- deterministic `review` card
 
 Tools/data sources:
 
@@ -150,6 +170,7 @@ Outputs:
 - post-game coaching summary
 - why you lost summary
 - what to practice next summary
+- deterministic `analysis` card when saved analysis exists
 
 Tools/data sources:
 
@@ -181,6 +202,7 @@ Outputs:
 
 - story-based motivation
 - respectful chapter continuation note
+- deterministic `story` card
 
 Tools/data sources:
 
@@ -214,6 +236,7 @@ Outputs:
 - allowed response
 - blocked response with reason
 - redaction request
+- export safety status
 
 Tools/data sources:
 
@@ -234,3 +257,4 @@ Guardrails:
 - deny invented statistics
 - deny medical or psychological claims
 - require "insufficient data" when evidence is missing
+- keep `safe_to_send_to_llm` false by default until explicit consent and redaction are implemented

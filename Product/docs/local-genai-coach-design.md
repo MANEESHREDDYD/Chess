@@ -2,7 +2,7 @@
 
 MIRROR has enough local analytics to support a future coaching system: StyleVector behavior, Stockfish analysis, CP-loss metrics, puzzle attempts, spaced repetition reviews, story progress, achievements, SQL marts, and `mirror_features.json`.
 
-This milestone designs that future system. It does not implement live LLM calls, paid API integrations, cloud inference, or private data upload.
+This milestone designs that future system and implements a deterministic local coach stub. It does not implement live LLM calls, paid API integrations, cloud inference, or private data upload.
 
 ## Product Goal
 
@@ -30,15 +30,34 @@ Default behavior:
 
 This design treats the local deterministic coach as the current runtime bridge and GenAI as a future optional layer.
 
+## Current Local Coach Stub
+
+`/coach-preview` now uses local IndexedDB summaries to build `MirrorCoachContext`, prioritized `CoachCard` records, and exportable local reports. This is still deterministic software, not a runtime GenAI coach.
+
+Current card types:
+
+- `weakness`: weakest and strongest motif evidence from clue attempts and reviews
+- `review`: due spaced-repetition queue counts and due motifs
+- `analysis`: Stockfish CP-loss, accuracy, mistake, and blunder summaries
+- `story`: current story chapter status and respectful continuation guidance
+- `progression`: level, XP, streak, achievements, and next action
+- `mirror`: Mirror match sample coverage and analysis gaps
+- `data_quality`: missing profile, calibration, StyleVector, puzzle, analysis, story, or match evidence
+
+Every card includes evidence, recommendation, priority, confidence, and source. If data is missing, the card states insufficient data instead of inventing facts.
+
 ## Coach Data Inputs
 
 Primary analytics artifacts:
 
 - `mirror_features.json`
+- `mirror_insights.md`
 - `player_summary.csv`
 - `puzzle_performance.csv`
 - `analysis_quality.csv`
 - `story_progress.csv`
+
+The browser app does not depend on `analytics_output` files. Those artifacts are optional local references for analysts, recruiters, or a future consent-gated coach pipeline.
 
 Local app stores and records:
 
@@ -64,6 +83,9 @@ The coach should prefer aggregated feature data over raw chess records unless th
 - study plan
 - why you lost summary
 - what to practice next summary
+- prioritized deterministic coach cards
+- local Markdown coach report
+- summarized JSON coach context
 
 All outputs must cite the MIRROR context used. If the context is missing or thin, the coach must say "insufficient data" and recommend how to collect useful local evidence.
 
@@ -79,7 +101,7 @@ The future system can be split into small agents:
 - Story Mentor Agent: map story progress to respectful motivational copy.
 - Safety/Privacy Guard Agent: block unsupported claims and private raw data exposure.
 
-The deterministic local coach implements a small subset of this contract today without GenAI.
+The deterministic local coach implements a useful subset of this contract today without GenAI: context construction, card prioritization, insufficient-data flags, confidence labels, and Markdown/JSON exports.
 
 ## Non-Goals
 
@@ -90,6 +112,7 @@ The deterministic local coach implements a small subset of this contract today w
 - No medical, psychological, or personality diagnosis.
 - No sacred or religious parody.
 - No invention of games, ratings, or statistics not present in MIRROR context.
+- No claim that deterministic coach cards are LLM-generated.
 
 ## Future Runtime Implementation Options
 

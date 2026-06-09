@@ -7,12 +7,15 @@
 ```ts
 interface MirrorCoachContext {
   player_profile_summary: PlayerProfileSummary;
+  player_progress_summary: PlayerProgressCoachSummary;
   style_vector_summary: StyleVectorSummary;
   recent_performance_summary: RecentPerformanceSummary;
   puzzle_weakness_summary: PuzzleWeaknessSummary;
   analysis_quality_summary: AnalysisQualitySummary;
   spaced_repetition_summary: SpacedRepetitionSummary;
   story_progress_summary: StoryProgressSummary;
+  coach_summary: CoachSummary;
+  coach_cards: CoachCard[];
   recommended_next_actions: string[];
   privacy_flags: CoachPrivacyFlags;
   generated_at: string;
@@ -57,6 +60,22 @@ The current TypeScript `StyleVector` has 11 behavioral/profile fields plus `sche
 
 Safe to send after consent as summarized features. The full raw StyleVector record remains local-private by default.
 
+### player_progress_summary
+
+Progression summary from the local progression engine:
+
+- total XP
+- level
+- current streak
+- best streak
+- game counts
+- clue attempts and solves
+- story chapter counts
+- due reviews
+- deterministic next action
+
+Safe to send after consent as aggregate data. It should not include raw games or account identifiers.
+
 ### recent_performance_summary
 
 Aggregated progress data:
@@ -96,6 +115,7 @@ Post-game quality metrics:
 - accuracy estimate
 - blunder count
 - mistake count
+- latest analysis aggregate metrics
 - trend
 
 Safe to send after consent as aggregate data. Raw PGN, FEN before/after, and move-by-move engine lines remain local-private by default.
@@ -115,9 +135,12 @@ Safe to send after consent as aggregate scheduling data.
 
 Narrative progress:
 
+- progress availability
 - completed chapters
 - total chapters
 - current story chapter
+- current story title and act if available
+- status
 - next story recommendation
 
 Safe to send after consent. Future story mentor prompts must be respectful with Mahabharata-inspired material and must not parody sacred content.
@@ -125,6 +148,39 @@ Safe to send after consent. Future story mentor prompts must be respectful with 
 ### recommended_next_actions
 
 Deterministic action strings from local rules. These are safe to show locally and safe to send after consent.
+
+### coach_summary
+
+Top-level local coaching summary:
+
+- recommended focus area
+- confidence level
+- insufficient data flags
+- weakest motif
+- strongest motif
+- review due count
+- recent analysis quality summary
+- story progress status
+- achievement count
+- StyleVector availability
+
+This is the preferred future prompt input because it is compact and evidence-bound.
+
+### coach_cards
+
+Prioritized deterministic recommendations:
+
+- id
+- type
+- title
+- summary
+- evidence
+- recommendation
+- priority
+- confidence
+- source
+
+Card types are `weakness`, `review`, `analysis`, `story`, `progression`, `mirror`, and `data_quality`. Every card must cite evidence or state insufficient data.
 
 ### privacy_flags
 
@@ -138,6 +194,8 @@ Machine-readable privacy posture:
 - `local_private_by_default`
 
 These flags should gate any future GenAI adapter.
+
+The current runtime sets `safe_to_send_to_llm` to false by default. A future optional adapter must add explicit user consent and redaction before changing that behavior.
 
 ### generated_at
 
@@ -156,6 +214,8 @@ Names of local stores or analytics artifacts used. Safe metadata if it does not 
 - review queue counts
 - story progress summary
 - recommended next actions
+- coach summary
+- coach cards
 - source artifact names
 
 ## Local/Private By Default

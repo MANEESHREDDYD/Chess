@@ -115,7 +115,7 @@ A future GenAI coach or agent system could build on this layer by:
 - using `MirrorCoachContext` as a consent-gated summary object
 - passing outputs through deterministic safety and privacy guards
 
-Runtime GenAI coaching is not implemented here. The current app has a deterministic Local Coach Preview and design docs for the future optional GenAI path.
+Runtime GenAI coaching is not implemented here. The current app has a deterministic Local Coach Preview, coach cards, local exports, and design docs for the future optional GenAI path.
 
 ## Local Coach And Agentic Readiness
 
@@ -129,12 +129,16 @@ Added design surfaces:
 Runtime surface:
 
 - `/coach-preview` uses local deterministic rules.
+- The route builds a summarized `MirrorCoachContext` from IndexedDB records.
+- It generates prioritized `CoachCard` objects for weakness, review, analysis, story, progression, mirror, and data quality.
+- It exports a local Markdown coach report and summarized JSON context.
 - No LLM calls, paid APIs, cloud inference, login, or gameplay upload are required.
+- The browser app does not read `analytics_output` files directly; `mirror_features.json` and `mirror_insights.md` remain optional local artifacts from the Python analytics pipeline.
 
 ## Recruiter Skill Map
 
 - Data Engineering: schema validation, local ETL, typed loaders, CLI pipelines, warehouse-style SQL marts.
 - Data Science / Analytics: feature extraction, solve-rate metrics, CP-loss aggregation, trend detection, review prioritization.
-- AI / ML Thinking: StyleVector feature engineering, model-ready JSON features, interpretable risk and personalization signals.
+- AI / ML Thinking: StyleVector feature engineering, model-ready JSON features, deterministic recommendation cards, interpretable risk and personalization signals.
 - Forward Deployment: local-first operation, smoke-testable CLI, no cloud prerequisites, documented run path.
 - Software Engineering: tests, package metadata, modular Python design, CI workflow, integration with an existing React app without gameplay changes.
