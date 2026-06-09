@@ -117,6 +117,8 @@ A future GenAI coach or agent system could build on this layer by:
 
 Runtime GenAI coaching is not implemented here. The current app has a deterministic Local Coach Preview, coach cards, local exports, and design docs for the future optional GenAI path.
 
+The app also includes deterministic safety evaluation before runtime GenAI exists. The checks inspect coach cards, exports, and future prompt contexts for missing evidence, unsupported claims, privacy leaks, and obvious secret-like text.
+
 ## Local Coach And Agentic Readiness
 
 Added design surfaces:
@@ -132,6 +134,7 @@ Runtime surface:
 - The route builds a summarized `MirrorCoachContext` from IndexedDB records.
 - It generates prioritized `CoachCard` objects for weakness, review, analysis, story, progression, mirror, and data quality.
 - It exports a local Markdown coach report and summarized JSON context.
+- It exports a local safety report with pass/fail status and findings by severity.
 - No LLM calls, paid APIs, cloud inference, login, or gameplay upload are required.
 - The browser app does not read `analytics_output` files directly; `mirror_features.json` and `mirror_insights.md` remain optional local artifacts from the Python analytics pipeline.
 
@@ -139,6 +142,7 @@ Runtime surface:
 
 - Data Engineering: schema validation, local ETL, typed loaders, CLI pipelines, warehouse-style SQL marts.
 - Data Science / Analytics: feature extraction, solve-rate metrics, CP-loss aggregation, trend detection, review prioritization.
-- AI / ML Thinking: StyleVector feature engineering, model-ready JSON features, deterministic recommendation cards, interpretable risk and personalization signals.
+- AI / ML Thinking: StyleVector feature engineering, model-ready JSON features, deterministic recommendation cards, prompt-context validation, interpretable risk and personalization signals.
+- Responsible AI / Evaluation: local safety checks for evidence, confidence, unsupported claims, export leakage, and future prompt contexts.
 - Forward Deployment: local-first operation, smoke-testable CLI, no cloud prerequisites, documented run path.
 - Software Engineering: tests, package metadata, modular Python design, CI workflow, integration with an existing React app without gameplay changes.

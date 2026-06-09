@@ -10,6 +10,7 @@ import {
   generateWeaknessSummary,
   getCoachExportDate,
 } from '../coach/localCoach';
+import { buildCoachSafetyReport } from '../coach/coachSafety';
 import type { LocalTrainingPlan, MirrorCoachContext } from '../coach/coachTypes';
 
 type CoachPreviewState =
@@ -95,6 +96,18 @@ export default function CoachPreview() {
   const { context, plan, weaknessSummary, nextActionSummary } = state;
   const exportDate = getCoachExportDate(context.generated_at);
   const insufficientFlags = context.coach_summary.insufficient_data_flags;
+  const markdownExport = buildCoachReportMarkdown(context);
+  const jsonExport = buildCoachContextJson(context);
+  const markdownFilename = `mirror-coach-report-${exportDate}.md`;
+  const jsonFilename = `mirror-coach-context-${exportDate}.json`;
+  const safetyFilename = `mirror-coach-safety-report-${exportDate}.json`;
+  const safetyReport = buildCoachSafetyReport({
+    cards: context.coach_cards,
+    context,
+    markdown: markdownExport,
+    json: jsonExport,
+    filenames: [markdownFilename, jsonFilename, safetyFilename],
+  });
 
   return (
     <div style={{ maxWidth: 1040, margin: '0 auto', padding: '2rem' }}>
@@ -112,8 +125,8 @@ export default function CoachPreview() {
             className="btn btn-primary"
             onClick={() =>
               downloadTextFile(
-                `mirror-coach-report-${exportDate}.md`,
-                buildCoachReportMarkdown(context),
+                markdownFilename,
+                markdownExport,
                 'text/markdown;charset=utf-8'
               )
             }
@@ -125,13 +138,26 @@ export default function CoachPreview() {
             className="btn"
             onClick={() =>
               downloadTextFile(
-                `mirror-coach-context-${exportDate}.json`,
-                buildCoachContextJson(context),
+                jsonFilename,
+                jsonExport,
                 'application/json;charset=utf-8'
               )
             }
           >
             Export JSON Context
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() =>
+              downloadTextFile(
+                safetyFilename,
+                `${JSON.stringify(safetyReport, null, 2)}\n`,
+                'application/json;charset=utf-8'
+              )
+            }
+          >
+            Export safety report
           </button>
         </div>
       </header>
@@ -194,6 +220,45 @@ export default function CoachPreview() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section style={{ marginBottom: '1.5rem' }}>
+        <h2>Safety/Evaluation</h2>
+        <p style={{ color: 'var(--ink-soft)' }}>
+          Safety checks are deterministic local checks. They do not use an LLM.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+          <Metric label="Status" value={safetyReport.passed ? 'passed' : 'failed'} />
+          <Metric label="Errors" value={String(safetyReport.summary.error)} />
+          <Metric label="Warnings" value={String(safetyReport.summary.warning)} />
+          <Metric label="Info" value={String(safetyReport.summary.info)} />
+          <Metric label="Cards checked" value={String(safetyReport.checked_cards)} />
+        </div>
+        {safetyReport.findings.length > 0 ? (
+          <div style={{ display: 'grid', gap: '0.75rem' }}>
+            {safetyReport.findings.map((finding) => (
+              <article
+                key={`${finding.id}-${finding.card_id || 'context'}-${finding.field || 'field'}`}
+                style={{
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 8,
+                  padding: '0.75rem',
+                  background: 'var(--surface-color)',
+                }}
+              >
+                <p style={{ margin: '0 0 0.25rem', color: 'var(--ink-soft)', fontSize: '0.85rem' }}>
+                  {finding.severity} | {finding.category}
+                  {finding.card_id ? ` | ${finding.card_id}` : ''}
+                  {finding.field ? ` | ${finding.field}` : ''}
+                </p>
+                <p style={{ margin: '0 0 0.25rem' }}>{finding.message}</p>
+                <p style={{ margin: 0, color: 'var(--ink-soft)' }}>{finding.recommendation}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p>No safety findings.</p>
+        )}
       </section>
 
       <section style={{ marginBottom: '1.5rem' }}>

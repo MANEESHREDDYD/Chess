@@ -249,6 +249,9 @@ describe('local deterministic coach', () => {
       expect(screen.getByText(/deterministic and local-only/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Export Markdown/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Export JSON Context/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Export safety report/i })).toBeInTheDocument();
+      expect(screen.getByText('Safety/Evaluation')).toBeInTheDocument();
+      expect(screen.getByText(/Safety checks are deterministic local checks/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Practice pin patterns/i).length).toBeGreaterThan(0);
     });
   });

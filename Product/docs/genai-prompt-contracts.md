@@ -4,6 +4,8 @@ These prompt contracts are for a future optional GenAI coach. MIRROR does not cu
 
 Every prompt must be grounded only in provided MIRROR context. If the context does not contain enough evidence, the response must say "insufficient data" and recommend the next local action that would create useful evidence.
 
+Before any future optional prompt is sent to a model, MIRROR should run the deterministic prompt-context validator and coach safety evaluator. Runtime GenAI coaching is still not implemented.
+
 Global rules for every prompt:
 
 - Do not invent games, positions, ratings, statistics, or personal traits.
@@ -13,6 +15,22 @@ Global rules for every prompt:
 - Treat Mahabharata-inspired content with respect and keep it optional.
 - Use concise coaching language.
 - Cite the MIRROR fields used.
+- Pass deterministic prompt-context safety checks before use.
+
+## Deterministic Preflight Contract
+
+Any future prompt context must pass local checks for:
+
+- bounded serialized size
+- `privacy_flags`
+- `source_files`
+- insufficient-data behavior
+- no raw backup JSON
+- no account-link records
+- no raw PGN/FEN unless explicitly enabled for local-only review
+- no token, JWT, service-role, or API-key-like text
+
+If preflight fails, the future adapter must not call a model. The UI should show the deterministic finding instead.
 
 ## 1. Post-Game Coach
 

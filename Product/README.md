@@ -36,6 +36,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Data / AI Engineering Showcase](docs/data-ai-showcase.md)
 - [Local GenAI Coach Design](docs/local-genai-coach-design.md)
 - [Coach Context Schema](docs/coach-context-schema.md)
+- [Local Coach Safety Evaluation](docs/local-coach-safety-eval.md)
 - [GenAI Prompt Contracts](docs/genai-prompt-contracts.md)
 - [Agentic Coach Workflows](docs/agentic-coach-workflows.md)
 
@@ -51,13 +52,14 @@ MIRROR includes a real local-first Python and SQL analytics layer that runs on e
 - **Local Coach Preview**: `/coach-preview` renders a deterministic rule-based coach from local IndexedDB summaries as a bridge toward future optional GenAI.
 - **Deterministic coach cards**: the local coach generates prioritized weakness, review, analysis, story, progression, mirror, and data-quality cards with evidence and confidence.
 - **Coach exports**: `/coach-preview` can export a local Markdown coach report and summarized JSON coach context without raw PGN, FEN, auth tokens, or API keys.
+- **Safety evaluation**: deterministic local checks validate coach cards, prompt contexts, and exports for missing evidence, unsupported claims, privacy leaks, and obvious secret-like text.
 - **GenAI / Agentic design docs**: coach architecture, context schema, prompt contracts, and future agent workflows are documented without claiming runtime LLM coaching.
 
 Recruiter skill map:
 
 - Data Engineering: schema-aware loaders, local ETL, warehouse-style SQL, repeatable CLI outputs.
 - Data Science / Analytics: solved-rate metrics, weak motif detection, CP-loss aggregation, trend analysis, review prioritization.
-- AI / ML Thinking: StyleVector feature extraction, deterministic recommendation cards, and model-ready JSON summaries.
+- AI / ML Thinking: StyleVector feature extraction, deterministic recommendation cards, safety-checked prompt context, and model-ready JSON summaries.
 - Forward Deployment: local-first operation, CI smoke tests, no cloud dependency.
 - Software Engineering: modular Python package, pytest coverage, CI workflow, and integration without changing gameplay.
 
@@ -124,12 +126,14 @@ node scripts/run-mirror-verification.mjs
 - `v1.16.0-account-sync-design-1`
 - `v1.17.0-account-auth-local-bridge`
 - `v1.18.0-cloud-backup-sync-1`
+- `v1.18.1-portfolio-showcase-1`
 - `v1.18.2-data-ai-showcase-layer`
 - `v1.18.3-local-genai-coach-design-1`
 - `v1.18.4-local-genai-coach-stub-2`
+- `v1.18.5-local-genai-coach-safety-eval-1`
 
 ## Future Roadmap
 - E2EE Cloud Backups.
-- Local coach safety/evaluation layer before runtime model integration.
+- Local GenAI coach runtime adapter design, without live model calls until privacy and safety gates are proven.
 - Optional runtime GenAI coaching integration after local context, privacy, and guardrail contracts are verified.
 - Advanced progression dashboard.

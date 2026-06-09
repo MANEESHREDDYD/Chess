@@ -46,6 +46,23 @@ Current card types:
 
 Every card includes evidence, recommendation, priority, confidence, and source. If data is missing, the card states insufficient data instead of inventing facts.
 
+## Current Safety Evaluation Layer
+
+`/coach-preview` also runs deterministic local safety checks. These checks do not use an LLM.
+
+The safety layer validates:
+
+- card evidence and source metadata
+- overconfident insufficient-data recommendations
+- unsupported exact-stat claims
+- medical, psychological, and permanent-trait language
+- sacred/religious parody
+- raw PGN/FEN exposure
+- secret-like export text
+- future prompt context shape and privacy flags
+
+The route can export `mirror-coach-safety-report-YYYY-MM-DD.json` for inspection.
+
 ## Coach Data Inputs
 
 Primary analytics artifacts:
@@ -86,6 +103,7 @@ The coach should prefer aggregated feature data over raw chess records unless th
 - prioritized deterministic coach cards
 - local Markdown coach report
 - summarized JSON coach context
+- local JSON safety report
 
 All outputs must cite the MIRROR context used. If the context is missing or thin, the coach must say "insufficient data" and recommend how to collect useful local evidence.
 
@@ -101,7 +119,7 @@ The future system can be split into small agents:
 - Story Mentor Agent: map story progress to respectful motivational copy.
 - Safety/Privacy Guard Agent: block unsupported claims and private raw data exposure.
 
-The deterministic local coach implements a useful subset of this contract today without GenAI: context construction, card prioritization, insufficient-data flags, confidence labels, and Markdown/JSON exports.
+The deterministic local coach implements a useful subset of this contract today without GenAI: context construction, card prioritization, insufficient-data flags, confidence labels, Markdown/JSON exports, and local safety reports.
 
 ## Non-Goals
 
@@ -113,6 +131,7 @@ The deterministic local coach implements a useful subset of this contract today 
 - No sacred or religious parody.
 - No invention of games, ratings, or statistics not present in MIRROR context.
 - No claim that deterministic coach cards are LLM-generated.
+- No claim that deterministic safety checks are model-based.
 
 ## Future Runtime Implementation Options
 
@@ -140,4 +159,4 @@ Option 4: Hybrid guarded workflow
 - Optional LLM only writes prose from a bounded context object.
 - All outputs pass through a verifier that rejects invented stats, raw-data leakage, and unsupported claims.
 
-The recommended path is Option 1 now, then Option 2 or guarded Option 4 after the context contract and safety tests mature.
+The recommended path is Option 1 now, then Option 2 or guarded Option 4 after the context contract, safety tests, export checks, and prompt-context validator mature.

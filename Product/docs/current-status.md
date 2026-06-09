@@ -1,8 +1,9 @@
 # Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.18.4-local-genai-coach-stub-2`
-> **Current Milestone**: `M-LOCAL-GENAI-COACH-STUB-2`
+> **Latest Tag**: `v1.18.5-local-genai-coach-safety-eval-1`
+> **Latest Completed Milestone**: `M-LOCAL-GENAI-COACH-SAFETY-EVAL-1`
+> **Current / Next Milestone**: `M-LOCAL-GENAI-COACH-RUNTIME-ADAPTER-DESIGN-1`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
@@ -31,9 +32,11 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.16.0-account-sync-design-1`**: Design architecture for cloud sync.
 *   **`v1.17.0-account-auth-local-bridge`**: Supabase authentication bridge.
 *   **`v1.18.0-cloud-backup-sync-1`**: Optional, user-triggered cloud backup storage without structured sync.
+*   **`v1.18.1-portfolio-showcase-1`**: Portfolio-facing project documentation and showcase positioning.
 *   **`v1.18.2-data-ai-showcase-layer`**: Local Python and SQL analytics layer for exported MIRROR backup JSON.
 *   **`v1.18.3-local-genai-coach-design-1`**: Local deterministic coach preview plus GenAI/agentic design docs.
 *   **`v1.18.4-local-genai-coach-stub-2`**: Deterministic local coach cards, confidence/insufficient-data summaries, and Markdown/JSON exports.
+*   **`v1.18.5-local-genai-coach-safety-eval-1`**: Deterministic safety/evaluation checks for coach cards, exports, and future prompt contexts.
 
 ## Current Implemented Features
 
@@ -43,11 +46,12 @@ The following features and milestones have been successfully completed and tagge
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
 *   **Local Coach Preview**: `/coach-preview` provides deterministic, local-only training focus, weak motif, review queue, story recommendations, prioritized coach cards, evidence, and local exports.
+*   **Coach Safety Evaluation**: deterministic local checks validate coach cards, prompt contexts, Markdown exports, and JSON exports without LLM calls.
 *   **Data / AI Showcase Layer**: Python analytics, SQL marts, anonymized sample backup data, generated reports, and `mirror_features.json`.
 
 ## Known Limitations
 
-*   **No Cross-Device Sync**: Progress is strictly local to the browser's IndexedDB.
+*   **No Automatic Structured Cross-Device Sync**: Manual cloud backup exists, but row-by-row sync does not.
 *   **No Real-Time Multiplayer**: Currently restricted to playing against the Engine or Local Pass-and-Play.
 *   **Placeholder Art Assets**: The Mahabharata theme relies on procedural CSS and data-URI SVG pieces pending final art.
 *   **No Runtime GenAI Coach Yet**: GenAI and agentic coaching are designed, but the app currently uses deterministic local coach rules only.
@@ -55,7 +59,7 @@ The following features and milestones have been successfully completed and tagge
 
 ## Next Recommended Milestones
 
-*   **M-LOCAL-GENAI-COACH-SAFETY-EVAL-1**: Add deterministic safety/evaluation checks for coach cards, exports, and future prompt contexts before any runtime GenAI integration.
+*   **M-LOCAL-GENAI-COACH-RUNTIME-ADAPTER-DESIGN-1**: Design an optional runtime adapter boundary after safety/evaluation checks, without adding live model calls yet.
 *   **M-E2EE-CLOUD-BACKUP-1**: Add end-to-end encryption for cloud backups.
-*   **M-STORY-ACT-2**: Expand the narrative campaign with Chapters 8-14.
-*   **M-STORY-ACT-3-IMPLEMENTATION**: Narrative and chess encounters for Act III.
+*   **M-STORY-ACT-2-IMPLEMENTATION**: Implement playable Act II story encounters on top of the existing Act II shell.
+*   **M-STORY-ACT-3-IMPLEMENTATION**: Implement playable Act III story encounters on top of the existing Act III shell.

@@ -2,7 +2,7 @@
 
 This document designs possible future agents for MIRROR's optional coaching system. No runtime agents or LLM calls are implemented in this milestone.
 
-The current runtime implementation is deterministic and local-only. It builds `MirrorCoachContext`, emits prioritized `CoachCard` records, and exports Markdown/JSON summaries without cloud inference or private data upload.
+The current runtime implementation is deterministic and local-only. It builds `MirrorCoachContext`, emits prioritized `CoachCard` records, exports Markdown/JSON summaries, and runs `CoachSafetyReport` checks without cloud inference or private data upload.
 
 ## Current Deterministic Agent Analog
 
@@ -14,7 +14,7 @@ The local coach stub maps future agent responsibilities onto deterministic cards
 - Puzzle Recommendation Agent maps to `review` cards and due motif evidence.
 - Post-Game Explanation Agent maps to `analysis` cards.
 - Story Mentor Agent maps to `story` cards.
-- Safety/Privacy Guard Agent maps to privacy flags, insufficient-data flags, and export redaction rules.
+- Safety/Privacy Guard Agent maps to privacy flags, insufficient-data flags, prompt-context validation, export safety checks, and the `/coach-preview` safety report.
 
 This proves the interface and product behavior before any optional GenAI runtime exists.
 
@@ -237,6 +237,7 @@ Outputs:
 - blocked response with reason
 - redaction request
 - export safety status
+- deterministic `CoachSafetyReport`
 
 Tools/data sources:
 
@@ -258,3 +259,9 @@ Guardrails:
 - deny medical or psychological claims
 - require "insufficient data" when evidence is missing
 - keep `safe_to_send_to_llm` false by default until explicit consent and redaction are implemented
+
+Current local checks live in:
+
+- `src/coach/coachSafety.ts`
+- `src/coach/promptContextValidator.ts`
+- `docs/local-coach-safety-eval.md`
