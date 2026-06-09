@@ -2,6 +2,7 @@
 
 > **Date**: June 09, 2026
 > **Latest Tag**: `v1.18.0-cloud-backup-sync-1`
+> **Current Milestone**: `M-PORTFOLIO-SHOWCASE-1`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
@@ -17,7 +18,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.4.0-basic-analysis`**: Post-game analysis using the local Stockfish engine to identify blunders and cp-loss.
 *   **`v1.5.0-clue-chess`**: Single-move tactical puzzles with dynamic hints based on the player's style vector.
 *   **`v1.6.0-mahabharata-visuals-1`**: Static SVG placeholder theme & basic story mode scaffolding.
-*   **`v1.7.0-story-shell`**: 3-chapter narrative framework with branching dialogues and chess encounters.
+*   **`v1.7.0-story-shell`**: 3-chapter narrative framework with dialogue and chess encounters.
 *   **`v1.8.0-story-act-1`**: Expanded first 7 chapters of the Mahabharata story arc.
 *   **`v1.9.0-audio-fx-1`**: Lightweight client-side audio triggers for moves, captures, checks, and game events.
 *   **`v1.10.0-multi-move-puzzles`**: Multi-move sequence puzzles with stepping and auto-replies for Clue Chess and Story Mode.
@@ -47,7 +48,7 @@ The following features and milestones have been successfully completed and tagge
 
 ## Next Recommended Milestones
 
-*   **M-STORY-ACT-2**: Expand the narrative campaign with Chapters 8-14, introducing mid-game complexities and multi-path dialogue options.
-*   **M-VISUAL-ASSETS-2**: Replace placeholder SVGs with higher-fidelity board designs and distinct character portraits.
-*   **M-ANALYSIS-UPGRADE**: Improve the post-match coach feedback with clearer, natural-language explanations of critical blunders.
-*   **M-ACCOUNT-AUTH-LOCAL-BRIDGE**: Implement Supabase Auth and link local profiles to cloud accounts as the first step toward the architecture defined in M-ACCOUNT-SYNC-DESIGN-1.
+*   **M-PORTFOLIO-SHOWCASE-1**: Present MIRROR as a data engineering and AI full-stack product.
+*   **M-E2EE-CLOUD-BACKUP-1**: Add end-to-end encryption for cloud backups.
+*   **M-STORY-ACT-2**: Expand the narrative campaign with Chapters 8-14.
+*   **M-STORY-ACT-3-IMPLEMENTATION**: Narrative and chess encounters for Act III.

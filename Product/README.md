@@ -1,79 +1,102 @@
-# MIRROR - The Apprentice
+# MIRROR: Personalized AI Coaching & Analytics
 
-A chess prototype where the final opponent is built from how you play. The current MVP includes calibration, free play, a Stockfish-based personalized Mirror opponent, self-recognition, scouting-card export, and an optional Kurukshetra board theme.
+MIRROR is an offline-first, progressive web application that reimagines chess training as a data-driven, personalized narrative experience.
 
-## Design docs
+## Product Overview
+While superficially a chess interface, MIRROR is fundamentally a robust data engineering and analytics platform built on the client-side. It features AI-driven behavioral profiling, post-game CP-loss analytics, spaced repetition learning, and a local-first architecture with optional secure cloud syncing.
 
-Read these before extending the codebase. They live in `docs/`:
+## Why MIRROR is Unique
+Unlike traditional platforms, MIRROR adapts to *how* you play. By measuring 12 dimensions of player behavior (e.g., aggression, complexity), the "Mirror Engine" reranks Stockfish evaluations to simulate your specific playstyle, exposing your blind spots.
 
-| File | What it covers |
-| --- | --- |
-| `docs/v2_strategy.html` | Historical staging plan, gate criteria, kill criteria |
-| `docs/v3_story.html`    | Full Mahabharata Mode 1 bible (Stage 2 scope) |
-| `docs/v4_implementation.html` | Historical executable plan and implementation reference |
+## Recruiter / Hiring Manager Summary
+This repository demonstrates professional-grade engineering across multiple domains:
+- **Data Engineering**: Robust IndexedDB relational schema, zero-downtime migrations, atomic export/import pipelines, and conflict-aware cloud merges.
+- **AI/ML Thinking**: Behavioral profiling (`StyleVector`), custom move-reranking algorithms, and structured data preparation for future GenAI integration.
+- **Analytics**: Deep CP-loss telemetry, motif weakness detection, and SuperMemo-style spaced repetition scheduling.
+- **Frontend / Product Design**: Responsive React/Vite PWA, modular state management, cohesive onboarding, and a deeply creative narrative UX.
+- **Full-Stack Architecture**: Local-first data models with seamless, optional Supabase Auth and Storage integration (enforced by RLS policies).
+- **Deployment / Security**: Environment-aware CI commands, stringent verification scripts, and a strict no-secret policy.
 
-## What's built
+## Skill Showcase Map
+- **Data Engineering**: IndexedDB schema design, migrations, export/import pipeline, cloud backup schema, Supabase Storage policies, backup merge strategy.
+- **Data Science / Analytics**: CP-loss analysis, move classification, accuracy estimate, puzzle solved-rate, weak motif detection, progression metrics, review scheduling.
+- **AI / ML**: StyleVector, personalized Mirror opponent, move reranking, Stockfish evaluation, adaptive clue selection.
+- **Frontend**: React, Vite, route architecture, state management, chessboard UI, responsive app shell.
+- **UI/UX**: Onboarding, story mode, clue hints, progression dashboard, backup warnings, theme toggle, audio feedback.
+- **Backend / Full Stack**: Supabase Auth, Supabase Storage, RLS policies, cloud backup service wrapper, account linking.
+- **Forward Deployment**: Environment configuration, verification scripts, CI-ready commands, safe fallback when cloud env is missing.
+- **GenAI-readiness**: MIRROR structures personalization and coaching-ready data for future integration. *(Note: Runtime GenAI conversational coaching is a future milestone, not currently implemented).*
+- **Creativity**: Mahabharata/Kurukshetra theme, Story Acts I–III, Pandava/Kaurava visual identity, custom audio FX.
 
-- React + TypeScript PWA on Vite 5
-- Chess board with drag-to-move, real promotion chooser, color selection
-- Stockfish in a Web Worker, fixed depth 10, bundled from the pinned npm package
-- PGN export, resign, new-game flow
-- Calibration flow and style-vector persistence in IndexedDB
-- Personalized Mirror match, decision traces, self-recognition, and scouting-card export
-- Optional Kurukshetra board and piece theme
-- `/about` route with GPL notices for Stockfish (license compliance, required)
-- Cloudflare `_headers` file for COEP/COOP
-- PWA manifest with proper icons
+## Technical Architecture
+- [System Architecture](docs/architecture-overview.md)
+- [Data Architecture](docs/data-architecture.md)
+- [AI & ML Methodology](docs/ai-ml-methodology.md)
+- [Analytics & Progression](docs/analytics-and-progression.md)
 
-**Not yet built**: story system, Coach, multiplayer, sync/auth, ranked play, and the larger post-MVP roadmap systems.
+## Security and Privacy
+MIRROR is private by default. All match histories, telemetry, and analytics remain entirely local in your browser's IndexedDB. Optional cloud backups are stored in a private Supabase bucket secured by strict Row Level Security (RLS) policies. No `SERVICE_ROLE` keys or secrets are stored in this repository.
 
-## Quickstart
+## Tech Stack
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Zustand
+- **Engine**: Stockfish 16.1 (WebAssembly)
+- **Database**: IndexedDB (Local), Supabase Storage (Cloud)
+- **Auth**: Supabase Magic Links
 
+## Local Setup & Deployment
+Please see the [Deployment Runbook](docs/deployment-runbook.md) for detailed setup, environment variables, and verification commands.
+
+### Quick Start
 ```bash
-# Need Node 20 LTS first. nvm-windows or nvm.
+git clone https://github.com/MANEESHREDDYD/Chess.git
+cd Chess/Product
 npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>. Click **Begin Calibration**, then play Mirror or free play.
+### Environment Variables
+*(Optional - for Cloud Auth/Backups only)*
+Copy `.env.example` to `.env`:
+```env
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
 
-## Scripts
+### Verification Commands
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npx tsx scripts/validate-puzzles.ts
+node scripts/run-mirror-verification.mjs
+```
 
-| Command             | Effect                              |
-| ------------------- | ----------------------------------- |
-| `npm run dev`       | Vite dev server with HMR            |
-| `npm run build`     | Production build → `dist/`          |
-| `npm run preview`   | Serve the production build locally  |
-| `npm run typecheck` | TypeScript check without emitting   |
-| `npm run lint`      | ESLint over `src/`                  |
-| `npm test`          | Vitest unit tests                   |
+## Screenshots
+*(Placeholder for future product screenshots)*
 
-## Deployment
+## Milestone Timeline
+- `v1.0.0-mirror-verified`
+- `v1.1.0-core-chess`
+- `v1.3.0-human-mirror-loop`
+- `v1.4.0-basic-analysis`
+- `v1.5.0-clue-chess`
+- `v1.6.0-mahabharata-visuals-1`
+- `v1.7.0-story-shell`
+- `v1.8.0-story-act-1`
+- `v1.9.0-audio-fx-1`
+- `v1.10.0-multi-move-puzzles`
+- `v1.10.1-status-reconciliation`
+- `v1.11.0-story-act-2-shell`
+- `v1.12.0-player-progression-1`
+- `v1.13.0-puzzle-spaced-repetition-1`
+- `v1.14.0-story-act-3-shell`
+- `v1.15.0-local-backup-export-1`
+- `v1.16.0-account-sync-design-1`
+- `v1.17.0-account-auth-local-bridge`
+- `v1.18.0-cloud-backup-sync-1`
 
-Cloudflare Pages, GitHub-connected:
-
-- Build command: `npm run build`
-- Build output: `dist`
-- Node version env var: `NODE_VERSION = 20`
-
-## Stack
-
-| Layer            | Tool                                   |
-| ---------------- | -------------------------------------- |
-| Framework        | React 18 + TypeScript                  |
-| Build            | Vite 5 + vite-plugin-pwa               |
-| State            | Zustand                                |
-| Chess validation | chess.js                               |
-| Board UI         | react-chessboard v4                    |
-| Engine           | Stockfish (Web Worker, GPLv3)          |
-| Hosting          | Cloudflare Pages (free)                |
-
-## License
-
-This project: **AGPL-3.0-or-later**. See `LICENSE`.
-
-Stockfish, bundled: GPLv3 — see `/about` in the running app for full attribution.
-
-## Status
-
-Mirror MVP work is in progress: calibration, Mirror, self-recognition, export, and theme are implemented; deployment and launch polish remain.
+## Future Roadmap
+- E2EE Cloud Backups.
+- GenAI Conversational Coaching integration.
+- Advanced progression dashboard.

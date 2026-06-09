@@ -10,6 +10,7 @@ import { Onboarding } from './routes/Onboarding';
 import { Progress } from './routes/Progress';
 import Backup from './routes/Backup';
 import { Account } from './routes/Account';
+import { AboutProject } from './routes/AboutProject';
 import DevMirrorVerification from './routes/DevMirrorVerification';
 import DevInspector from './routes/DevInspector';
 import { useEffect } from 'react';
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="/backup" element={<Backup />} />
           <Route path="/account" element={<Account />} />
           <Route path="/about" element={<About />} />
+          <Route path="/about-project" element={<AboutProject />} />
           {import.meta.env.DEV && (
             <>
               <Route path="/dev/mirror-verification" element={<DevMirrorVerification />} />
@@ -103,6 +105,8 @@ export default function App() {
         <span>MIRROR | MVP prototype</span>
         <span>|</span>
         <Link to="/about">Credits &amp; GPL notices</Link>
+        <span>|</span>
+        <Link to="/about-project">About this project</Link>
       </footer>
     </div>
   );

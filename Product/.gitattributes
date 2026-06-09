@@ -1,0 +1,5 @@
+dist/** linguist-generated=true
+coverage/** linguist-generated=true
+docs/**/*.html linguist-documentation=true
+*.min.js linguist-generated=true
+*.min.css linguist-generated=true
