@@ -1,13 +1,11 @@
 # Current Status
 
 > **Date**: June 09, 2026
-> **Latest Tag**: `v1.10.0-multi-move-puzzles`
+> **Latest Tag**: `v1.18.0-cloud-backup-sync-1`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
 
-## ⚠️ Warning
-Older status reports, such as `product_status_report.md` or early drafts of `HONEST_BUILD_PLAN.md`, may contain stale language claiming that "M-MIRROR is in progress", there is an "Engine Hang Bug", or that the launch status is "NOT READY". Those claims are **outdated** and apply to old architectural states. The Mirror Engine was verified and completed in `v1.0.0-mirror-verified`. Any claims that the worker bug is unresolved are false.
 
 ## Completed Milestones
 
@@ -23,6 +21,15 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.8.0-story-act-1`**: Expanded first 7 chapters of the Mahabharata story arc.
 *   **`v1.9.0-audio-fx-1`**: Lightweight client-side audio triggers for moves, captures, checks, and game events.
 *   **`v1.10.0-multi-move-puzzles`**: Multi-move sequence puzzles with stepping and auto-replies for Clue Chess and Story Mode.
+*   **`v1.10.1-status-reconciliation`**: Docs and sync.
+*   **`v1.11.0-story-act-2-shell`**: Act 2 story chapters.
+*   **`v1.12.0-player-progression-1`**: Base player progression.
+*   **`v1.13.0-puzzle-spaced-repetition-1`**: Spaced repetition for puzzles.
+*   **`v1.14.0-story-act-3-shell`**: Act 3 story framework.
+*   **`v1.15.0-local-backup-export-1`**: Local manual JSON backup export/import.
+*   **`v1.16.0-account-sync-design-1`**: Design architecture for cloud sync.
+*   **`v1.17.0-account-auth-local-bridge`**: Supabase authentication bridge.
+*   **`v1.18.0-cloud-backup-sync-1`**: Optional, user-triggered cloud backup storage without structured sync.
 
 ## Current Implemented Features
 
