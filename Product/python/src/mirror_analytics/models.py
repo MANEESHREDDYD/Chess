@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 @dataclass
 class StyleVector:
-    """12-dimensional behavioral fingerprint derived from calibration."""
+    """11 behavioral/profile fields plus schema metadata derived from calibration."""
 
     opening_white_top3: list[str] = field(default_factory=list)
     opening_black_top3: list[str] = field(default_factory=list)
@@ -104,6 +104,35 @@ class MirrorMatchRecord:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "MirrorMatchRecord":
+        return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class ImportedGameRecord:
+    id: str = ""
+    player_id: str = ""
+    source: str = "unknown_pgn"
+    original_filename: Optional[str] = None
+    imported_at: str = ""
+    headers: dict[str, Any] = field(default_factory=dict)
+    pgn_text: str = ""
+    normalized_pgn: str = ""
+    result: Optional[str] = None
+    white: Optional[str] = None
+    black: Optional[str] = None
+    user_color: Optional[str] = None
+    move_count: int = 0
+    final_fen: str = ""
+    legal_status: str = "invalid"
+    validation_errors: list[str] = field(default_factory=list)
+    analysis_status: str = "not_analyzed"
+    stylevector_applied: bool = False
+    created_at: str = ""
+    updated_at: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "ImportedGameRecord":
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
@@ -324,6 +353,7 @@ class MirrorBackupData:
     players: list[PlayerRecord] = field(default_factory=list)
     local_matches: list[LocalMatchRecord] = field(default_factory=list)
     mirror_matches: list[MirrorMatchRecord] = field(default_factory=list)
+    imported_games: list[ImportedGameRecord] = field(default_factory=list)
     calibration_runs: list[CalibrationRunRecord] = field(default_factory=list)
     style_vectors: list[StyleVectorRecord] = field(default_factory=list)
     saved_analyses: list[AnalysisRecord] = field(default_factory=list)

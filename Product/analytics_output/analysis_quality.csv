@@ -2,3 +2,4 @@ player_id,analysis_id,match_id,match_type,created_at,average_cp_loss,accuracy_es
 player-sample-001,analysis-sample-001,lm-sample-001,computer,2026-05-02T15:00:00.000Z,32.0,82.5,0,1,1,8,0.0,regressing
 player-sample-001,analysis-sample-002,lm-sample-002,computer,2026-05-05T10:00:00.000Z,18.0,91.2,0,0,1,7,-14.0,regressing
 player-sample-001,analysis-sample-003,lm-sample-003,computer,2026-05-07T11:00:00.000Z,78.0,63.0,1,1,1,5,60.0,regressing
+player-sample-001,analysis-sample-004,ig-sample-001,imported,2026-05-24T10:05:00.000Z,28.0,86.0,0,0,1,8,-50.0,regressing

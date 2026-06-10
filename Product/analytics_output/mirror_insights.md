@@ -6,12 +6,15 @@ Generated from an exported MIRROR backup JSON file. This is a local-first analyt
 
 Player: Arjuna_Sample (player-sample-001)
 
-- Total games: 11 (3 Mirror matches)
-- Analyses completed: 3
+- Total games: 12 (3 Mirror matches)
+- Imported games: 2 (1 valid)
+- Imported-game analysis coverage: 100.0%
+- Analyses completed: 4
 - Clue solve rate: 50.0%
 - Multi-move solve rate: 100.0%
-- Active days: 22 with an estimated 1-day current streak
+- Active days: 23 with an estimated 2-day current streak
 - Achievements earned: 5
+- Import sources: lichess_pgn:1; manual_pgn:1
 
 ## Weakest Motifs
 
@@ -31,12 +34,12 @@ Player: Arjuna_Sample (player-sample-001)
 
 ## Analysis Quality Summary
 
-- Average CP loss: 42.6667
-- Accuracy estimate: 78.9
+- Average CP loss: 39.0
+- Accuracy estimate: 80.675
 - Blunders: 1
 - Mistakes: 2
 - Improvement trend: regressing
-- Latest analysis CP loss delta vs previous: 60.0
+- Latest analysis CP loss delta vs previous: -50.0
 
 ## Story Progress
 

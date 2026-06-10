@@ -394,6 +394,186 @@ body {
   width: 220px;
 }
 
+/* ---------- PGN Import ---------- */
+
+.import-pgn {
+  display: grid;
+  gap: 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.import-pgn__header {
+  max-width: 760px;
+}
+
+.import-pgn__header h1,
+.import-pgn__panel h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.import-pgn__header h1 {
+  font-size: 38px;
+  margin-bottom: 12px;
+}
+
+.import-pgn__header p,
+.import-pgn__muted,
+.import-pgn__privacy,
+.import-pgn__status {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.import-pgn__layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.import-pgn__layout--bottom {
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+}
+
+.import-pgn__panel {
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+}
+
+.import-pgn__panel--wide {
+  max-width: 100%;
+}
+
+.import-pgn__panel h2 {
+  font-size: 24px;
+}
+
+.import-pgn__label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.import-pgn__label input,
+.import-pgn__label select,
+.import-pgn__label textarea {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  padding: 9px 10px;
+}
+
+.import-pgn__label textarea {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.import-pgn__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.import-pgn__actions .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.import-pgn__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.import-pgn__stats div {
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 10px;
+}
+
+.import-pgn__stats dt {
+  color: var(--ink-faded);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.import-pgn__stats dd {
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.import-pgn__game-list {
+  display: grid;
+  gap: 8px;
+}
+
+.import-pgn__game {
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.import-pgn__game span,
+.import-pgn__game p {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.import-pgn__report {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+.import-pgn__table-wrap {
+  overflow-x: auto;
+}
+
+.import-pgn__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.import-pgn__table th,
+.import-pgn__table td {
+  border-bottom: 1px solid var(--rule-soft);
+  padding: 8px;
+  text-align: left;
+}
+
+.import-pgn__table th {
+  color: var(--ink-faded);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 /* ---------- Calibration ---------- */
 
 .calibration-flow {
@@ -729,6 +909,15 @@ body {
 
   .style-vector-radar__slider-row {
     grid-template-columns: 1fr;
+  }
+
+  .import-pgn__layout,
+  .import-pgn__layout--bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .import-pgn__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

@@ -22,6 +22,19 @@ The core of MIRROR's AI is the **StyleVector**, a local behavioral personalizati
 ### Calibration Method
 When a user completes calibration, MIRROR converts task outputs into StyleVector fields. These include tactical motif results, time-pressure behavior, exchange decisions, opening choices, endgame outcome, and detected Elo band. Over time, this builds a behavioral fingerprint for local personalization.
 
+### PGN Import Evidence
+MIRROR can also enrich StyleVector evidence from local, user-provided PGN imports. The import pipeline supports pasted PGN text and uploaded `.pgn` files, parses one or many games, validates legal moves, and stores each imported game locally.
+
+Imported games update StyleVector conservatively:
+- valid games only
+- no update from malformed games
+- opening, capture, castling, queen-move, minor-piece, result, and move-count proxies only when supported by the PGN
+- user-side features only when the PGN headers can identify the active player as White or Black
+- no time-pressure behavior unless PGN clock data is present
+- no tactical motif weakness unless analysis data exists
+
+This is still rule-based feature engineering, not a trained model. External platforms are supported only through user-provided PGN exports; MIRROR does not use OAuth or scraping for this milestone.
+
 ## Mirror Opponent Behavior
 When the user plays against their "Mirror", the engine does not just play the best move.
 1. Stockfish generates the top N moves (MultiPV).

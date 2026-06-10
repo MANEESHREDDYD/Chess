@@ -44,29 +44,48 @@
       "match_type": "computer",
       "mistake_count": 1,
       "player_id": "player-sample-001"
+    },
+    {
+      "accuracy_estimate": 86.0,
+      "analysis_id": "analysis-sample-004",
+      "analyzed_moves": 8,
+      "average_cp_loss": 28.0,
+      "blunder_count": 0,
+      "cp_loss_trend_vs_previous": -50.0,
+      "created_at": "2026-05-24T10:05:00.000Z",
+      "improvement_trend": "regressing",
+      "inaccuracy_count": 1,
+      "match_id": "ig-sample-001",
+      "match_type": "imported",
+      "mistake_count": 0,
+      "player_id": "player-sample-001"
     }
   ],
   "metadata": {
     "app_name": "MIRROR",
     "created_at": "2026-06-01T12:00:00.000Z",
-    "latest_known_tag": "v1.18.1-portfolio-showcase-1",
-    "schema_version": 8
+    "latest_known_tag": "v1.19.1-pgn-import-pipeline-1",
+    "schema_version": 9
   },
   "player_summary": [
     {
-      "accuracy_estimate": 78.9,
+      "accuracy_estimate": 80.675,
       "achievement_count": 5,
-      "active_days": 22,
+      "active_days": 23,
       "aggression_index": 0.3111,
-      "analyses_completed": 3,
+      "analyses_completed": 4,
       "analysis_improvement_trend": "regressing",
-      "average_cp_loss": 42.6667,
+      "average_cp_loss": 39.0,
       "blunder_count": 1,
       "clue_attempts": 10,
       "clue_solve_rate": 0.5,
       "detected_elo": 1350,
       "display_name": "Arjuna_Sample",
       "elo_band": "initiate",
+      "imported_game_analysis_coverage": 1.0,
+      "imported_games_count": 2,
+      "imported_result_summary": "1-0:2",
+      "imported_source_breakdown": "lichess_pgn:1; manual_pgn:1",
       "local_matches": 8,
       "mirror_matches": 3,
       "mistake_count": 2,
@@ -77,11 +96,12 @@
       "risk_index": 0.2625,
       "story_chapters_available": 1,
       "story_chapters_completed": 4,
-      "streak_estimate_days": 1,
+      "streak_estimate_days": 2,
       "style_vector_id": "sv-sample-002",
       "tactical_weakness_summary": "pin: 0.42",
       "time_pressure_risk": 0.28,
-      "total_games": 11
+      "total_games": 12,
+      "valid_imported_games": 1
     }
   ],
   "puzzle_performance": [

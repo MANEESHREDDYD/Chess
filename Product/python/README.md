@@ -1,8 +1,8 @@
 # MIRROR Analytics
 
 Offline analytics toolkit for MIRROR chess PWA backup data. Reads exported MIRROR
-backup JSON files and produces player summaries, puzzle performance reports,
-analysis quality metrics, and training recommendations.
+backup JSON files and produces player summaries, imported-game coverage,
+puzzle performance reports, analysis quality metrics, and training recommendations.
 
 ## Quickstart
 
@@ -25,7 +25,7 @@ pytest
 |--------|---------|
 | `loaders.py` | Parse and validate MIRROR backup JSON |
 | `models.py` | Python dataclasses mirroring the MIRROR schema |
-| `features.py` | Extract player, puzzle, analysis, and StyleVector features |
+| `features.py` | Extract player, imported-game, puzzle, analysis, and StyleVector features |
 | `metrics.py` | Compute aggregated analytics metrics |
 | `reports.py` | Generate CSV exports and Markdown insight reports |
 | `cli.py` | Command-line interface orchestrating the full pipeline |
@@ -34,7 +34,7 @@ pytest
 
 | File | Contents |
 |------|----------|
-| `player_summary.csv` | Per-player game counts, solve rates, streaks |
+| `player_summary.csv` | Per-player game counts, imported-game counts, solve rates, streaks |
 | `puzzle_performance.csv` | Per-motif solve rates and weakness detection |
 | `story_progress.csv` | Chapter completion and attempt counts |
 | `analysis_quality.csv` | CP-loss, accuracy, blunder counts per analysis |

@@ -39,6 +39,26 @@ create table mirror_matches (
     mirror_version integer
 );
 
+create table imported_games (
+    id varchar(160) primary key,
+    player_id varchar(128) not null,
+    source varchar(64),
+    original_filename varchar(255),
+    imported_at timestamp,
+    result varchar(32),
+    white_player varchar(255),
+    black_player varchar(255),
+    user_color varchar(16),
+    move_count integer,
+    final_fen text,
+    legal_status varchar(32),
+    validation_error_count integer,
+    analysis_status varchar(32),
+    stylevector_applied boolean,
+    created_at timestamp,
+    updated_at timestamp
+);
+
 create table style_vectors (
     id varchar(128) primary key,
     player_id varchar(128) not null,

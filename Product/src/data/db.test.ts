@@ -17,6 +17,9 @@ import {
   putClueAttempt,
   getClueAttemptsForPlayer,
   getClueStatsForPlayer,
+  getImportedGamesForPlayer,
+  putImportedGameRecord,
+  updateImportedGameRecord,
   type PlayerRecord,
   type StyleVector,
   type StyleVectorRecord,
@@ -55,6 +58,7 @@ describe('openMirrorDb', () => {
       'calibration_runs',
       'clue_attempts',
       'feedback',
+      'imported_games',
       'local_matches',
       'mirror_matches',
       'players',
@@ -71,6 +75,16 @@ describe('openMirrorDb', () => {
     const styleTx = db.transaction('style_vectors', 'readonly');
     expect(indexNames(styleTx.objectStore('style_vectors'))).toEqual(['computed_at']);
     await styleTx.done;
+
+    const importTx = db.transaction('imported_games', 'readonly');
+    expect(indexNames(importTx.objectStore('imported_games'))).toEqual([
+      'analysis_status',
+      'imported_at',
+      'legal_status',
+      'player_id',
+      'source',
+    ]);
+    await importTx.done;
   });
 
   it('reopens idempotently without dropping existing rows', async () => {
@@ -281,6 +295,40 @@ describe('openMirrorDb', () => {
         mirror_match_id: 'match-1',
       },
     });
+  });
+
+  it('stores imported games and updates analysis status safely', async () => {
+    const dbName = nextDbName();
+    await putImportedGameRecord(
+      {
+        id: 'imported-game-1',
+        player_id: 'player-1',
+        source: 'manual_pgn',
+        imported_at: '2026-06-01T00:00:00.000Z',
+        headers: { White: 'Local Player', Black: 'Opponent', Result: '1-0' },
+        pgn_text: '1. e4 e5 1-0',
+        normalized_pgn: '1. e4 e5 1-0',
+        result: '1-0',
+        white: 'Local Player',
+        black: 'Opponent',
+        user_color: 'white',
+        move_count: 2,
+        final_fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+        legal_status: 'valid',
+        validation_errors: [],
+        analysis_status: 'not_analyzed',
+        stylevector_applied: false,
+        created_at: '2026-06-01T00:00:00.000Z',
+        updated_at: '2026-06-01T00:00:00.000Z',
+      },
+      dbName
+    );
+
+    await updateImportedGameRecord('imported-game-1', { analysis_status: 'queued' }, dbName);
+
+    await expect(getImportedGamesForPlayer('player-1', undefined, dbName)).resolves.toMatchObject([
+      { id: 'imported-game-1', analysis_status: 'queued' },
+    ]);
   });
 });
 

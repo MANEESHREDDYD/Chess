@@ -5,6 +5,7 @@ type BackupStoreName =
   | 'players'
   | 'local_matches'
   | 'mirror_matches'
+  | 'imported_games'
   | 'calibration_runs'
   | 'style_vectors'
   | 'saved_analyses'
@@ -33,6 +34,7 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     players: await db.getAll('players'),
     local_matches: await db.getAll('local_matches'),
     mirror_matches: await db.getAll('mirror_matches'),
+    imported_games: await db.getAll('imported_games'),
     calibration_runs: await db.getAll('calibration_runs'),
     style_vectors: await db.getAll('style_vectors'),
     saved_analyses: await db.getAll('saved_analyses'),
@@ -59,6 +61,7 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     data.players = data.players.filter(x => x.id === playerId);
     data.local_matches = data.local_matches.filter(x => x.player_id === playerId);
     data.mirror_matches = data.mirror_matches.filter(x => x.player_id === playerId);
+    data.imported_games = data.imported_games.filter(x => x.player_id === playerId);
     data.calibration_runs = data.calibration_runs.filter(x => x.player_id === playerId);
     data.style_vectors = data.style_vectors.filter(x => x.player_id === playerId);
     data.saved_analyses = data.saved_analyses.filter(x => x.player_id === playerId);
@@ -123,6 +126,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   expectArray('players');
   expectArray('local_matches');
   expectArray('mirror_matches');
+  expectArray('imported_games');
   expectArray('calibration_runs');
   expectArray('style_vectors');
   expectArray('saved_analyses');
@@ -141,6 +145,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
     players: (dataObj.players as unknown as MirrorBackupData['players']) || [],
     local_matches: (dataObj.local_matches as unknown as MirrorBackupData['local_matches']) || [],
     mirror_matches: (dataObj.mirror_matches as unknown as MirrorBackupData['mirror_matches']) || [],
+    imported_games: (dataObj.imported_games as unknown as MirrorBackupData['imported_games']) || [],
     calibration_runs: (dataObj.calibration_runs as unknown as MirrorBackupData['calibration_runs']) || [],
     style_vectors: (dataObj.style_vectors as unknown as MirrorBackupData['style_vectors']) || [],
     saved_analyses: (dataObj.saved_analyses as unknown as MirrorBackupData['saved_analyses']) || [],
@@ -164,6 +169,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   validateIds(safeData.players, 'players');
   validateIds(safeData.local_matches, 'local_matches');
   validateIds(safeData.mirror_matches, 'mirror_matches');
+  validateIds(safeData.imported_games, 'imported_games');
   validateIds(safeData.calibration_runs, 'calibration_runs');
   validateIds(safeData.style_vectors, 'style_vectors');
   validateIds(safeData.saved_analyses, 'saved_analyses');
@@ -187,6 +193,7 @@ export function getBackupSummary(backup: MirrorBackupFile) {
     schema_version: backup.schema_version,
     players: d.players.length,
     matches: d.local_matches.length + d.mirror_matches.length,
+    imported_games: d.imported_games.length,
     analyses: d.saved_analyses.length,
     clue_attempts: d.clue_attempts.length,
     puzzle_reviews: d.puzzle_reviews.length,
@@ -210,7 +217,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
     // If replace mode, we need to delete existing data.
     // If replacePlayerId is set, delete only that player's data. Otherwise wipe everything.
     const stores = [
-      'players', 'local_matches', 'mirror_matches', 'calibration_runs',
+      'players', 'local_matches', 'mirror_matches', 'imported_games', 'calibration_runs',
       'style_vectors', 'saved_analyses', 'clue_attempts', 'puzzle_reviews',
       'story_progress', 'achievements', 'account_links'
     ] as const;
@@ -286,6 +293,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
   await mergeRecords('players', data.players);
   await mergeRecords('local_matches', data.local_matches);
   await mergeRecords('mirror_matches', data.mirror_matches);
+  await mergeRecords('imported_games', data.imported_games);
   await mergeRecords('calibration_runs', data.calibration_runs);
   await mergeRecords('style_vectors', data.style_vectors);
   await mergeRecords('saved_analyses', data.saved_analyses);

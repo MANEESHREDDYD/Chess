@@ -8,7 +8,7 @@ interface AnalysisPanelProps {
   pgn: string;
   playerId: string;
   matchId: string;
-  matchType: 'computer' | 'mirror';
+  matchType: 'computer' | 'mirror' | 'imported';
   styleVector?: StyleVector;
 }
 

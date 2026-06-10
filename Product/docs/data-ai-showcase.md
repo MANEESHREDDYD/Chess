@@ -9,6 +9,7 @@ The package reads the same backup envelope produced by the app:
 - `players`
 - `local_matches`
 - `mirror_matches`
+- `imported_games`
 - `saved_analyses`
 - `clue_attempts`
 - `puzzle_reviews`
@@ -37,6 +38,7 @@ This demonstrates local-first pipeline design, schema boundaries, ingestion vali
 The analytics layer computes interpretable features rather than decorative summaries:
 
 - Player activity: total games, Mirror matches, active days, streak estimate, achievements, due reviews.
+- Imported games: import count, valid imported games, source breakdown, result summary, and imported-game analysis coverage.
 - Puzzle performance: motif solve rates, weakest motif, strongest motif, review lapses, multi-move failure rate.
 - Analysis quality: average centipawn loss, accuracy estimate, mistakes, blunders, trend against previous analyses.
 - Story progress: completed chapters, available chapters, attempts, and completion state.
@@ -75,7 +77,7 @@ These are not claimed to be a trained ML model. They are honest feature engineer
 The SQL marts show how exported MIRROR data could be queried in a warehouse:
 
 - `analytics/sql/schema.sql` defines portable staging tables for backup records.
-- `marts_player_summary.sql` aggregates player progress, activity, analyses, reviews, achievements, and latest StyleVector fields.
+- `marts_player_summary.sql` aggregates player progress, imported-game coverage, activity, analyses, reviews, achievements, and latest StyleVector fields.
 - `marts_puzzle_performance.sql` detects motif weakness and review priority.
 - `marts_story_progress.sql` models narrative completion and retry friction.
 - `marts_analysis_quality.sql` tracks CP-loss, accuracy, mistakes, blunders, and analysis trend.
@@ -100,6 +102,8 @@ The CLI emits:
 - `analysis_quality.csv`
 - `mirror_insights.md`
 - `mirror_features.json`
+
+The sample backup includes anonymized imported PGN rows. Valid imported games can contribute to StyleVector evidence; invalid imported games are kept as data-quality rows and excluded from StyleVector updates and analysis.
 
 ## Forward Deployment And GenAI Readiness
 

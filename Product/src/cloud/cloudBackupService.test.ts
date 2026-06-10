@@ -31,6 +31,7 @@ function minimalBackup(): MirrorBackupFile {
       players: [],
       local_matches: [],
       mirror_matches: [],
+      imported_games: [],
       calibration_runs: [],
       style_vectors: [],
       saved_analyses: [],

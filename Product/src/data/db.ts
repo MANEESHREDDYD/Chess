@@ -4,10 +4,10 @@ import type { EloBand, StyleVector } from '../ml/styleVector';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 8;
+export const MIRROR_DB_VERSION = 9;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
-export type StyleVectorSource = 'calibration' | 'tuned';
+export type StyleVectorSource = 'calibration' | 'tuned' | 'imported';
 
 // Persistence-intent annotations (the storage seam — docs/ARCHITECTURE.md §B.3).
 // These do not change runtime behavior. They mark where a future sync layer
@@ -126,6 +126,35 @@ export interface LocalMatchRecord {
   metadata?: Record<string, unknown>;
 }
 
+export type ImportedGameSource = 'manual_pgn' | 'chess_com_pgn' | 'lichess_pgn' | 'unknown_pgn';
+export type ImportedGameLegalStatus = 'valid' | 'invalid' | 'partial';
+export type ImportedGameAnalysisStatus = 'not_analyzed' | 'queued' | 'analyzed' | 'failed';
+
+// USER-OWNED / LOCAL ONLY
+export interface ImportedGameRecord {
+  id: string;
+  player_id: string;
+  source: ImportedGameSource;
+  original_filename?: string;
+  imported_at: string;
+  headers: Record<string, string>;
+  pgn_text: string;
+  normalized_pgn: string;
+  result?: string;
+  white?: string;
+  black?: string;
+  user_color?: 'white' | 'black' | 'unknown';
+  move_count: number;
+  final_fen: string;
+  legal_status: ImportedGameLegalStatus;
+  validation_errors: string[];
+  analysis_status: ImportedGameAnalysisStatus;
+  stylevector_applied: boolean;
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, unknown>;
+}
+
 // USER-OWNED / MIRROR  (anonymous event/feedback records today; eventual
 // storage seam's first server-bound surface)
 export interface FeedbackRecord {
@@ -179,7 +208,7 @@ export interface AnalysisRecord {
   id: string;
   player_id: string;
   match_id: string;
-  match_type: "computer" | "mirror";
+  match_type: "computer" | "mirror" | "imported";
   source: "local_stockfish";
   engine_depth: number;
   engine_version?: string;
@@ -251,6 +280,17 @@ export interface MirrorDB extends DBSchema {
     value: LocalMatchRecord;
     indexes: {
       created_at: string;
+    };
+  };
+  imported_games: {
+    key: string;
+    value: ImportedGameRecord;
+    indexes: {
+      player_id: string;
+      imported_at: string;
+      source: string;
+      legal_status: string;
+      analysis_status: string;
     };
   };
   saved_analyses: {
@@ -348,6 +388,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 8) {
         createV8Schema(db);
+      }
+      if (oldVersion < 9) {
+        createV9Schema(db);
       }
     },
   });
@@ -629,6 +672,66 @@ export async function getRecentLocalMatches(
 }
 
 // -----------------------------------------------------------------------------
+// IMPORTED GAME API
+// -----------------------------------------------------------------------------
+
+export async function putImportedGameRecord(
+  record: ImportedGameRecord,
+  dbName = MIRROR_DB_NAME
+): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('imported_games', record);
+}
+
+export async function putImportedGameRecords(
+  records: ImportedGameRecord[],
+  dbName = MIRROR_DB_NAME
+): Promise<void> {
+  if (records.length === 0) return;
+  const db = await openMirrorDb(dbName);
+  const tx = db.transaction('imported_games', 'readwrite');
+  for (const record of records) {
+    await tx.store.put(record);
+  }
+  await tx.done;
+}
+
+export async function getImportedGameRecord(
+  id: string,
+  dbName = MIRROR_DB_NAME
+): Promise<ImportedGameRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  return db.get('imported_games', id);
+}
+
+export async function getImportedGamesForPlayer(
+  playerId: string,
+  limit?: number,
+  dbName = MIRROR_DB_NAME
+): Promise<ImportedGameRecord[]> {
+  const db = await openMirrorDb(dbName);
+  let rows = await db.getAllFromIndex('imported_games', 'player_id', playerId);
+  rows.sort((a, b) => b.imported_at.localeCompare(a.imported_at));
+  if (limit) {
+    rows = rows.slice(0, limit);
+  }
+  return rows;
+}
+
+export async function updateImportedGameRecord(
+  id: string,
+  patch: Partial<ImportedGameRecord>,
+  dbName = MIRROR_DB_NAME
+): Promise<ImportedGameRecord> {
+  const db = await openMirrorDb(dbName);
+  const existing = await db.get('imported_games', id);
+  if (!existing) throw new Error('Imported game not found');
+  const updated = { ...existing, ...patch, updated_at: new Date().toISOString() };
+  await db.put('imported_games', updated);
+  return updated;
+}
+
+// -----------------------------------------------------------------------------
 // ANALYSIS API
 // -----------------------------------------------------------------------------
 
@@ -895,5 +998,16 @@ function createV8Schema(db: IDBPDatabase<MirrorDB>) {
     store.createIndex('provider', 'provider', { unique: false });
     store.createIndex('status', 'status', { unique: false });
     store.createIndex('updated_at', 'updated_at', { unique: false });
+  }
+}
+
+function createV9Schema(db: IDBPDatabase<MirrorDB>) {
+  if (!db.objectStoreNames.contains('imported_games')) {
+    const store = db.createObjectStore('imported_games', { keyPath: 'id' });
+    store.createIndex('player_id', 'player_id', { unique: false });
+    store.createIndex('imported_at', 'imported_at', { unique: false });
+    store.createIndex('source', 'source', { unique: false });
+    store.createIndex('legal_status', 'legal_status', { unique: false });
+    store.createIndex('analysis_status', 'analysis_status', { unique: false });
   }
 }

@@ -15,12 +15,23 @@ with game_events as (
         cast(coalesce(completed_at, started_at) as date) as activity_date,
         'mirror_match' as event_type
     from mirror_matches
+    union all
+    select
+        player_id,
+        id as event_id,
+        cast(coalesce(imported_at, created_at) as date) as activity_date,
+        'imported_game' as event_type
+    from imported_games
+    where legal_status = 'valid'
 ),
 activity_events as (
     select player_id, activity_date from game_events
     union all
     select player_id, cast(coalesce(completed_at, created_at) as date) as activity_date
     from saved_analyses
+    union all
+    select player_id, cast(coalesce(imported_at, created_at) as date) as activity_date
+    from imported_games
     union all
     select player_id, cast(coalesce(completed_at, started_at, created_at) as date) as activity_date
     from clue_attempts
@@ -45,6 +56,25 @@ analysis_rollup as (
     from saved_analyses
     where status = 'complete'
     group by player_id
+),
+import_rollup as (
+    select
+        ig.player_id,
+        count(*) as imported_games_count,
+        sum(case when ig.legal_status = 'valid' then 1 else 0 end) as valid_imported_games,
+        sum(case when ig.legal_status = 'invalid' then 1 else 0 end) as invalid_imported_games,
+        sum(case when ig.analysis_status = 'analyzed' or sa.id is not null then 1 else 0 end) as analyzed_imported_games,
+        case
+            when sum(case when ig.legal_status = 'valid' then 1 else 0 end) = 0 then 0
+            else cast(sum(case when ig.analysis_status = 'analyzed' or sa.id is not null then 1 else 0 end) as decimal(18, 4))
+                / sum(case when ig.legal_status = 'valid' then 1 else 0 end)
+        end as imported_game_analysis_coverage
+    from imported_games ig
+    left join saved_analyses sa
+        on sa.match_id = ig.id
+        and sa.match_type = 'imported'
+        and sa.status = 'complete'
+    group by ig.player_id
 ),
 clue_rollup as (
     select
@@ -105,6 +135,10 @@ select
     p.display_name,
     coalesce(count(distinct ge.event_id), 0) as total_games,
     coalesce(sum(case when ge.event_type = 'mirror_match' then 1 else 0 end), 0) as mirror_matches,
+    coalesce(ir.imported_games_count, 0) as imported_games_count,
+    coalesce(ir.valid_imported_games, 0) as valid_imported_games,
+    coalesce(ir.invalid_imported_games, 0) as invalid_imported_games,
+    coalesce(ir.imported_game_analysis_coverage, 0) as imported_game_analysis_coverage,
     coalesce(ar.analyses_completed, 0) as analyses_completed,
     coalesce(sr.story_chapters_completed, 0) as story_chapters_completed,
     coalesce(cr.clue_attempts, 0) as clue_attempts,
@@ -136,6 +170,7 @@ select
 from players p
 left join game_events ge on ge.player_id = p.id
 left join analysis_rollup ar on ar.player_id = p.id
+left join import_rollup ir on ir.player_id = p.id
 left join clue_rollup cr on cr.player_id = p.id
 left join story_rollup sr on sr.player_id = p.id
 left join review_rollup rr on rr.player_id = p.id
@@ -150,6 +185,10 @@ group by
     ar.accuracy_estimate,
     ar.blunder_count,
     ar.mistake_count,
+    ir.imported_games_count,
+    ir.valid_imported_games,
+    ir.invalid_imported_games,
+    ir.imported_game_analysis_coverage,
     cr.clue_attempts,
     cr.clue_solved,
     cr.multi_move_attempts,

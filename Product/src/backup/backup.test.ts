@@ -33,6 +33,7 @@ describe('Backup Service', () => {
       | 'style_vectors'
       | 'mirror_matches'
       | 'feedback'
+      | 'imported_games'
       | 'local_matches'
       | 'saved_analyses'
       | 'clue_attempts'
@@ -64,6 +65,27 @@ describe('Backup Service', () => {
       difficulty: 'Beginner', result: 'draw', result_label: 'Draw', pgn: '', move_count: 0, 
       created_at: '2020-01-01', completed_at: '2020-01-01' 
     });
+    await db.put('imported_games', {
+      id: 'ig1',
+      player_id: 'p1',
+      source: 'manual_pgn',
+      imported_at: '2020-01-01',
+      headers: { White: 'Player 1', Black: 'Opponent', Result: '1-0' },
+      pgn_text: '1. e4 e5 1-0',
+      normalized_pgn: '1. e4 e5 1-0',
+      result: '1-0',
+      white: 'Player 1',
+      black: 'Opponent',
+      user_color: 'white',
+      move_count: 2,
+      final_fen: '8/8/8/8/8/8/8/8 w - - 0 1',
+      legal_status: 'valid',
+      validation_errors: [],
+      analysis_status: 'not_analyzed',
+      stylevector_applied: false,
+      created_at: '2020-01-01',
+      updated_at: '2020-01-01',
+    });
     await db.put('local_matches', { 
       id: 'm2', player_id: 'p2', mode: 'computer', side: 'white', actual_side: 'white', 
       difficulty: 'Beginner', result: 'draw', result_label: 'Draw', pgn: '', move_count: 0, 
@@ -80,12 +102,15 @@ describe('Backup Service', () => {
     expect(backupActive.data.players[0].id).toBe('p1');
     expect(backupActive.data.local_matches.length).toBe(1);
     expect(backupActive.data.local_matches[0].id).toBe('m1');
+    expect(backupActive.data.imported_games.length).toBe(1);
+    expect(backupActive.data.imported_games[0].id).toBe('ig1');
     expect(backupActive.data.settings['mirror-settings']).toBeDefined();
 
     // Export all data
     const backupAll = await exportMirrorBackup();
     expect(backupAll.data.players.length).toBe(2);
     expect(backupAll.data.local_matches.length).toBe(2);
+    expect(backupAll.data.imported_games.length).toBe(1);
   });
 
   it('validates backup files correctly', () => {
@@ -127,6 +152,7 @@ describe('Backup Service', () => {
         ],
         local_matches: [],
         mirror_matches: [],
+        imported_games: [],
         calibration_runs: [],
         style_vectors: [],
         saved_analyses: [],
@@ -168,6 +194,7 @@ describe('Backup Service', () => {
       created_at: '2020-01-02',
       data: {
         players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], achievements: [], account_links: [], settings: {},
+        imported_games: [],
         story_progress: [
           // Even though updated_at is newer, it's 'locked', so merge should reject downgrade
           { id: 'p1:c1', player_id: 'p1', chapter_id: 'c1', status: 'locked' as const, updated_at: '2020-01-02', attempts: 0 }
@@ -203,6 +230,7 @@ describe('Backup Service', () => {
       created_at: '2020-01-02',
       data: {
         players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], puzzle_reviews: [], story_progress: [], account_links: [], settings: {},
+        imported_games: [],
         achievements: [
           { id: 'p1:ach1', player_id: 'p1', achievement_id: 'ach1', title: 'T', earned_at: '2020-01-01' }
         ]

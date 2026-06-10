@@ -16,6 +16,7 @@ from typing import Any, Iterable
 from .models import (
     AnalysisRecord,
     ClueAttemptRecord,
+    ImportedGameRecord,
     MirrorBackupFile,
     PuzzleReviewRecord,
     StyleVectorRecord,
@@ -34,6 +35,8 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
         player_id = player.id
         local_matches = [m for m in backup.data.local_matches if m.player_id == player_id]
         mirror_matches = [m for m in backup.data.mirror_matches if m.player_id == player_id]
+        imported_games = [m for m in backup.data.imported_games if m.player_id == player_id]
+        valid_imported_games = [m for m in imported_games if m.legal_status == "valid"]
         analyses = [
             a
             for a in backup.data.saved_analyses
@@ -65,13 +68,19 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
         ]
 
         analysis_quality = aggregate_analysis_features(analyses)
+        imported_summary = imported_game_summary_features(imported_games, analyses)
 
         row: dict[str, Any] = {
             "player_id": player_id,
             "display_name": player.display_name,
-            "total_games": len(local_matches) + len(mirror_matches),
+            "total_games": len(local_matches) + len(mirror_matches) + len(valid_imported_games),
             "local_matches": len(local_matches),
             "mirror_matches": len(mirror_matches),
+            "imported_games_count": len(imported_games),
+            "valid_imported_games": len(valid_imported_games),
+            "imported_source_breakdown": imported_summary["source_breakdown"],
+            "imported_result_summary": imported_summary["result_summary"],
+            "imported_game_analysis_coverage": imported_summary["analysis_coverage"],
             "analyses_completed": len(analyses),
             "story_chapters_completed": sum(1 for s in story_progress if s.status == "complete"),
             "story_chapters_available": sum(1 for s in story_progress if s.status == "available"),
@@ -92,6 +101,32 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
         rows.append(row)
 
     return rows
+
+
+def imported_game_summary_features(
+    imported_games: list[ImportedGameRecord],
+    analyses: list[AnalysisRecord],
+) -> dict[str, Any]:
+    """Summarize imported PGN coverage without exposing raw game text."""
+    source_counts = Counter(game.source or "unknown_pgn" for game in imported_games)
+    result_counts = Counter(game.result or "unknown" for game in imported_games)
+    valid_games = [game for game in imported_games if game.legal_status == "valid"]
+    analyzed_match_ids = {
+        analysis.match_id
+        for analysis in analyses
+        if analysis.match_type == "imported" and analysis.status == "complete"
+    }
+    analyzed_count = sum(
+        1
+        for game in valid_games
+        if game.analysis_status == "analyzed" or game.id in analyzed_match_ids
+    )
+
+    return {
+        "source_breakdown": compact_counter(source_counts),
+        "result_summary": compact_counter(result_counts),
+        "analysis_coverage": safe_rate(analyzed_count, len(valid_games)),
+    }
 
 
 def puzzle_motif_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
@@ -362,6 +397,9 @@ def activity_dates_for_player(
     for match in backup.data.mirror_matches:
         if match.player_id == player_id:
             yield date_part(match.completed_at or match.started_at)
+    for imported_game in backup.data.imported_games:
+        if imported_game.player_id == player_id:
+            yield date_part(imported_game.imported_at or imported_game.created_at)
     for analysis in backup.data.saved_analyses:
         if analysis.player_id == player_id:
             yield date_part(analysis.completed_at or analysis.created_at)
@@ -496,6 +534,12 @@ def safe_rate(numerator: int | float, denominator: int | float) -> float:
     if not denominator:
         return 0.0
     return round(float(numerator) / float(denominator), 4)
+
+
+def compact_counter(counter: Counter[str]) -> str:
+    if not counter:
+        return ""
+    return "; ".join(f"{key}:{counter[key]}" for key in sorted(counter))
 
 
 def clamp01(value: float) -> float:

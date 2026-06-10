@@ -16,6 +16,7 @@ from .models import (
     AnalysisRecord,
     CalibrationRunRecord,
     ClueAttemptRecord,
+    ImportedGameRecord,
     LocalMatchRecord,
     MirrorBackupData,
     MirrorBackupFile,
@@ -41,6 +42,8 @@ _REQUIRED_DATA_ARRAY_KEYS = {
     "story_progress",
     "achievements",
 }
+
+_OPTIONAL_DATA_ARRAY_KEYS = {"calibration_runs", "imported_games"}
 
 
 class BackupValidationError(Exception):
@@ -87,7 +90,7 @@ def parse_backup(raw: Any) -> MirrorBackupFile:
     if missing_arrays:
         raise BackupValidationError(f"Missing data array keys: {sorted(missing_arrays)}")
 
-    for key in sorted(_REQUIRED_DATA_ARRAY_KEYS | {"calibration_runs"}):
+    for key in sorted(_REQUIRED_DATA_ARRAY_KEYS | _OPTIONAL_DATA_ARRAY_KEYS):
         if key in data_raw and not isinstance(data_raw[key], list):
             raise BackupValidationError(f"data.{key} must be an array")
 
@@ -116,7 +119,7 @@ def _hydrate_list(raw_list: Any, factory):  # type: ignore[no-untyped-def]
 
 
 def _validate_record_ids(data_raw: dict[str, Any]) -> None:
-    for key in sorted(_REQUIRED_DATA_ARRAY_KEYS | {"calibration_runs"}):
+    for key in sorted(_REQUIRED_DATA_ARRAY_KEYS | _OPTIONAL_DATA_ARRAY_KEYS):
         rows = data_raw.get(key, [])
         if not isinstance(rows, list):
             continue
@@ -132,6 +135,7 @@ def _hydrate_data(d: dict[str, Any]) -> MirrorBackupData:
         players=_hydrate_list(d.get("players"), PlayerRecord.from_dict),
         local_matches=_hydrate_list(d.get("local_matches"), LocalMatchRecord.from_dict),
         mirror_matches=_hydrate_list(d.get("mirror_matches"), MirrorMatchRecord.from_dict),
+        imported_games=_hydrate_list(d.get("imported_games"), ImportedGameRecord.from_dict),
         calibration_runs=_hydrate_list(d.get("calibration_runs"), CalibrationRunRecord.from_dict),
         style_vectors=_hydrate_list(d.get("style_vectors"), StyleVectorRecord.from_dict),
         saved_analyses=_hydrate_list(d.get("saved_analyses"), AnalysisRecord.from_dict),

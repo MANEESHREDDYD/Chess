@@ -31,7 +31,8 @@ def test_backup_loading_parses_core_stores(backup):
     assert backup.data.players[0].id == "player-sample-001"
     assert len(backup.data.local_matches) == 8
     assert len(backup.data.mirror_matches) == 3
-    assert len(backup.data.saved_analyses) == 3
+    assert len(backup.data.imported_games) == 2
+    assert len(backup.data.saved_analyses) == 4
     assert len(backup.data.clue_attempts) == 10
     assert len(backup.data.puzzle_reviews) == 3
     assert len(backup.data.story_progress) == 5
@@ -63,9 +64,14 @@ def test_schema_validation_rejects_malformed_backup():
 def test_player_summary_metrics(backup):
     row = player_summary_features(backup)[0]
 
-    assert row["total_games"] == 11
+    assert row["total_games"] == 12
     assert row["mirror_matches"] == 3
-    assert row["analyses_completed"] == 3
+    assert row["imported_games_count"] == 2
+    assert row["valid_imported_games"] == 1
+    assert row["imported_source_breakdown"] == "lichess_pgn:1; manual_pgn:1"
+    assert row["imported_result_summary"] == "1-0:2"
+    assert row["imported_game_analysis_coverage"] == 1.0
+    assert row["analyses_completed"] == 4
     assert row["story_chapters_completed"] == 4
     assert row["clue_attempts"] == 10
     assert row["clue_solve_rate"] == 0.5
@@ -87,8 +93,8 @@ def test_puzzle_solved_rate_and_weakest_motif_detection(backup):
 def test_cp_loss_aggregation(backup):
     rollup = aggregate_analysis_features(backup.data.saved_analyses)
 
-    assert rollup["average_cp_loss"] == pytest.approx(42.6667, abs=0.0001)
-    assert rollup["accuracy_estimate"] == pytest.approx(78.9, abs=0.0001)
+    assert rollup["average_cp_loss"] == pytest.approx(39.0, abs=0.0001)
+    assert rollup["accuracy_estimate"] == pytest.approx(80.675, abs=0.0001)
     assert rollup["blunder_count"] == 1
     assert rollup["mistake_count"] == 2
     assert rollup["improvement_trend"] == "regressing"
@@ -114,6 +120,7 @@ def test_report_generation(backup, tmp_path):
     insights = outputs["mirror_insights"].read_text(encoding="utf-8")
     assert "Player Progress Summary" in insights
     assert "Weakest motif: pin" in insights
+    assert "Imported games: 2 (1 valid)" in insights
     assert "Next Training Recommendation" in insights
 
     features = json.loads(outputs["mirror_features"].read_text(encoding="utf-8"))
@@ -152,3 +159,16 @@ def test_cli_output_creation(tmp_path):
     with (tmp_path / "player_summary.csv").open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     assert rows[0]["player_id"] == "player-sample-001"
+    assert rows[0]["imported_games_count"] == "2"
+
+
+def test_sql_files_include_imported_games_fields():
+    schema = (PRODUCT_ROOT / "analytics" / "sql" / "schema.sql").read_text(encoding="utf-8")
+    player_mart = (PRODUCT_ROOT / "analytics" / "sql" / "marts_player_summary.sql").read_text(
+        encoding="utf-8"
+    )
+
+    assert "create table imported_games" in schema
+    assert "analysis_status" in schema
+    assert "imported_games_count" in player_mart
+    assert "imported_game_analysis_coverage" in player_mart

@@ -9,6 +9,7 @@ MIRROR relies on a robust IndexedDB schema to handle complex relational data loc
 | `players` | Stores user profiles. | `id`, `name`, `current_style_vector_id`, `created_at` |
 | `local_matches` | Pass-and-play match history. | `id`, `player_id`, `pgn`, `result`, `created_at` |
 | `mirror_matches` | Human vs Mirror match history. | `id`, `player_id`, `pgn`, `result`, `analysis_data` |
+| `imported_games` | Local user-provided PGN imports, including valid and invalid rows. | `id`, `player_id`, `source`, `legal_status`, `analysis_status`, `stylevector_applied` |
 | `calibration_runs` | Logs of StyleVector calculations. | `id`, `player_id`, `status`, `style_vector_id` |
 | `style_vectors` | Behavioral personalization record with 11 profile fields plus schema metadata. | `id`, `player_id`, `vector`, `computed_at`, `source` |
 | `saved_analyses` | Post-game CP-loss engine evaluations. | `id`, `match_id`, `move_evaluations`, `blunder_count` |
@@ -19,8 +20,8 @@ MIRROR relies on a robust IndexedDB schema to handle complex relational data loc
 | `account_links` | Maps local players to Supabase Auth IDs. | `id`, `player_id`, `cloud_user_id`, `provider` |
 
 ## Data Relationships
-- **One-to-Many**: `players` -> `mirror_matches`, `style_vectors`, `puzzle_reviews`.
-- **One-to-One (Contextual)**: `mirror_matches` -> `saved_analyses`.
+- **One-to-Many**: `players` -> `mirror_matches`, `imported_games`, `style_vectors`, `puzzle_reviews`.
+- **One-to-One (Contextual)**: `mirror_matches` / `local_matches` / `imported_games` -> `saved_analyses`.
 - All foreign keys enforce logical grouping on backup/export.
 
 ## Migration Version Timeline
@@ -30,6 +31,14 @@ We utilize an incremental versioning script for IndexedDB upgrades:
 - `v5-v6`: Clue Engine tables (`clue_attempts`).
 - `v7`: Story Progress and Achievements.
 - `v8`: Spaced Repetition (`puzzle_reviews`) and Cloud Auth (`account_links`).
+- `v9`: Local PGN imports (`imported_games`) with validation status, source, result, final FEN, analysis status, and StyleVector application flags.
+
+## PGN Import Data Flow
+- `/import-pgn` parses pasted or uploaded user-provided PGN text locally with `chess.js`.
+- Each game is saved as a separate `imported_games` row, including malformed games marked `invalid` or `partial`.
+- Invalid games do not update StyleVector and are not analyzed.
+- Valid games can update StyleVector evidence only when user color can be attributed from the PGN headers.
+- Optional imported-game analysis is capped and sequential, reusing the stable local Stockfish analysis path with `match_type = imported`.
 
 ## Cloud Backup & Merge Strategy
 - **Inclusion**: All stores are serialized into a master JSON blob.

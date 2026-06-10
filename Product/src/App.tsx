@@ -10,6 +10,7 @@ import { Onboarding } from './routes/Onboarding';
 import { Progress } from './routes/Progress';
 import Backup from './routes/Backup';
 import CoachPreview from './routes/CoachPreview';
+import PgnImport from './routes/PgnImport';
 import { Account } from './routes/Account';
 import { AboutProject } from './routes/AboutProject';
 import DevMirrorVerification from './routes/DevMirrorVerification';
@@ -38,6 +39,7 @@ export default function App() {
           <Link to="/story">Story</Link>
           <Link to="/clue-chess">Clue</Link>
           <Link to="/play">Play</Link>
+          <Link to="/import-pgn">Import games</Link>
           <Link to="/progress">Progress</Link>
           <Link to="/coach-preview">Coach</Link>
           <Link to="/about">About</Link>
@@ -90,6 +92,7 @@ export default function App() {
           <Route path="/story" element={<Story />} />
           <Route path="/clue-chess" element={<ClueChess />} />
           <Route path="/play" element={<Play />} />
+          <Route path="/import-pgn" element={<PgnImport />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/coach-preview" element={<CoachPreview />} />
           <Route path="/backup" element={<Backup />} />
