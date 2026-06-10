@@ -22,6 +22,8 @@ It validates the backup shape, converts records into typed Python dataclasses, c
 
 The app also includes a Local Coach Preview route that consumes local summaries deterministically. It is a bridge toward future optional GenAI coaching, not runtime LLM coaching.
 
+The app now also includes `/analytics`, an in-app Advanced Analytics Dashboard that consumes the same local IndexedDB data directly. The browser dashboard is not a replacement for the Python/SQL pipeline; it is the product-facing layer that turns local features into player guidance.
+
 ## Data Engineering Proof
 
 This is a real extract-and-transform layer over app data:
@@ -41,6 +43,7 @@ The analytics layer computes interpretable features rather than decorative summa
 - Player activity: total games, Mirror matches, active days, streak estimate, achievements, due reviews.
 - Imported games: import count, valid imported games, source breakdown, result summary, and imported-game analysis coverage.
 - Game Review Pro: reviewed-game count, review average CP loss, review blunders/mistakes, weakest phase, and most common review label.
+- In-app dashboard: CP-loss trend, move-label distribution, phase weakness bars, StyleVector profile bars, weak motif rows, review queue, imported-game coverage, Mirror feedback, story/progression summary, and prioritized recommendations.
 - Puzzle performance: motif solve rates, weakest motif, strongest motif, review lapses, multi-move failure rate.
 - Analysis quality: average centipawn loss, accuracy estimate, mistakes, blunders, trend against previous analyses.
 - Story progress: completed chapters, available chapters, attempts, and completion state.
@@ -120,6 +123,7 @@ A future GenAI coach or agent system could build on this layer by:
 - routing recommendations through local-first privacy controls
 - using `MirrorCoachContext` as a consent-gated summary object
 - passing outputs through deterministic safety and privacy guards
+- reusing the `/analytics` snapshot as a local, summary-first context after explicit consent
 
 Runtime GenAI coaching is not implemented here. The current app has a deterministic Local Coach Preview, coach cards, local exports, and design docs for the future optional GenAI path.
 
@@ -136,6 +140,7 @@ Added design surfaces:
 
 Runtime surface:
 
+- `/analytics` renders the Advanced Analytics Dashboard from local IndexedDB summaries and exports safe Markdown/JSON snapshots.
 - `/coach-preview` uses local deterministic rules.
 - The route builds a summarized `MirrorCoachContext` from IndexedDB records.
 - It generates prioritized `CoachCard` objects for weakness, review, analysis, story, progression, mirror, and data quality.

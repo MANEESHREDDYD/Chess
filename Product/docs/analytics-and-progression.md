@@ -38,6 +38,31 @@ Each review can include:
 - recommended next actions linking back to Clue Chess or Mirror rematch
 - local Markdown export
 
+## Advanced Analytics Dashboard
+
+The `/analytics` route brings the local data model into the product UI. It reads IndexedDB stores only and does not require login, cloud sync, platform OAuth, runtime GenAI, or filesystem access.
+
+Dashboard sections include:
+
+- Player intelligence summary across local games, Mirror matches, imports, reviews, active days, and calibration state.
+- Game Review Pro summary with reviewed-game count, average CP loss, MIRROR internal accuracy estimate, blunders, mistakes, common move labels, CP-loss trend, and weakest phase.
+- StyleVector profile with aggression/risk proxy, exchange willingness, time-pressure risk, motif blindness, endgame strength, openings, preferred minor piece, evidence source, and confidence.
+- Weak motif analytics from Clue Chess attempts, puzzle reviews, Game Review motif tags, and StyleVector motif blindness.
+- Puzzle review queue with due, overdue, upcoming, interval, and due motif summaries.
+- Imported-game coverage with valid/invalid counts, source breakdown, review coverage, analysis coverage, and last import date.
+- Mirror performance with personality modes, feedback tags, felt-like-me count, too-random count, latest result, and next Mirror recommendation.
+- Story/progression summary with XP, level, achievements, streak, chapter progress, and next chapter recommendation.
+- Prioritized recommended actions with route targets and local evidence.
+
+Every chart or visual block ends with a recommended action or an explicit insufficient-data note. This keeps the dashboard product-oriented: it explains what the player should do next instead of simply displaying metrics.
+
+Dashboard exports are summary-first:
+
+- `mirror-analytics-dashboard-YYYY-MM-DD.md`
+- `mirror-analytics-snapshot-YYYY-MM-DD.json`
+
+Exports exclude raw PGN, raw backup JSON, auth tokens, and service-role keys.
+
 ## Training Analytics
 MIRROR tracks user interactions with Clue Chess puzzles.
 - **Puzzle Solved Rate**: Tracks the percentage of puzzles completed without using heavy hints.

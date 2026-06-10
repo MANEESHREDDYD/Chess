@@ -12,6 +12,7 @@ import Backup from './routes/Backup';
 import CoachPreview from './routes/CoachPreview';
 import PgnImport from './routes/PgnImport';
 import GameReview from './routes/GameReview';
+import AnalyticsDashboard from './routes/AnalyticsDashboard';
 import StockfishDiagnostics from './routes/StockfishDiagnostics';
 import { Account } from './routes/Account';
 import { AboutProject } from './routes/AboutProject';
@@ -42,6 +43,7 @@ export default function App() {
           <Link to="/clue-chess">Clue</Link>
           <Link to="/play">Play</Link>
           <Link to="/import-pgn">Import games</Link>
+          <Link to="/analytics">Analytics</Link>
           <Link to="/progress">Progress</Link>
           <Link to="/coach-preview">Coach</Link>
           <Link to="/stockfish-diagnostics">Engine diagnostics</Link>
@@ -96,6 +98,7 @@ export default function App() {
           <Route path="/clue-chess" element={<ClueChess />} />
           <Route path="/play" element={<Play />} />
           <Route path="/import-pgn" element={<PgnImport />} />
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
           <Route path="/review/:sourceType/:sourceId" element={<GameReview />} />
           <Route path="/stockfish-diagnostics" element={<StockfishDiagnostics />} />
           <Route path="/progress" element={<Progress />} />

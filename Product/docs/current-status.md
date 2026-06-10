@@ -1,9 +1,9 @@
 ﻿# Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.19.3-stockfish-boot-timeout-hotfix-2`
-> **Latest Completed Milestone**: `M-STOCKFISH-BOOT-TIMEOUT-HOTFIX-2`
-> **Current / Next Milestone**: `M-ADVANCED-ANALYTICS-DASHBOARD-1`
+> **Latest Tag**: `v1.19.4-advanced-analytics-dashboard-1`
+> **Latest Completed Milestone**: `M-ADVANCED-ANALYTICS-DASHBOARD-1`
+> **Current / Next Milestone**: `M-CLUE-CHESS-ADAPTIVE-2`
 > **Launch Status**: READY FOR NEXT MILESTONE (Iterative Releases)
 
 ---
@@ -42,6 +42,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.19.1-pgn-import-pipeline-1`**: Local PGN paste/upload/import pipeline with legal validation, imported-game records, StyleVector evidence updates, optional capped Stockfish analysis, backup export support, and Python/SQL analytics metrics.
 *   **`v1.19.2-game-review-pro-1`**: Local Game Review Pro with deterministic move classifications, side-normalized CP-loss, MIRROR internal accuracy estimates, key moments, retry mistakes, phase summaries, StyleVector notes, imported-game review support, Markdown export, and Python/SQL review metrics.
 *   **`v1.19.3-stockfish-boot-timeout-hotfix-2`**: Fixed production-preview Stockfish worker boot timeout by replacing the unsafe generated `data:video/mp2t` worker URL path with a Vite-emitted worker asset URL, adding boot-phase telemetry, local WASM asset checks, diagnostics UI, and browser build/preview verification.
+*   **`v1.19.4-advanced-analytics-dashboard-1`**: In-app Advanced Analytics Dashboard with local player intelligence, Game Review Pro summaries, StyleVector visualization, weak motif analytics, puzzle review queue, imported-game coverage, Mirror feedback, story/progression summaries, prioritized actions, and safe Markdown/JSON exports.
 
 ## Current Implemented Features
 
@@ -50,6 +51,7 @@ The following features and milestones have been successfully completed and tagge
 *   **Stable Stockfish Runtime**: shared browser engine manager serializes searches, records worker/asset/UCI/ready/search boot phases, waits for real `readyok`, auto-retries once with a fresh worker, exposes `runStockfishHealthCheck()`, and includes browser preview boot verification.
 *   **Local PGN Import**: `/import-pgn` lets users paste or upload user-provided PGN files, preview per-game validation, save valid/invalid rows locally, update StyleVector evidence from valid user-attributed games, and optionally analyze up to 5 imported games sequentially with Stockfish.
 *   **Game Review Pro**: `/review/:sourceType/:sourceId` reviews completed local matches, Mirror matches, and valid imported games with local Stockfish evidence, deterministic labels, key moments, retry training, phase summaries, StyleVector notes, and Markdown export.
+*   **Advanced Analytics Dashboard**: `/analytics` aggregates local IndexedDB data into player intelligence, CP-loss trends, move-label distribution, StyleVector bars, weak motifs, puzzle review queue, imported-game coverage, Mirror feedback, story/progression summary, and evidence-backed recommended actions.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
@@ -69,5 +71,5 @@ The following features and milestones have been successfully completed and tagge
 
 ## Next Recommended Milestones
 
-*   **M-ADVANCED-ANALYTICS-DASHBOARD-1**: Bring weak motifs, CP-loss trends, review due counts, StyleVector charts, and recommended actions into the app UI.
+*   **M-CLUE-CHESS-ADAPTIVE-2**: deepen Clue Chess with adaptive clue levels, review mode, streaks, boss puzzle flow, and child-friendly wording.
 *   **Paused Until Sequenced Later**: runtime GenAI adapter, story implementation expansion, 3D visuals, multiplayer, and E2EE remain future phases rather than the immediate next milestone.
