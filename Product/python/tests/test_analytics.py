@@ -33,6 +33,7 @@ def test_backup_loading_parses_core_stores(backup):
     assert len(backup.data.mirror_matches) == 3
     assert len(backup.data.imported_games) == 2
     assert len(backup.data.saved_analyses) == 4
+    assert len(backup.data.game_reviews) == 1
     assert len(backup.data.clue_attempts) == 10
     assert len(backup.data.puzzle_reviews) == 3
     assert len(backup.data.story_progress) == 5
@@ -72,6 +73,12 @@ def test_player_summary_metrics(backup):
     assert row["imported_result_summary"] == "1-0:2"
     assert row["imported_game_analysis_coverage"] == 1.0
     assert row["analyses_completed"] == 4
+    assert row["reviewed_games_count"] == 1
+    assert row["review_average_cp_loss"] == 23
+    assert row["review_blunder_count"] == 0
+    assert row["review_mistake_count"] == 0
+    assert row["review_phase_weakness_summary"] == "opening"
+    assert row["review_most_common_classification"] == "best"
     assert row["story_chapters_completed"] == 4
     assert row["clue_attempts"] == 10
     assert row["clue_solve_rate"] == 0.5
@@ -121,6 +128,8 @@ def test_report_generation(backup, tmp_path):
     assert "Player Progress Summary" in insights
     assert "Weakest motif: pin" in insights
     assert "Imported games: 2 (1 valid)" in insights
+    assert "Game Review Pro records: 1" in insights
+    assert "Review weakest phase: opening" in insights
     assert "Next Training Recommendation" in insights
 
     features = json.loads(outputs["mirror_features"].read_text(encoding="utf-8"))
@@ -160,6 +169,7 @@ def test_cli_output_creation(tmp_path):
         rows = list(csv.DictReader(handle))
     assert rows[0]["player_id"] == "player-sample-001"
     assert rows[0]["imported_games_count"] == "2"
+    assert rows[0]["reviewed_games_count"] == "1"
 
 
 def test_sql_files_include_imported_games_fields():
@@ -169,6 +179,9 @@ def test_sql_files_include_imported_games_fields():
     )
 
     assert "create table imported_games" in schema
+    assert "create table game_reviews" in schema
+    assert "create table game_review_moves" in schema
     assert "analysis_status" in schema
     assert "imported_games_count" in player_mart
     assert "imported_game_analysis_coverage" in player_mart
+    assert "reviewed_games_count" in player_mart

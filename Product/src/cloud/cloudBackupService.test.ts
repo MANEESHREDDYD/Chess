@@ -35,6 +35,7 @@ function minimalBackup(): MirrorBackupFile {
       calibration_runs: [],
       style_vectors: [],
       saved_analyses: [],
+      game_reviews: [],
       clue_attempts: [],
       puzzle_reviews: [],
       story_progress: [],

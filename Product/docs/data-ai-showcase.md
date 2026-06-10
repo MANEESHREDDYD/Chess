@@ -11,6 +11,7 @@ The package reads the same backup envelope produced by the app:
 - `mirror_matches`
 - `imported_games`
 - `saved_analyses`
+- `game_reviews`
 - `clue_attempts`
 - `puzzle_reviews`
 - `story_progress`
@@ -39,6 +40,7 @@ The analytics layer computes interpretable features rather than decorative summa
 
 - Player activity: total games, Mirror matches, active days, streak estimate, achievements, due reviews.
 - Imported games: import count, valid imported games, source breakdown, result summary, and imported-game analysis coverage.
+- Game Review Pro: reviewed-game count, review average CP loss, review blunders/mistakes, weakest phase, and most common review label.
 - Puzzle performance: motif solve rates, weakest motif, strongest motif, review lapses, multi-move failure rate.
 - Analysis quality: average centipawn loss, accuracy estimate, mistakes, blunders, trend against previous analyses.
 - Story progress: completed chapters, available chapters, attempts, and completion state.
@@ -80,7 +82,7 @@ The SQL marts show how exported MIRROR data could be queried in a warehouse:
 - `marts_player_summary.sql` aggregates player progress, imported-game coverage, activity, analyses, reviews, achievements, and latest StyleVector fields.
 - `marts_puzzle_performance.sql` detects motif weakness and review priority.
 - `marts_story_progress.sql` models narrative completion and retry friction.
-- `marts_analysis_quality.sql` tracks CP-loss, accuracy, mistakes, blunders, and analysis trend.
+- `marts_analysis_quality.sql` tracks CP-loss, accuracy, mistakes, blunders, analysis trend, and Game Review Pro rows.
 
 The SQL is intentionally separate from Supabase. It is an analytics model, not an app runtime dependency.
 
@@ -103,7 +105,7 @@ The CLI emits:
 - `mirror_insights.md`
 - `mirror_features.json`
 
-The sample backup includes anonymized imported PGN rows. Valid imported games can contribute to StyleVector evidence; invalid imported games are kept as data-quality rows and excluded from StyleVector updates and analysis.
+The sample backup includes anonymized imported PGN rows and one anonymized Game Review Pro record. Valid imported games can contribute to StyleVector evidence and review records; invalid imported games are kept as data-quality rows and excluded from StyleVector updates and analysis.
 
 ## Forward Deployment And GenAI Readiness
 

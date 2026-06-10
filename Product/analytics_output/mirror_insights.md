@@ -10,6 +10,7 @@ Player: Arjuna_Sample (player-sample-001)
 - Imported games: 2 (1 valid)
 - Imported-game analysis coverage: 100.0%
 - Analyses completed: 4
+- Game Review Pro records: 1
 - Clue solve rate: 50.0%
 - Multi-move solve rate: 100.0%
 - Active days: 23 with an estimated 2-day current streak
@@ -39,6 +40,11 @@ Player: Arjuna_Sample (player-sample-001)
 - Blunders: 1
 - Mistakes: 2
 - Improvement trend: regressing
+- Review average CP loss: 23.0
+- Review blunders: 0
+- Review mistakes: 0
+- Review weakest phase: opening
+- Most common review label: best
 - Latest analysis CP loss delta vs previous: -50.0
 
 ## Story Progress

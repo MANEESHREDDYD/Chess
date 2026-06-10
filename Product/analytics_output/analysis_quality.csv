@@ -1,5 +1,6 @@
-player_id,analysis_id,match_id,match_type,created_at,average_cp_loss,accuracy_estimate,blunder_count,mistake_count,inaccuracy_count,analyzed_moves,cp_loss_trend_vs_previous,improvement_trend
-player-sample-001,analysis-sample-001,lm-sample-001,computer,2026-05-02T15:00:00.000Z,32.0,82.5,0,1,1,8,0.0,regressing
-player-sample-001,analysis-sample-002,lm-sample-002,computer,2026-05-05T10:00:00.000Z,18.0,91.2,0,0,1,7,-14.0,regressing
-player-sample-001,analysis-sample-003,lm-sample-003,computer,2026-05-07T11:00:00.000Z,78.0,63.0,1,1,1,5,60.0,regressing
-player-sample-001,analysis-sample-004,ig-sample-001,imported,2026-05-24T10:05:00.000Z,28.0,86.0,0,0,1,8,-50.0,regressing
+player_id,analysis_id,match_id,match_type,created_at,average_cp_loss,accuracy_estimate,blunder_count,mistake_count,inaccuracy_count,analyzed_moves,cp_loss_trend_vs_previous,improvement_trend,phase_weakness_summary,most_common_classification
+player-sample-001,analysis-sample-001,lm-sample-001,computer,2026-05-02T15:00:00.000Z,32.0,82.5,0,1,1,8,0.0,regressing,,
+player-sample-001,analysis-sample-002,lm-sample-002,computer,2026-05-05T10:00:00.000Z,18.0,91.2,0,0,1,7,-14.0,regressing,,
+player-sample-001,analysis-sample-003,lm-sample-003,computer,2026-05-07T11:00:00.000Z,78.0,63.0,1,1,1,5,60.0,regressing,,
+player-sample-001,analysis-sample-004,ig-sample-001,imported,2026-05-24T10:05:00.000Z,28.0,86.0,0,0,1,8,-50.0,regressing,,
+player-sample-001,gr-sample-001,ig-sample-001,imported_game,2026-05-24T10:12:00.000Z,23.0,89.2,0,0,1,2,0.0,game_review_record,opening,best

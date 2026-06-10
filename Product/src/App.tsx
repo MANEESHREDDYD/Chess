@@ -11,6 +11,7 @@ import { Progress } from './routes/Progress';
 import Backup from './routes/Backup';
 import CoachPreview from './routes/CoachPreview';
 import PgnImport from './routes/PgnImport';
+import GameReview from './routes/GameReview';
 import { Account } from './routes/Account';
 import { AboutProject } from './routes/AboutProject';
 import DevMirrorVerification from './routes/DevMirrorVerification';
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/clue-chess" element={<ClueChess />} />
           <Route path="/play" element={<Play />} />
           <Route path="/import-pgn" element={<PgnImport />} />
+          <Route path="/review/:sourceType/:sourceId" element={<GameReview />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/coach-preview" element={<CoachPreview />} />
           <Route path="/backup" element={<Backup />} />

@@ -57,6 +57,18 @@ analysis_rollup as (
     where status = 'complete'
     group by player_id
 ),
+game_review_rollup as (
+    select
+        gr.player_id,
+        count(*) as reviewed_games_count,
+        avg((coalesce(gr.average_cp_loss_white, 0) + coalesce(gr.average_cp_loss_black, 0)) / 2.0) as review_average_cp_loss,
+        sum(case when grm.classification = 'blunder' then 1 else 0 end) as review_blunder_count,
+        sum(case when grm.classification = 'mistake' then 1 else 0 end) as review_mistake_count,
+        max(gr.weakest_phase) as review_phase_weakness_summary
+    from game_reviews gr
+    left join game_review_moves grm on grm.review_id = gr.id
+    group by gr.player_id
+),
 import_rollup as (
     select
         ig.player_id,
@@ -157,6 +169,11 @@ select
     coalesce(ar.accuracy_estimate, 0) as accuracy_estimate,
     coalesce(ar.blunder_count, 0) as blunder_count,
     coalesce(ar.mistake_count, 0) as mistake_count,
+    coalesce(grr.reviewed_games_count, 0) as reviewed_games_count,
+    coalesce(grr.review_average_cp_loss, 0) as review_average_cp_loss,
+    coalesce(grr.review_blunder_count, 0) as review_blunder_count,
+    coalesce(grr.review_mistake_count, 0) as review_mistake_count,
+    coalesce(grr.review_phase_weakness_summary, 'insufficient_data') as review_phase_weakness_summary,
     lsv.id as style_vector_id,
     lsv.time_pressure_blunder_rate as time_pressure_risk,
     lsv.exchange_willingness,
@@ -170,6 +187,7 @@ select
 from players p
 left join game_events ge on ge.player_id = p.id
 left join analysis_rollup ar on ar.player_id = p.id
+left join game_review_rollup grr on grr.player_id = p.id
 left join import_rollup ir on ir.player_id = p.id
 left join clue_rollup cr on cr.player_id = p.id
 left join story_rollup sr on sr.player_id = p.id
@@ -185,6 +203,11 @@ group by
     ar.accuracy_estimate,
     ar.blunder_count,
     ar.mistake_count,
+    grr.reviewed_games_count,
+    grr.review_average_cp_loss,
+    grr.review_blunder_count,
+    grr.review_mistake_count,
+    grr.review_phase_weakness_summary,
     ir.imported_games_count,
     ir.valid_imported_games,
     ir.invalid_imported_games,

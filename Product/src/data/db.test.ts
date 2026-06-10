@@ -20,6 +20,8 @@ import {
   getImportedGamesForPlayer,
   putImportedGameRecord,
   updateImportedGameRecord,
+  putGameReviewRecord,
+  getGameReviewForSource,
   type PlayerRecord,
   type StyleVector,
   type StyleVectorRecord,
@@ -58,6 +60,7 @@ describe('openMirrorDb', () => {
       'calibration_runs',
       'clue_attempts',
       'feedback',
+      'game_reviews',
       'imported_games',
       'local_matches',
       'mirror_matches',
@@ -85,6 +88,15 @@ describe('openMirrorDb', () => {
       'source',
     ]);
     await importTx.done;
+
+    const reviewTx = db.transaction('game_reviews', 'readonly');
+    expect(indexNames(reviewTx.objectStore('game_reviews'))).toEqual([
+      'created_at',
+      'player_id',
+      'source_id',
+      'source_type',
+    ]);
+    await reviewTx.done;
   });
 
   it('reopens idempotently without dropping existing rows', async () => {
@@ -329,6 +341,51 @@ describe('openMirrorDb', () => {
     await expect(getImportedGamesForPlayer('player-1', undefined, dbName)).resolves.toMatchObject([
       { id: 'imported-game-1', analysis_status: 'queued' },
     ]);
+  });
+
+  it('stores Game Review Pro records by source', async () => {
+    const dbName = nextDbName();
+    await putGameReviewRecord(
+      {
+        id: 'review-1',
+        player_id: 'player-1',
+        source_type: 'imported_game',
+        source_id: 'imported-game-1',
+        created_at: '2026-06-01T00:00:00.000Z',
+        analysis_depth: 8,
+        engine_name: 'Stockfish',
+        engine_version: 'local',
+        total_moves: 2,
+        reviewed_side: 'white',
+        accuracy_white: 94,
+        accuracy_black: 92,
+        average_cp_loss_white: 12,
+        average_cp_loss_black: 18,
+        result: '1-0',
+        phase_summary: {
+          opening: { phase: 'opening', moves: 2, average_cp_loss: 15, blunder_count: 0, mistake_count: 0, inaccuracy_count: 0, summary: 'opening' },
+          middlegame: { phase: 'middlegame', moves: 0, average_cp_loss: 0, blunder_count: 0, mistake_count: 0, inaccuracy_count: 0, summary: 'middlegame' },
+          endgame: { phase: 'endgame', moves: 0, average_cp_loss: 0, blunder_count: 0, mistake_count: 0, inaccuracy_count: 0, summary: 'endgame' },
+          weakest_phase: 'opening',
+          summary: 'opening',
+        },
+        key_moments: [],
+        move_reviews: [],
+        personalized_summary: {
+          headline: 'Review focus',
+          notes: [],
+          evidence: [],
+          insufficient_data: [],
+        },
+        recommended_actions: [],
+      },
+      dbName
+    );
+
+    await expect(getGameReviewForSource('imported_game', 'imported-game-1', dbName)).resolves.toMatchObject({
+      id: 'review-1',
+      source_type: 'imported_game',
+    });
   });
 });
 

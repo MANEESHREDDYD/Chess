@@ -3,7 +3,7 @@
 MIRROR is an offline-first, progressive web application that reimagines chess training as a personalized AI chess improvement platform with regular chess, a user-like Mirror opponent, story gameplay, adaptive training, analytics, and future multiplayer.
 
 ## Product Overview
-MIRROR is not just a frontend chess board. It combines a client-side chess product with behavioral profiling, local PGN import, post-game CP-loss analytics, spaced repetition learning, a Mahabharata/Kurukshetra story layer, deterministic local coaching, and a local-first architecture with optional cloud backup.
+MIRROR is not just a frontend chess board. It combines a client-side chess product with behavioral profiling, local PGN import, Game Review Pro, post-game CP-loss analytics, spaced repetition learning, a Mahabharata/Kurukshetra story layer, deterministic local coaching, and a local-first architecture with optional cloud backup.
 
 ## Why MIRROR is Unique
 Unlike traditional platforms, MIRROR adapts to *how* you play. The current code models StyleVector as 11 behavioral/profile fields plus `schema_version` metadata. The "Mirror Engine" reranks Stockfish evaluations against that profile to simulate your specific playstyle and expose blind spots, with deterministic personality variants for current, past, aggressive, cautious, blunder-prone, and improved versions of the player.
@@ -12,7 +12,7 @@ Unlike traditional platforms, MIRROR adapts to *how* you play. The current code 
 This repository demonstrates professional-grade engineering across multiple domains:
 - **Data Engineering**: Robust IndexedDB relational schema, zero-downtime migrations, PGN import pipeline, atomic backup import/export, and conflict-aware cloud merges.
 - **AI/ML Thinking**: Behavioral profiling (`StyleVector`), custom move-reranking algorithms, and structured data preparation for future GenAI integration.
-- **Analytics**: Deep CP-loss telemetry, motif weakness detection, and SuperMemo-style spaced repetition scheduling.
+- **Analytics**: Game Review Pro records, CP-loss telemetry, motif weakness detection, and SuperMemo-style spaced repetition scheduling.
 - **Frontend / Product Design**: Responsive React/Vite PWA, modular state management, cohesive onboarding, and a deeply creative narrative UX.
 - **Full-Stack Architecture**: Local-first data models with seamless, optional Supabase Auth and Storage integration (enforced by RLS policies).
 - **Deployment / Security**: Environment-aware CI commands, stringent verification scripts, and a strict no-secret policy.
@@ -20,7 +20,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 
 ## Skill Showcase Map
 - **Data Engineering**: IndexedDB schema design, migrations, PGN parser/import pipeline, backup export/import pipeline, cloud backup schema, Supabase Storage policies, backup merge strategy.
-- **Data Science / Analytics**: CP-loss analysis, move classification, accuracy estimate, puzzle solved-rate, weak motif detection, progression metrics, review scheduling.
+- **Data Science / Analytics**: Game Review Pro, CP-loss analysis, deterministic move classification, MIRROR internal accuracy estimates, puzzle solved-rate, weak motif detection, progression metrics, review scheduling.
 - **AI / ML**: StyleVector, personalized Mirror opponent, personality-based move reranking, Stockfish evaluation, adaptive clue selection.
 - **Frontend**: React, Vite, route architecture, state management, chessboard UI, responsive app shell.
 - **UI/UX**: Onboarding, story mode, clue hints, progression dashboard, backup warnings, theme toggle, audio feedback.
@@ -37,6 +37,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Data / AI Engineering Showcase](docs/data-ai-showcase.md)
 - [Mirror 2.0 Personality Opponent Report](docs/mirror-2-personality-opponent-report.md)
 - [PGN Import Pipeline Report](docs/m-pgn-import-pipeline-1-report.md)
+- [Game Review Pro Report](docs/m-game-review-pro-1-report.md)
 - [Local GenAI Coach Design](docs/local-genai-coach-design.md)
 - [Coach Context Schema](docs/coach-context-schema.md)
 - [Local Coach Safety Evaluation](docs/local-coach-safety-eval.md)
@@ -50,6 +51,7 @@ MIRROR includes a real local-first Python and SQL analytics layer that runs on e
 - **SQL marts**: `analytics/sql` models warehouse-ready player, puzzle, story, and analysis marts using portable SQL patterns.
 - **Feature engineering**: player progress, puzzle motif weakness, review due counts, multi-move solve rates, CP-loss quality, accuracy, trend, and StyleVector-derived signals.
 - **Imported game analytics**: backup exports and the Python layer include `imported_games`, valid/imported counts, source/result breakdowns, and imported-game analysis coverage.
+- **Game Review Pro analytics**: backup exports and the Python/SQL layer include `game_reviews`, reviewed-game counts, review CP-loss, review blunders/mistakes, weakest phase, and most common review label.
 - **Behavioral analytics**: StyleVector is treated as MIRROR's behavioral personalization layer, with aggression, risk, time-pressure, tactical weakness, and positional preference features.
 - **Local-first pipeline**: the CLI reads local JSON and writes CSV, Markdown, and JSON artifacts without cloud credentials.
 - **Report generation**: `mirror-analytics` emits `player_summary.csv`, `puzzle_performance.csv`, `story_progress.csv`, `analysis_quality.csv`, `mirror_insights.md`, and `mirror_features.json`.
@@ -108,6 +110,7 @@ node scripts/run-mirror-verification.mjs
 npm run stockfish:stability
 node scripts/run-mirror-personality-verification.mjs
 node scripts/run-pgn-import-verification.mjs
+node scripts/run-game-review-pro-verification.mjs
 ```
 
 ## Screenshots
@@ -141,9 +144,9 @@ node scripts/run-pgn-import-verification.mjs
 - `v1.18.6-stockfish-stability-hotfix-1`
 - `v1.19.0-mirror-2-personality-opponent`
 - `v1.19.1-pgn-import-pipeline-1`
+- `v1.19.2-game-review-pro-1`
 
 ## Market-Grade Product Roadmap
-- `M-GAME-REVIEW-PRO-1`: Chess.com-level review with MIRROR-specific explanations and practice recommendations.
 - `M-ADVANCED-ANALYTICS-DASHBOARD-1`: in-app analytics dashboards with every chart ending in a recommended action.
 - `M-CLUE-CHESS-ADAPTIVE-2`: deeper clue levels, adaptive difficulty, review mode, streaks, and kid-friendly wording.
 - Later phases sequence progression, invite multiplayer, random matchmaking, 3D Kurukshetra visuals, kids mode, E2EE backup, and release hardening.

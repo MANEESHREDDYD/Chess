@@ -574,6 +574,242 @@ body {
   text-transform: uppercase;
 }
 
+/* ---------- Game Review Pro ---------- */
+
+.game-review {
+  display: grid;
+  gap: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.game-review__header {
+  max-width: 780px;
+}
+
+.game-review__header h1,
+.game-review__empty h2,
+.game-review__selected h2,
+.game-review__timeline h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.game-review__header h1 {
+  font-size: 38px;
+  margin-bottom: 12px;
+}
+
+.game-review__header p,
+.game-review__empty p {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.game-review__empty {
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: 12px;
+  max-width: 560px;
+  padding-top: 20px;
+}
+
+.game-review__layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.game-review__summary,
+.game-review__board-area {
+  display: grid;
+  gap: 18px;
+}
+
+.game-review__metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.game-review__metric-grid div {
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  background: var(--paper);
+  padding: 10px 12px;
+}
+
+.game-review__metric-grid dt {
+  color: var(--ink-faded);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.game-review__metric-grid dd {
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.game-review__moment-list,
+.game-review__actions,
+.game-review__bullets {
+  display: grid;
+  gap: 8px;
+}
+
+.game-review__moment {
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.game-review__moment:hover {
+  border-color: var(--pandava-gold);
+  background: var(--paper-warm);
+}
+
+.game-review__moment span,
+.game-review__action span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.game-review__bullets {
+  margin-left: 18px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.game-review__action {
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+}
+
+.game-review__selected {
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+  padding-top: 16px;
+}
+
+.game-review__selected p {
+  color: var(--ink-soft);
+}
+
+.game-review__pill {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+  padding: 4px 9px;
+  text-transform: uppercase;
+}
+
+.game-review__pill--best,
+.game-review__pill--excellent {
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.game-review__pill--good,
+.game-review__pill--book,
+.game-review__pill--forced {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+}
+
+.game-review__pill--inaccuracy {
+  background: rgba(217, 119, 6, 0.14);
+  color: #92400e;
+}
+
+.game-review__pill--mistake,
+.game-review__pill--missed_win {
+  background: rgba(220, 38, 38, 0.12);
+  color: #991b1b;
+}
+
+.game-review__pill--blunder {
+  background: rgba(127, 29, 29, 0.16);
+  color: #7f1d1d;
+}
+
+.game-review__evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.game-review__evidence span {
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.game-review__retry-result {
+  border-left: 3px solid var(--pandava-gold);
+  color: var(--ink);
+  padding-left: 10px;
+}
+
+.game-review__timeline {
+  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+  padding-top: 16px;
+}
+
+.game-review__moves {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: 8px;
+}
+
+.game-review__move {
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  min-height: 72px;
+  padding: 8px;
+  text-align: left;
+}
+
+.game-review__move.is-selected,
+.game-review__move:hover {
+  border-color: var(--pandava-gold);
+  background: var(--paper-warm);
+}
+
+.game-review__move span,
+.game-review__move em {
+  color: var(--ink-faded);
+  font-size: 11px;
+  font-style: normal;
+}
+
 /* ---------- Calibration ---------- */
 
 .calibration-flow {
@@ -917,6 +1153,14 @@ body {
   }
 
   .import-pgn__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .game-review__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-review__moves {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

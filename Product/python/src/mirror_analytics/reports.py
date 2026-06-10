@@ -96,6 +96,7 @@ def render_markdown_insights(bundle: dict[str, Any]) -> str:
                 f"- Imported games: {player.get('imported_games_count', 0)} ({player.get('valid_imported_games', 0)} valid)",
                 f"- Imported-game analysis coverage: {as_percent(player.get('imported_game_analysis_coverage', 0))}",
                 f"- Analyses completed: {player['analyses_completed']}",
+                f"- Game Review Pro records: {player.get('reviewed_games_count', 0)}",
                 f"- Clue solve rate: {as_percent(player['clue_solve_rate'])}",
                 f"- Multi-move solve rate: {as_percent(player['multi_move_solve_rate'])}",
                 f"- Active days: {player['active_days']} with an estimated {player['streak_estimate_days']}-day current streak",
@@ -131,11 +132,19 @@ def render_markdown_insights(bundle: dict[str, Any]) -> str:
                 f"- Blunders: {player['blunder_count']}",
                 f"- Mistakes: {player['mistake_count']}",
                 f"- Improvement trend: {player['analysis_improvement_trend']}",
+                f"- Review average CP loss: {player.get('review_average_cp_loss', 0)}",
+                f"- Review blunders: {player.get('review_blunder_count', 0)}",
+                f"- Review mistakes: {player.get('review_mistake_count', 0)}",
+                f"- Review weakest phase: {player.get('review_phase_weakness_summary', 'insufficient_data')}",
+                f"- Most common review label: {player.get('review_most_common_classification', 'insufficient_data')}",
             ]
         )
 
-        if player_analysis:
-            latest = player_analysis[-1]
+        stockfish_analysis = [
+            row for row in player_analysis if row.get("improvement_trend") != "game_review_record"
+        ]
+        if stockfish_analysis:
+            latest = stockfish_analysis[-1]
             lines.append(
                 f"- Latest analysis CP loss delta vs previous: {latest['cp_loss_trend_vs_previous']}"
             )

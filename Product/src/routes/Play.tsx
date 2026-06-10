@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { BoardView } from '../components/Board/BoardView';
 import { useGameStore, type Difficulty } from '../state/gameStore';
 import { useSettingsStore } from '../state/settingsStore';
@@ -256,12 +257,17 @@ export default function Play() {
         />
         
         {status === 'game-over' && activePlayerId && useGameStore.getState().savedRecordId && (
-          <AnalysisPanel
-            pgn={exportPgn()}
-            playerId={activePlayerId}
-            matchId={useGameStore.getState().savedRecordId!}
-            matchType="computer"
-          />
+          <>
+            <AnalysisPanel
+              pgn={exportPgn()}
+              playerId={activePlayerId}
+              matchId={useGameStore.getState().savedRecordId!}
+              matchType="computer"
+            />
+            <p className="play-note" style={{ marginTop: '0.75rem' }}>
+              <Link to={`/review/local_match/${useGameStore.getState().savedRecordId}`}>Open Game Review Pro</Link>
+            </p>
+          </>
         )}
         
         {localMatches.length > 0 && (
@@ -277,6 +283,7 @@ export default function Play() {
                   <th>Moves</th>
                   <th>Result</th>
                   <th>Export</th>
+                  <th>Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,6 +299,9 @@ export default function Play() {
                       <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleExportJson(match)}>
                         JSON
                       </button>
+                    </td>
+                    <td>
+                      <Link to={`/review/local_match/${match.id}`}>Review</Link>
                     </td>
                   </tr>
                 ))}

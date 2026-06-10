@@ -336,6 +336,7 @@ function ImportedGamesList({ games }: { games: ImportedGameRecord[] }) {
             <th>Moves</th>
             <th>Validation</th>
             <th>Analysis</th>
+            <th>Review</th>
           </tr>
         </thead>
         <tbody>
@@ -347,6 +348,13 @@ function ImportedGamesList({ games }: { games: ImportedGameRecord[] }) {
               <td>{game.move_count}</td>
               <td>{game.legal_status}</td>
               <td>{game.analysis_status}</td>
+              <td>
+                {game.legal_status === 'valid' ? (
+                  <Link to={`/review/imported_game/${game.id}`}>Review</Link>
+                ) : (
+                  <span className="import-pgn__muted">Invalid</span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

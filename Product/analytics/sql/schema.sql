@@ -120,6 +120,44 @@ create table analysis_moves (
     primary key (analysis_id, ply)
 );
 
+create table game_reviews (
+    id varchar(160) primary key,
+    player_id varchar(128) not null,
+    source_type varchar(32),
+    source_id varchar(160),
+    created_at timestamp,
+    analysis_depth integer,
+    engine_name varchar(64),
+    engine_version varchar(64),
+    total_moves integer,
+    reviewed_side varchar(16),
+    accuracy_white numeric(8, 4),
+    accuracy_black numeric(8, 4),
+    average_cp_loss_white numeric(12, 4),
+    average_cp_loss_black numeric(12, 4),
+    result varchar(64),
+    opening_name varchar(255),
+    weakest_phase varchar(32),
+    key_moment_count integer,
+    recommended_action_count integer
+);
+
+create table game_review_moves (
+    review_id varchar(160) not null,
+    ply integer not null,
+    player_id varchar(128) not null,
+    move_number integer,
+    side varchar(16),
+    san varchar(32),
+    uci varchar(16),
+    cp_loss integer,
+    classification varchar(32),
+    phase varchar(32),
+    is_turning_point boolean,
+    retry_available boolean,
+    primary key (review_id, ply)
+);
+
 create table clue_attempts (
     id varchar(128) primary key,
     player_id varchar(128) not null,

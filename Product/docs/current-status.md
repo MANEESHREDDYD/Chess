@@ -1,10 +1,10 @@
-# Current Status
+﻿# Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.19.1-pgn-import-pipeline-1`
-> **Latest Completed Milestone**: `M-PGN-IMPORT-PIPELINE-1`
-> **Current / Next Milestone**: `M-GAME-REVIEW-PRO-1`
-> **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
+> **Latest Tag**: `v1.19.2-game-review-pro-1`
+> **Latest Completed Milestone**: `M-GAME-REVIEW-PRO-1`
+> **Current / Next Milestone**: `M-ADVANCED-ANALYTICS-DASHBOARD-1`
+> **Launch Status**: READY FOR NEXT MILESTONE (Iterative Releases)
 
 ---
 
@@ -40,6 +40,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.18.6-stockfish-stability-hotfix-1`**: Stable Stockfish engine manager, UCI readiness lifecycle, serialized searches, one automatic worker restart, browser health check, and improved engine UI states.
 *   **`v1.19.0-mirror-2-personality-opponent`**: Personality-based Mirror opponent with current, past, aggressive, cautious, blunder-prone, and improved self modes.
 *   **`v1.19.1-pgn-import-pipeline-1`**: Local PGN paste/upload/import pipeline with legal validation, imported-game records, StyleVector evidence updates, optional capped Stockfish analysis, backup export support, and Python/SQL analytics metrics.
+*   **`v1.19.2-game-review-pro-1`**: Local Game Review Pro with deterministic move classifications, side-normalized CP-loss, MIRROR internal accuracy estimates, key moments, retry mistakes, phase summaries, StyleVector notes, imported-game review support, Markdown export, and Python/SQL review metrics.
 
 ## Current Implemented Features
 
@@ -47,6 +48,7 @@ The following features and milestones have been successfully completed and tagge
 *   **Mirror Engine**: StyleVector personalization calculated from player behavior. The current code has 11 behavioral/profile fields plus `schema_version` metadata, and the Mirror uses deterministic personality profiles to rerank legal Stockfish choices as current, past, aggressive, cautious, blunder-prone, or improved self.
 *   **Stable Stockfish Runtime**: shared browser engine manager serializes searches, waits for UCI readiness, auto-retries once with a fresh worker, and exposes `runStockfishHealthCheck()`.
 *   **Local PGN Import**: `/import-pgn` lets users paste or upload user-provided PGN files, preview per-game validation, save valid/invalid rows locally, update StyleVector evidence from valid user-attributed games, and optionally analyze up to 5 imported games sequentially with Stockfish.
+*   **Game Review Pro**: `/review/:sourceType/:sourceId` reviews completed local matches, Mirror matches, and valid imported games with local Stockfish evidence, deterministic labels, key moments, retry training, phase summaries, StyleVector notes, and Markdown export.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
@@ -61,10 +63,10 @@ The following features and milestones have been successfully completed and tagge
 *   **No Real-Time Multiplayer**: Currently restricted to playing against the Engine or Local Pass-and-Play.
 *   **Placeholder Art Assets**: The Mahabharata theme relies on procedural CSS and data-URI SVG pieces pending final art.
 *   **No Runtime GenAI Coach Yet**: GenAI and agentic coaching are designed, but the app currently uses deterministic local coach rules only.
+*   **Game Review Accuracy Is MIRROR Internal**: Move labels and accuracy estimates are deterministic local metrics based on Stockfish CP-loss thresholds, not a clone of any external platform's proprietary formula.
 *   **Coach Export Is Local Only**: Markdown and JSON exports are generated in the browser from summaries; they are not uploaded by MIRROR.
 
 ## Next Recommended Milestones
 
-*   **M-GAME-REVIEW-PRO-1**: Build a stronger review loop with move labels, CP-loss, best moves, retry mistakes, phase summaries, and personalized practice recommendations.
 *   **M-ADVANCED-ANALYTICS-DASHBOARD-1**: Bring weak motifs, CP-loss trends, review due counts, StyleVector charts, and recommended actions into the app UI.
 *   **Paused Until Sequenced Later**: runtime GenAI adapter, story implementation expansion, 3D visuals, multiplayer, and E2EE remain future phases rather than the immediate next milestone.

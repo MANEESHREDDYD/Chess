@@ -48,6 +48,32 @@ Mirror 2.0 extracts candidate features such as CP loss, captures, checks, early 
 ## Adaptive Clue Selection
 During training puzzles, MIRROR uses the StyleVector to identify the user's "Motif Blindness" (e.g., they often miss discovered attacks). It curates Clue Hints based on these specific algorithmic weaknesses rather than generic tooltips.
 
+## Game Review Pro
+Game Review Pro is a local-first review loop for completed local matches, Mirror matches, and valid imported games.
+
+The review engine:
+
+- reconstructs positions move by move from legal PGN
+- asks the stable local Stockfish manager for candidate moves sequentially
+- normalizes evaluation from the mover's perspective before calculating CP loss
+- labels moves with deterministic thresholds
+- detects key moments and phase-level weakness
+- generates StyleVector notes only when local evidence supports them
+
+Current deterministic thresholds:
+
+- `best`: 0-10 CP loss
+- `excellent`: 11-25 CP loss
+- `good`: 26-60 CP loss
+- `inaccuracy`: 61-120 CP loss
+- `mistake`: 121-250 CP loss
+- `blunder`: more than 250 CP loss
+- `missed_win`: only when the best line had a large winning advantage and the played move gave most of it back
+
+`brilliant` is reserved in the type system but is not assigned by the current deterministic classifier because MIRROR does not yet have enough sacrifice/engine-line proof to use it responsibly.
+
+The accuracy number shown in reviews is MIRROR's internal estimate from local CP-loss, not a proprietary external-platform formula.
+
 ## Limitations & Future GenAI Coach
 Currently, coaching feedback is rule-based and local. The Local Coach Preview uses deterministic summaries from local data; it does not call an LLM.
 

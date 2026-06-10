@@ -16,6 +16,7 @@ from typing import Any, Iterable
 from .models import (
     AnalysisRecord,
     ClueAttemptRecord,
+    GameReviewRecord,
     ImportedGameRecord,
     MirrorBackupFile,
     PuzzleReviewRecord,
@@ -42,6 +43,7 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
             for a in backup.data.saved_analyses
             if a.player_id == player_id and a.status == "complete"
         ]
+        game_reviews = [r for r in backup.data.game_reviews if r.player_id == player_id]
         clue_attempts = [a for a in backup.data.clue_attempts if a.player_id == player_id]
         puzzle_reviews = [r for r in backup.data.puzzle_reviews if r.player_id == player_id]
         story_progress = [s for s in backup.data.story_progress if s.player_id == player_id]
@@ -68,6 +70,7 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
         ]
 
         analysis_quality = aggregate_analysis_features(analyses)
+        review_quality = aggregate_game_review_features(game_reviews)
         imported_summary = imported_game_summary_features(imported_games, analyses)
 
         row: dict[str, Any] = {
@@ -96,6 +99,12 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
             "mistake_count": analysis_quality["mistake_count"],
             "accuracy_estimate": analysis_quality["accuracy_estimate"],
             "analysis_improvement_trend": analysis_quality["improvement_trend"],
+            "reviewed_games_count": review_quality["reviewed_games_count"],
+            "review_average_cp_loss": review_quality["average_cp_loss"],
+            "review_blunder_count": review_quality["blunder_count"],
+            "review_mistake_count": review_quality["mistake_count"],
+            "review_phase_weakness_summary": review_quality["phase_weakness_summary"],
+            "review_most_common_classification": review_quality["most_common_classification"],
             **style_features,
         }
         rows.append(row)
@@ -245,9 +254,32 @@ def analysis_quality_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
                     "analyzed_moves": analysis.summary.analyzed_moves or len(analysis.moves),
                     "cp_loss_trend_vs_previous": trend_delta,
                     "improvement_trend": player_trend,
+                    "phase_weakness_summary": "",
+                    "most_common_classification": "",
                 }
             )
             previous_cp_loss = avg_cp_loss
+
+    for review in sorted(backup.data.game_reviews, key=lambda row: row.created_at):
+        rows.append(
+            {
+                "player_id": review.player_id,
+                "analysis_id": review.id,
+                "match_id": review.source_id,
+                "match_type": review.source_type,
+                "created_at": review.created_at,
+                "average_cp_loss": round(game_review_average_cp_loss(review), 4),
+                "accuracy_estimate": round(game_review_accuracy_estimate(review), 4),
+                "blunder_count": game_review_classification_count(review, "blunder"),
+                "mistake_count": game_review_classification_count(review, "mistake"),
+                "inaccuracy_count": game_review_classification_count(review, "inaccuracy"),
+                "analyzed_moves": len(review.move_reviews),
+                "cp_loss_trend_vs_previous": 0.0,
+                "improvement_trend": "game_review_record",
+                "phase_weakness_summary": game_review_phase_weakness(review),
+                "most_common_classification": game_review_most_common_classification(review),
+            }
+        )
     return rows
 
 
@@ -351,6 +383,29 @@ def aggregate_analysis_features(analyses: Iterable[AnalysisRecord]) -> dict[str,
     }
 
 
+def aggregate_game_review_features(reviews: Iterable[GameReviewRecord]) -> dict[str, Any]:
+    """Aggregate Game Review Pro records into player-level analytics."""
+    review_rows = list(reviews)
+    if not review_rows:
+        return {
+            "reviewed_games_count": 0,
+            "average_cp_loss": 0.0,
+            "blunder_count": 0,
+            "mistake_count": 0,
+            "phase_weakness_summary": "insufficient_data",
+            "most_common_classification": "insufficient_data",
+        }
+
+    return {
+        "reviewed_games_count": len(review_rows),
+        "average_cp_loss": round(mean(game_review_average_cp_loss(row) for row in review_rows), 4),
+        "blunder_count": sum(game_review_classification_count(row, "blunder") for row in review_rows),
+        "mistake_count": sum(game_review_classification_count(row, "mistake") for row in review_rows),
+        "phase_weakness_summary": common_text(game_review_phase_weakness(row) for row in review_rows),
+        "most_common_classification": common_text(game_review_most_common_classification(row) for row in review_rows),
+    }
+
+
 def backup_feature_bundle(backup: MirrorBackupFile) -> dict[str, Any]:
     """Return all engineered features as a JSON-serializable bundle."""
     return {
@@ -403,6 +458,9 @@ def activity_dates_for_player(
     for analysis in backup.data.saved_analyses:
         if analysis.player_id == player_id:
             yield date_part(analysis.completed_at or analysis.created_at)
+    for review in backup.data.game_reviews:
+        if review.player_id == player_id:
+            yield date_part(review.created_at)
     for attempt in backup.data.clue_attempts:
         if attempt.player_id == player_id:
             yield date_part(attempt.completed_at or attempt.started_at or attempt.created_at)
@@ -446,6 +504,48 @@ def analysis_inaccuracy_count(analysis: AnalysisRecord) -> int:
     return analysis.summary.inaccuracy_count or sum(
         1 for move in analysis.moves if move.classification == "inaccuracy"
     )
+
+
+def game_review_average_cp_loss(review: GameReviewRecord) -> float:
+    values = [
+        value
+        for value in [review.average_cp_loss_white, review.average_cp_loss_black]
+        if value is not None
+    ]
+    if values:
+        return float(mean(values))
+    losses = [move.cp_loss for move in review.move_reviews if move.cp_loss is not None]
+    return float(mean(losses)) if losses else 0.0
+
+
+def game_review_accuracy_estimate(review: GameReviewRecord) -> float:
+    values = [value for value in [review.accuracy_white, review.accuracy_black] if value is not None]
+    if values:
+        return float(mean(values))
+    return round(clamp(100.0 - game_review_average_cp_loss(review) * 0.45, 0.0, 100.0), 4)
+
+
+def game_review_classification_count(review: GameReviewRecord, classification: str) -> int:
+    return sum(1 for move in review.move_reviews if move.classification == classification)
+
+
+def game_review_phase_weakness(review: GameReviewRecord) -> str:
+    weakest = review.phase_summary.get("weakest_phase") if isinstance(review.phase_summary, dict) else None
+    return str(weakest or "insufficient_data")
+
+
+def game_review_most_common_classification(review: GameReviewRecord) -> str:
+    counts = Counter(move.classification for move in review.move_reviews if move.classification)
+    if not counts:
+        return "insufficient_data"
+    return counts.most_common(1)[0][0]
+
+
+def common_text(values: Iterable[str]) -> str:
+    counts = Counter(value for value in values if value)
+    if not counts:
+        return "insufficient_data"
+    return counts.most_common(1)[0][0]
 
 
 def is_multi_move_attempt(attempt: ClueAttemptRecord) -> bool:

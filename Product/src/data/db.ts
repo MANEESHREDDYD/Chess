@@ -1,10 +1,11 @@
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { EloBand, StyleVector } from '../ml/styleVector';
+import type { GameReviewRecord } from '../review/reviewTypes';
 
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 9;
+export const MIRROR_DB_VERSION = 10;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned' | 'imported';
@@ -303,6 +304,16 @@ export interface MirrorDB extends DBSchema {
       created_at: string;
     };
   };
+  game_reviews: {
+    key: string;
+    value: GameReviewRecord;
+    indexes: {
+      player_id: string;
+      source_id: string;
+      source_type: string;
+      created_at: string;
+    };
+  };
   clue_attempts: {
     key: string;
     value: ClueAttemptRecord;
@@ -391,6 +402,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 9) {
         createV9Schema(db);
+      }
+      if (oldVersion < 10) {
+        createV10Schema(db);
       }
     },
   });
@@ -643,6 +657,14 @@ export async function getLocalMatches(
   return db.getAllFromIndex('local_matches', 'created_at');
 }
 
+export async function getLocalMatchRecord(
+  matchId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<LocalMatchRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  return db.get('local_matches', matchId);
+}
+
 export async function getLocalMatchesForPlayer(
   playerId: string,
   limit?: number,
@@ -764,6 +786,47 @@ export async function updateAnalysisRecord(id: string, patch: Partial<AnalysisRe
   const updated = { ...existing, ...patch };
   await db.put('saved_analyses', updated);
   return updated;
+}
+
+// -----------------------------------------------------------------------------
+// GAME REVIEW API
+// -----------------------------------------------------------------------------
+
+export async function putGameReviewRecord(record: GameReviewRecord, dbName = MIRROR_DB_NAME): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('game_reviews', record);
+}
+
+export async function getGameReviewRecord(
+  reviewId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<GameReviewRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  return db.get('game_reviews', reviewId);
+}
+
+export async function getGameReviewForSource(
+  sourceType: GameReviewRecord['source_type'],
+  sourceId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<GameReviewRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('game_reviews', 'source_id', sourceId);
+  return rows
+    .filter((row) => row.source_type === sourceType)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+}
+
+export async function getGameReviewsForPlayer(
+  playerId: string,
+  limit?: number,
+  dbName = MIRROR_DB_NAME
+): Promise<GameReviewRecord[]> {
+  const db = await openMirrorDb(dbName);
+  let rows = await db.getAllFromIndex('game_reviews', 'player_id', playerId);
+  rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (limit) rows = rows.slice(0, limit);
+  return rows;
 }
 
 // -----------------------------------------------------------------------------
@@ -1009,5 +1072,15 @@ function createV9Schema(db: IDBPDatabase<MirrorDB>) {
     store.createIndex('source', 'source', { unique: false });
     store.createIndex('legal_status', 'legal_status', { unique: false });
     store.createIndex('analysis_status', 'analysis_status', { unique: false });
+  }
+}
+
+function createV10Schema(db: IDBPDatabase<MirrorDB>) {
+  if (!db.objectStoreNames.contains('game_reviews')) {
+    const store = db.createObjectStore('game_reviews', { keyPath: 'id' });
+    store.createIndex('player_id', 'player_id', { unique: false });
+    store.createIndex('source_id', 'source_id', { unique: false });
+    store.createIndex('source_type', 'source_type', { unique: false });
+    store.createIndex('created_at', 'created_at', { unique: false });
   }
 }

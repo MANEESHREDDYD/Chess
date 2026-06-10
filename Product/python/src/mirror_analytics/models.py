@@ -259,6 +259,79 @@ class AnalysisRecord:
 
 
 @dataclass
+class GameReviewMoveRecord:
+    ply: int = 0
+    move_number: int = 0
+    san: str = ""
+    uci: Optional[str] = None
+    side: str = "white"
+    cp_loss: Optional[float] = None
+    classification: str = "unknown"
+    phase: str = "middlegame"
+    motif_tags: list[str] = field(default_factory=list)
+    is_turning_point: bool = False
+    retry_available: bool = False
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "GameReviewMoveRecord":
+        return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class GameReviewRecord:
+    id: str = ""
+    player_id: str = ""
+    source_type: str = "local_match"
+    source_id: str = ""
+    created_at: str = ""
+    analysis_depth: Optional[int] = None
+    engine_name: str = "Stockfish"
+    engine_version: Optional[str] = None
+    total_moves: int = 0
+    reviewed_side: Optional[str] = None
+    accuracy_white: Optional[float] = None
+    accuracy_black: Optional[float] = None
+    average_cp_loss_white: Optional[float] = None
+    average_cp_loss_black: Optional[float] = None
+    result: Optional[str] = None
+    opening_name: Optional[str] = None
+    phase_summary: dict[str, Any] = field(default_factory=dict)
+    key_moments: list[dict[str, Any]] = field(default_factory=list)
+    move_reviews: list[GameReviewMoveRecord] = field(default_factory=list)
+    personalized_summary: dict[str, Any] = field(default_factory=dict)
+    recommended_actions: list[dict[str, Any]] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "GameReviewRecord":
+        moves = d.get("move_reviews", [])
+        return cls(
+            id=d.get("id", ""),
+            player_id=d.get("player_id", ""),
+            source_type=d.get("source_type", "local_match"),
+            source_id=d.get("source_id", ""),
+            created_at=d.get("created_at", ""),
+            analysis_depth=d.get("analysis_depth"),
+            engine_name=d.get("engine_name", "Stockfish"),
+            engine_version=d.get("engine_version"),
+            total_moves=d.get("total_moves", 0),
+            reviewed_side=d.get("reviewed_side"),
+            accuracy_white=d.get("accuracy_white"),
+            accuracy_black=d.get("accuracy_black"),
+            average_cp_loss_white=d.get("average_cp_loss_white"),
+            average_cp_loss_black=d.get("average_cp_loss_black"),
+            result=d.get("result"),
+            opening_name=d.get("opening_name"),
+            phase_summary=d.get("phase_summary", {}),
+            key_moments=d.get("key_moments", []),
+            move_reviews=[GameReviewMoveRecord.from_dict(m) for m in moves] if isinstance(moves, list) else [],
+            personalized_summary=d.get("personalized_summary", {}),
+            recommended_actions=d.get("recommended_actions", []),
+            metadata=d.get("metadata", {}),
+        )
+
+
+@dataclass
 class ClueAttemptRecord:
     id: str = ""
     player_id: str = ""
@@ -357,6 +430,7 @@ class MirrorBackupData:
     calibration_runs: list[CalibrationRunRecord] = field(default_factory=list)
     style_vectors: list[StyleVectorRecord] = field(default_factory=list)
     saved_analyses: list[AnalysisRecord] = field(default_factory=list)
+    game_reviews: list[GameReviewRecord] = field(default_factory=list)
     clue_attempts: list[ClueAttemptRecord] = field(default_factory=list)
     puzzle_reviews: list[PuzzleReviewRecord] = field(default_factory=list)
     story_progress: list[StoryProgressRecord] = field(default_factory=list)

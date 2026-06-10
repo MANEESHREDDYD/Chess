@@ -9,6 +9,7 @@ type BackupStoreName =
   | 'calibration_runs'
   | 'style_vectors'
   | 'saved_analyses'
+  | 'game_reviews'
   | 'clue_attempts'
   | 'puzzle_reviews'
   | 'story_progress'
@@ -38,6 +39,7 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     calibration_runs: await db.getAll('calibration_runs'),
     style_vectors: await db.getAll('style_vectors'),
     saved_analyses: await db.getAll('saved_analyses'),
+    game_reviews: await db.getAll('game_reviews'),
     clue_attempts: await db.getAll('clue_attempts'),
     puzzle_reviews: await db.getAll('puzzle_reviews'),
     story_progress: await db.getAll('story_progress'),
@@ -65,6 +67,7 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     data.calibration_runs = data.calibration_runs.filter(x => x.player_id === playerId);
     data.style_vectors = data.style_vectors.filter(x => x.player_id === playerId);
     data.saved_analyses = data.saved_analyses.filter(x => x.player_id === playerId);
+    data.game_reviews = data.game_reviews.filter(x => x.player_id === playerId);
     data.clue_attempts = data.clue_attempts.filter(x => x.player_id === playerId);
     data.puzzle_reviews = data.puzzle_reviews.filter(x => x.player_id === playerId);
     data.story_progress = data.story_progress.filter(x => x.player_id === playerId);
@@ -130,6 +133,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   expectArray('calibration_runs');
   expectArray('style_vectors');
   expectArray('saved_analyses');
+  expectArray('game_reviews');
   expectArray('clue_attempts');
   expectArray('puzzle_reviews');
   expectArray('story_progress');
@@ -149,6 +153,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
     calibration_runs: (dataObj.calibration_runs as unknown as MirrorBackupData['calibration_runs']) || [],
     style_vectors: (dataObj.style_vectors as unknown as MirrorBackupData['style_vectors']) || [],
     saved_analyses: (dataObj.saved_analyses as unknown as MirrorBackupData['saved_analyses']) || [],
+    game_reviews: (dataObj.game_reviews as unknown as MirrorBackupData['game_reviews']) || [],
     clue_attempts: (dataObj.clue_attempts as unknown as MirrorBackupData['clue_attempts']) || [],
     puzzle_reviews: (dataObj.puzzle_reviews as unknown as MirrorBackupData['puzzle_reviews']) || [],
     story_progress: (dataObj.story_progress as unknown as MirrorBackupData['story_progress']) || [],
@@ -173,6 +178,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   validateIds(safeData.calibration_runs, 'calibration_runs');
   validateIds(safeData.style_vectors, 'style_vectors');
   validateIds(safeData.saved_analyses, 'saved_analyses');
+  validateIds(safeData.game_reviews, 'game_reviews');
   validateIds(safeData.clue_attempts, 'clue_attempts');
   validateIds(safeData.puzzle_reviews, 'puzzle_reviews');
   validateIds(safeData.story_progress, 'story_progress');
@@ -195,6 +201,7 @@ export function getBackupSummary(backup: MirrorBackupFile) {
     matches: d.local_matches.length + d.mirror_matches.length,
     imported_games: d.imported_games.length,
     analyses: d.saved_analyses.length,
+    game_reviews: d.game_reviews.length,
     clue_attempts: d.clue_attempts.length,
     puzzle_reviews: d.puzzle_reviews.length,
     achievements: d.achievements.length,
@@ -218,7 +225,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
     // If replacePlayerId is set, delete only that player's data. Otherwise wipe everything.
     const stores = [
       'players', 'local_matches', 'mirror_matches', 'imported_games', 'calibration_runs',
-      'style_vectors', 'saved_analyses', 'clue_attempts', 'puzzle_reviews',
+      'style_vectors', 'saved_analyses', 'game_reviews', 'clue_attempts', 'puzzle_reviews',
       'story_progress', 'achievements', 'account_links'
     ] as const;
 
@@ -297,6 +304,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
   await mergeRecords('calibration_runs', data.calibration_runs);
   await mergeRecords('style_vectors', data.style_vectors);
   await mergeRecords('saved_analyses', data.saved_analyses);
+  await mergeRecords('game_reviews', data.game_reviews);
   await mergeRecords('clue_attempts', data.clue_attempts);
   
   // Custom conflict resolvers

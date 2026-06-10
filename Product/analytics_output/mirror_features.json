@@ -13,6 +13,8 @@
       "match_id": "lm-sample-001",
       "match_type": "computer",
       "mistake_count": 1,
+      "most_common_classification": "",
+      "phase_weakness_summary": "",
       "player_id": "player-sample-001"
     },
     {
@@ -28,6 +30,8 @@
       "match_id": "lm-sample-002",
       "match_type": "computer",
       "mistake_count": 0,
+      "most_common_classification": "",
+      "phase_weakness_summary": "",
       "player_id": "player-sample-001"
     },
     {
@@ -43,6 +47,8 @@
       "match_id": "lm-sample-003",
       "match_type": "computer",
       "mistake_count": 1,
+      "most_common_classification": "",
+      "phase_weakness_summary": "",
       "player_id": "player-sample-001"
     },
     {
@@ -58,14 +64,33 @@
       "match_id": "ig-sample-001",
       "match_type": "imported",
       "mistake_count": 0,
+      "most_common_classification": "",
+      "phase_weakness_summary": "",
+      "player_id": "player-sample-001"
+    },
+    {
+      "accuracy_estimate": 89.2,
+      "analysis_id": "gr-sample-001",
+      "analyzed_moves": 2,
+      "average_cp_loss": 23.0,
+      "blunder_count": 0,
+      "cp_loss_trend_vs_previous": 0.0,
+      "created_at": "2026-05-24T10:12:00.000Z",
+      "improvement_trend": "game_review_record",
+      "inaccuracy_count": 1,
+      "match_id": "ig-sample-001",
+      "match_type": "imported_game",
+      "mistake_count": 0,
+      "most_common_classification": "best",
+      "phase_weakness_summary": "opening",
       "player_id": "player-sample-001"
     }
   ],
   "metadata": {
     "app_name": "MIRROR",
     "created_at": "2026-06-01T12:00:00.000Z",
-    "latest_known_tag": "v1.19.1-pgn-import-pipeline-1",
-    "schema_version": 9
+    "latest_known_tag": "v1.19.2-game-review-pro-1",
+    "schema_version": 10
   },
   "player_summary": [
     {
@@ -92,7 +117,13 @@
       "multi_move_solve_rate": 1.0,
       "player_id": "player-sample-001",
       "positional_preference_summary": "Prefers knight; white openings: e4, Nf3, d4; black replies: e5, c5, d5; endgame strength: 0.65",
+      "review_average_cp_loss": 23.0,
+      "review_blunder_count": 0,
       "review_due_count": 3,
+      "review_mistake_count": 0,
+      "review_most_common_classification": "best",
+      "review_phase_weakness_summary": "opening",
+      "reviewed_games_count": 1,
       "risk_index": 0.2625,
       "story_chapters_available": 1,
       "story_chapters_completed": 4,

@@ -16,6 +16,7 @@ from .models import (
     AnalysisRecord,
     CalibrationRunRecord,
     ClueAttemptRecord,
+    GameReviewRecord,
     ImportedGameRecord,
     LocalMatchRecord,
     MirrorBackupData,
@@ -43,7 +44,7 @@ _REQUIRED_DATA_ARRAY_KEYS = {
     "achievements",
 }
 
-_OPTIONAL_DATA_ARRAY_KEYS = {"calibration_runs", "imported_games"}
+_OPTIONAL_DATA_ARRAY_KEYS = {"calibration_runs", "imported_games", "game_reviews"}
 
 
 class BackupValidationError(Exception):
@@ -139,6 +140,7 @@ def _hydrate_data(d: dict[str, Any]) -> MirrorBackupData:
         calibration_runs=_hydrate_list(d.get("calibration_runs"), CalibrationRunRecord.from_dict),
         style_vectors=_hydrate_list(d.get("style_vectors"), StyleVectorRecord.from_dict),
         saved_analyses=_hydrate_list(d.get("saved_analyses"), AnalysisRecord.from_dict),
+        game_reviews=_hydrate_list(d.get("game_reviews"), GameReviewRecord.from_dict),
         clue_attempts=_hydrate_list(d.get("clue_attempts"), ClueAttemptRecord.from_dict),
         puzzle_reviews=_hydrate_list(d.get("puzzle_reviews"), PuzzleReviewRecord.from_dict),
         story_progress=_hydrate_list(d.get("story_progress"), StoryProgressRecord.from_dict),

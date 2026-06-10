@@ -34,6 +34,7 @@ describe('Backup Service', () => {
       | 'mirror_matches'
       | 'feedback'
       | 'imported_games'
+      | 'game_reviews'
       | 'local_matches'
       | 'saved_analyses'
       | 'clue_attempts'
@@ -154,9 +155,10 @@ describe('Backup Service', () => {
         mirror_matches: [],
         imported_games: [],
         calibration_runs: [],
-        style_vectors: [],
-        saved_analyses: [],
-        clue_attempts: [],
+      style_vectors: [],
+      saved_analyses: [],
+      game_reviews: [],
+      clue_attempts: [],
         puzzle_reviews: [],
         story_progress: [],
         achievements: [],
@@ -194,6 +196,7 @@ describe('Backup Service', () => {
       created_at: '2020-01-02',
       data: {
         players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], achievements: [], account_links: [], settings: {},
+        game_reviews: [],
         imported_games: [],
         story_progress: [
           // Even though updated_at is newer, it's 'locked', so merge should reject downgrade
@@ -230,6 +233,7 @@ describe('Backup Service', () => {
       created_at: '2020-01-02',
       data: {
         players: [], local_matches: [], mirror_matches: [], calibration_runs: [], style_vectors: [], saved_analyses: [], clue_attempts: [], puzzle_reviews: [], story_progress: [], account_links: [], settings: {},
+        game_reviews: [],
         imported_games: [],
         achievements: [
           { id: 'p1:ach1', player_id: 'p1', achievement_id: 'ach1', title: 'T', earned_at: '2020-01-01' }

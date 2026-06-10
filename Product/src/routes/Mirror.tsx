@@ -956,13 +956,18 @@ export default function Mirror() {
         ) : null}
 
         {status === 'game-over' && currentMatchId && activePlayerId && styleRecord && (
-          <AnalysisPanel
-            pgn={gameRef.current.pgn()}
-            playerId={activePlayerId}
-            matchId={currentMatchId}
-            matchType="mirror"
-            styleVector={styleRecord.vector}
-          />
+          <>
+            <AnalysisPanel
+              pgn={gameRef.current.pgn()}
+              playerId={activePlayerId}
+              matchId={currentMatchId}
+              matchType="mirror"
+              styleVector={styleRecord.vector}
+            />
+            <p className="play-note" style={{ marginTop: '0.75rem' }}>
+              <Link to={`/review/mirror_match/${currentMatchId}`}>Open Game Review Pro</Link>
+            </p>
+          </>
         )}
 
         {saveStatus ? (

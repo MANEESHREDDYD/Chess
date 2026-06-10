@@ -1,9 +1,9 @@
 {
-  "schema_version": 9,
+  "schema_version": 10,
   "app_name": "MIRROR",
   "created_at": "2026-06-01T12:00:00.000Z",
   "exported_by": "sample-generator",
-  "latest_known_tag": "v1.19.1-pgn-import-pipeline-1",
+  "latest_known_tag": "v1.19.2-game-review-pro-1",
   "data": {
     "players": [
       {
@@ -413,6 +413,150 @@
           {"ply": 5, "move_number": 3, "color": "white", "san": "Bc4", "fen_before": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "fen_after": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3", "cp_loss": 18, "classification": "good"},
           {"ply": 7, "move_number": 4, "color": "white", "san": "c3", "fen_before": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "fen_after": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/2P2N2/PP1P1PPP/RNBQK2R b KQkq - 0 4", "cp_loss": 94, "classification": "inaccuracy"}
         ]
+      }
+    ],
+    "game_reviews": [
+      {
+        "id": "gr-sample-001",
+        "player_id": "player-sample-001",
+        "source_type": "imported_game",
+        "source_id": "ig-sample-001",
+        "created_at": "2026-05-24T10:12:00.000Z",
+        "analysis_depth": 8,
+        "engine_name": "Stockfish",
+        "engine_version": "local",
+        "total_moves": 8,
+        "reviewed_side": "white",
+        "accuracy_white": 87.4,
+        "accuracy_black": 91.0,
+        "average_cp_loss_white": 28,
+        "average_cp_loss_black": 18,
+        "result": "1-0",
+        "opening_name": "Open Game family",
+        "phase_summary": {
+          "opening": {
+            "phase": "opening",
+            "moves": 8,
+            "average_cp_loss": 23,
+            "blunder_count": 0,
+            "mistake_count": 0,
+            "inaccuracy_count": 1,
+            "summary": "opening reviewed: 23 average CP loss, 0 blunder(s), 0 mistake(s)."
+          },
+          "middlegame": {
+            "phase": "middlegame",
+            "moves": 0,
+            "average_cp_loss": 0,
+            "blunder_count": 0,
+            "mistake_count": 0,
+            "inaccuracy_count": 0,
+            "summary": "No middlegame moves reviewed."
+          },
+          "endgame": {
+            "phase": "endgame",
+            "moves": 0,
+            "average_cp_loss": 0,
+            "blunder_count": 0,
+            "mistake_count": 0,
+            "inaccuracy_count": 0,
+            "summary": "No endgame moves reviewed."
+          },
+          "weakest_phase": "opening",
+          "summary": "Largest MIRROR internal CP-loss came in the opening."
+        },
+        "key_moments": [
+          {
+            "id": "largest_cp_loss-7",
+            "type": "largest_cp_loss",
+            "ply": 7,
+            "move_number": 4,
+            "san": "c3",
+            "classification": "inaccuracy",
+            "phase": "opening",
+            "reason": "Largest CP-loss move in the reviewed game.",
+            "evidence": ["Move 4. c3", "CP loss: 94", "Best move candidate: d2d4."],
+            "suggested_retry": "Retry from move 4 and look for d2d4.",
+            "cp_loss": 94,
+            "best_move": "d2d4"
+          }
+        ],
+        "move_reviews": [
+          {
+            "ply": 1,
+            "move_number": 1,
+            "san": "e4",
+            "uci": "e2e4",
+            "fen_before": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "fen_after": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+            "side": "white",
+            "eval_before": 30,
+            "eval_after": 30,
+            "best_move": "e2e4",
+            "best_line": ["e2e4", "e7e5"],
+            "cp_loss": 0,
+            "classification": "best",
+            "phase": "opening",
+            "motif_tags": ["unknown"],
+            "is_turning_point": false,
+            "retry_available": true,
+            "stylevector_note": "No strong StyleVector pattern was attached to this move; the explanation relies on Stockfish evidence.",
+            "explanation": "The played move stayed very close to the local Stockfish candidate.",
+            "evidence": ["Best move candidate: e2e4.", "Normalized CP loss: 0."]
+          },
+          {
+            "ply": 7,
+            "move_number": 4,
+            "san": "c3",
+            "uci": "c2c3",
+            "fen_before": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+            "fen_after": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/2P2N2/PP1P1PPP/RNBQK2R b KQkq - 0 4",
+            "side": "white",
+            "eval_before": 80,
+            "eval_after": -14,
+            "best_move": "d2d4",
+            "best_line": ["d2d4", "e5d4"],
+            "cp_loss": 94,
+            "classification": "inaccuracy",
+            "phase": "opening",
+            "motif_tags": ["missed_engine_line"],
+            "is_turning_point": true,
+            "retry_available": true,
+            "stylevector_note": "No strong StyleVector pattern was attached to this move; the explanation relies on Stockfish evidence.",
+            "explanation": "The move lost 94 centipawns against the reviewed best move d2d4.",
+            "evidence": ["Best move candidate: d2d4.", "Normalized CP loss: 94."]
+          }
+        ],
+        "personalized_summary": {
+          "headline": "Review focus: missed_engine_line",
+          "notes": ["Most repeated review tag: missed_engine_line.", "Start with move 4: Largest CP-loss move in the reviewed game."],
+          "evidence": ["StyleVector Elo band: initiate.", "1 reviewed issue(s) carried the missed_engine_line tag."],
+          "insufficient_data": []
+        },
+        "recommended_actions": [
+          {
+            "id": "retry-7",
+            "type": "retry",
+            "title": "Retry move 4",
+            "description": "Retry from move 4 and look for d2d4.",
+            "evidence": ["CP loss: 94"],
+            "priority": "high"
+          },
+          {
+            "id": "mirror-rematch",
+            "type": "mirror",
+            "title": "Play a Mirror rematch",
+            "description": "Test whether the reviewed habit appears against your personalized Mirror opponent.",
+            "route": "/mirror",
+            "evidence": ["Mirror uses local StyleVector reranking, not runtime GenAI."],
+            "priority": "medium"
+          }
+        ],
+        "metadata": {
+          "source_label": "Imported game (lichess_pgn)",
+          "local_first": true,
+          "runtime_genai_used": false,
+          "sample_data": true
+        }
       }
     ],
     "clue_attempts": [
