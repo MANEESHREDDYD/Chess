@@ -1,9 +1,9 @@
 # Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.18.6-stockfish-stability-hotfix-1`
-> **Latest Completed Milestone**: `M-STOCKFISH-STABILITY-HOTFIX-1`
-> **Current / Next Milestone**: `M-MIRROR-2-PERSONALITY-OPPONENT`
+> **Latest Tag**: `v1.19.0-mirror-2-personality-opponent`
+> **Latest Completed Milestone**: `M-MIRROR-2-PERSONALITY-OPPONENT`
+> **Current / Next Milestone**: `M-PGN-IMPORT-PIPELINE-1`
 > **Launch Status**: 🟢 **IN FLIGHT (Iterative Releases)**
 
 ---
@@ -38,11 +38,12 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.18.4-local-genai-coach-stub-2`**: Deterministic local coach cards, confidence/insufficient-data summaries, and Markdown/JSON exports.
 *   **`v1.18.5-local-genai-coach-safety-eval-1`**: Deterministic safety/evaluation checks for coach cards, exports, and future prompt contexts.
 *   **`v1.18.6-stockfish-stability-hotfix-1`**: Stable Stockfish engine manager, UCI readiness lifecycle, serialized searches, one automatic worker restart, browser health check, and improved engine UI states.
+*   **`v1.19.0-mirror-2-personality-opponent`**: Personality-based Mirror opponent with current, past, aggressive, cautious, blunder-prone, and improved self modes.
 
 ## Current Implemented Features
 
 *   **Local-First Architecture**: No backend required. IndexedDB handles all persistence for players, match histories, and story progress.
-*   **Mirror Engine**: StyleVector personalization calculated from player behavior. The current code has 11 behavioral/profile fields plus `schema_version` metadata, and the Mirror uses that profile to rerank Stockfish choices.
+*   **Mirror Engine**: StyleVector personalization calculated from player behavior. The current code has 11 behavioral/profile fields plus `schema_version` metadata, and the Mirror uses deterministic personality profiles to rerank legal Stockfish choices as current, past, aggressive, cautious, blunder-prone, or improved self.
 *   **Stable Stockfish Runtime**: shared browser engine manager serializes searches, waits for UCI readiness, auto-retries once with a fresh worker, and exposes `runStockfishHealthCheck()`.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
@@ -61,7 +62,6 @@ The following features and milestones have been successfully completed and tagge
 
 ## Next Recommended Milestones
 
-*   **M-MIRROR-2-PERSONALITY-OPPONENT**: Make regular chess and Mirror mode feel like the opponent is playing as current, past, aggressive, cautious, or improved versions of the user.
 *   **M-PGN-IMPORT-PIPELINE-1**: Add local PGN paste/upload/import so MIRROR can build a player chess fingerprint from outside games.
 *   **M-GAME-REVIEW-PRO-1**: Build a stronger review loop with move labels, CP-loss, best moves, retry mistakes, phase summaries, and personalized practice recommendations.
 *   **M-ADVANCED-ANALYTICS-DASHBOARD-1**: Bring weak motifs, CP-loss trends, review due counts, StyleVector charts, and recommended actions into the app UI.

@@ -312,6 +312,37 @@ body {
   border-color: var(--pandava-deep);
 }
 
+.mirror-panel--warning {
+  border-color: var(--warn);
+}
+
+.mirror-select {
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  margin: 4px 0 8px;
+  padding: 8px 10px;
+}
+
+.mirror-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.mirror-evidence span {
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 4px 8px;
+}
+
 .mirror-self-test__options {
   display: grid;
   gap: 8px;

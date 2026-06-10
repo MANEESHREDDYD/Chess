@@ -79,6 +79,8 @@ The browser app does not depend on `analytics_output` files. Those artifacts are
 Local app stores and records:
 
 - StyleVector
+- Mirror personality move traces
+- Mirror feedback tags such as too random, too aggressive, too passive, and good training
 - saved analyses
 - clue attempts
 - puzzle reviews
@@ -89,6 +91,8 @@ Local app stores and records:
 - Mirror matches
 
 The coach should prefer aggregated feature data over raw chess records unless the user explicitly requests deeper local-only review.
+
+Mirror 2.0 adds deterministic current, past, aggressive, cautious, blunder-prone, and improved self modes. Future coach context can summarize those personality traces and feedback tags as local evidence, but runtime GenAI coaching remains unimplemented.
 
 ## Coach Output Types
 

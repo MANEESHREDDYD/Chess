@@ -18,6 +18,7 @@ import {
   getMirrorMatchRecord,
   getCurrentStyleVectorRecord,
   getMirrorMatchesForPlayer,
+  getStyleVectorRecord,
   logAnonymousEvent,
   mergeMirrorMatchMetadata,
   putMirrorMatchRecord,
@@ -34,6 +35,11 @@ import {
   type MirrorRerankSummary,
   type MirrorOpponentProvider,
 } from '../engine/mirrorOpponent';
+import {
+  MIRROR_PERSONALITY_LABELS,
+  MIRROR_PERSONALITY_MODES,
+  type MirrorPersonalityMode,
+} from '../mirror/mirrorPersonality';
 import { stopThinking } from '../engine/stockfishBridge';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { sharpenMirrorVector } from '../ml/evolvingMirror';
@@ -45,12 +51,30 @@ type GameStatus = 'idle' | 'playing' | 'game-over';
 type MirrorResult = 'You won' | 'Mirror won' | 'Draw' | 'Game ended';
 type Promotion = 'q' | 'r' | 'b' | 'n';
 type PendingPromotion = { from: string; to: string } | null;
+type MirrorFeedbackTag =
+  | 'felt_like_me'
+  | 'too_strong'
+  | 'too_random'
+  | 'too_aggressive'
+  | 'too_passive'
+  | 'good_training';
+
+const MIRROR_FEEDBACK_TAGS: Array<{ value: MirrorFeedbackTag; label: string }> = [
+  { value: 'felt_like_me', label: 'Felt like me' },
+  { value: 'too_strong', label: 'Too strong' },
+  { value: 'too_random', label: 'Too random' },
+  { value: 'too_aggressive', label: 'Too aggressive' },
+  { value: 'too_passive', label: 'Too passive' },
+  { value: 'good_training', label: 'Good training' },
+];
 
 type StoredMirrorTrace = MirrorDecisionTrace & {
   moveNumber: number;
   fenBefore: string;
   ply: number;
 };
+
+let fallbackMirrorIdCounter = 0;
 
 export default function Mirror() {
   const activeTheme = useSettingsStore((state) => state.activeTheme);
@@ -64,6 +88,7 @@ export default function Mirror() {
   const mirrorTracesRef = useRef<StoredMirrorTrace[]>([]);
 
   const [styleRecord, setStyleRecord] = useState<StyleVectorRecord | null>(null);
+  const [pastStyleRecord, setPastStyleRecord] = useState<StyleVectorRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fen, setFen] = useState(gameRef.current.fen());
@@ -72,6 +97,7 @@ export default function Mirror() {
   const [isMirrorThinking, setIsMirrorThinking] = useState(false);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
+  const [personalityMode, setPersonalityMode] = useState<MirrorPersonalityMode>('current_self');
   
   useAudioFx(gameRef.current.history());
 
@@ -81,6 +107,7 @@ export default function Mirror() {
   const [themeError, setThemeError] = useState<string | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [lastMirrorLine, setLastMirrorLine] = useState<string | null>(null);
+  const [lastMirrorTrace, setLastMirrorTrace] = useState<StoredMirrorTrace | null>(null);
   const [rerankSummary, setRerankSummary] = useState<MirrorRerankSummary>({
     totalMirrorMoves: 0,
     overrideCount: 0,
@@ -108,6 +135,7 @@ export default function Mirror() {
   const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState(false);
   const [feltLikeMe, setFeltLikeMe] = useState<'yes' | 'somewhat' | 'no' | null>(null);
   const [perceivedStrength, setPerceivedStrength] = useState<'weaker' | 'equal' | 'stronger' | null>(null);
+  const [feedbackTags, setFeedbackTags] = useState<MirrorFeedbackTag[]>([]);
   const [similarNotes, setSimilarNotes] = useState('');
   const [wrongNotes, setWrongNotes] = useState('');
 
@@ -123,6 +151,7 @@ export default function Mirror() {
       try {
         if (!activePlayerId) {
           setStyleRecord(null);
+          setPastStyleRecord(null);
           setStatus('idle');
           setIsLoading(false);
           return;
@@ -133,6 +162,10 @@ export default function Mirror() {
 
         setStyleRecord(row);
         if (row) {
+          const previous = row.previous_vector_id
+            ? await getStyleVectorRecord(row.previous_vector_id)
+            : null;
+          if (!cancelled) setPastStyleRecord(previous?.player_id === row.player_id ? previous : null);
           const matches = await getMirrorMatchesForPlayer(row.player_id);
           if (!cancelled) setMirrorRecord(summarizeMirrorRecord(matches));
           opponentRef.current?.dispose?.();
@@ -151,6 +184,7 @@ export default function Mirror() {
           setPendingPromotion(null);
           setExplanation(null);
           setLastMirrorLine(null);
+          setLastMirrorTrace(null);
           setRerankSummary(summarizeMirrorReranks([]));
           setCurrentMatchId(null);
           setSelfRecognitionChallenge(null);
@@ -167,9 +201,11 @@ export default function Mirror() {
           setHasSubmittedFeedback(false);
           setFeltLikeMe(null);
           setPerceivedStrength(null);
+          setFeedbackTags([]);
           setSimilarNotes('');
           setWrongNotes('');
         } else {
+          setPastStyleRecord(null);
           setStatus('idle');
         }
       } catch (error) {
@@ -271,9 +307,10 @@ export default function Mirror() {
             explanation: explanationText,
             mirror_moves: traces,
             rerank_summary: summary,
+            personality_mode: personalityMode,
             self_recognition_options: challenge.options,
             self_recognition_correct_option_id: challenge.correctOptionId,
-            mirror_base: 'stockfish-limit-strength',
+            mirror_base: 'stockfish-personality-rerank',
           },
         });
         await logAnonymousEvent('mirror_played', { mirror_match_id: matchId }).catch(() => undefined);
@@ -306,8 +343,9 @@ export default function Mirror() {
         });
 
         opponentRef.current?.dispose?.();
-        opponentRef.current = createMirrorOpponent(tunedRecord.vector);
+        opponentRef.current = createMirrorOpponent(tunedRecord.vector, { personalityMode });
         persistedRef.current = true;
+        setPastStyleRecord(styleRecord);
         setStyleRecord(tunedRecord);
         setCurrentMatchId(matchId);
         setSelfRecognitionChallenge(challenge);
@@ -320,7 +358,7 @@ export default function Mirror() {
         );
       }
     },
-    [styleRecord]
+    [personalityMode, styleRecord]
   );
 
   const settleIfGameOver = useCallback((): boolean => {
@@ -343,11 +381,15 @@ export default function Mirror() {
     const moveNumber = nextMoveNumber(gameRef.current);
     setIsMirrorThinking(true);
     setLastMirrorLine(null);
+    setLastMirrorTrace(null);
 
     try {
       const mirrorMove = await opponent.getMoveWithTrace(fenBefore, {
         depth: 8,
         timeoutMs: 15_000,
+        personalityMode,
+        styleVectorOverride: personalityMode === 'past_self' ? pastStyleRecord?.vector ?? null : undefined,
+        seed: `${fenBefore}|${moveNumber}|${personalityMode}`,
       });
       if (gameIdRef.current !== activeGameId || status !== 'playing') return;
 
@@ -380,6 +422,7 @@ export default function Mirror() {
         mirrorTracesRef.current.push(storedTrace);
         setRerankSummary(summarizeMirrorReranks(mirrorTracesRef.current));
         setLastMirrorLine(describeMirrorDecision(storedTrace, moveNumber));
+        setLastMirrorTrace(storedTrace);
       }
 
       setFen(gameRef.current.fen());
@@ -394,7 +437,7 @@ export default function Mirror() {
         setIsMirrorThinking(false);
       }
     }
-  }, [finishGame, settleIfGameOver, status]);
+  }, [finishGame, pastStyleRecord, personalityMode, settleIfGameOver, status]);
 
   useEffect(() => {
     requestMirrorMoveRef.current = requestMirrorMove;
@@ -437,6 +480,7 @@ export default function Mirror() {
     setPendingPromotion(null);
     setExplanation(null);
     setLastMirrorLine(null);
+    setLastMirrorTrace(null);
     setRerankSummary(summarizeMirrorReranks([]));
     setCurrentMatchId(null);
     setSelfRecognitionChallenge(null);
@@ -452,6 +496,7 @@ export default function Mirror() {
     setHasSubmittedFeedback(false);
     setFeltLikeMe(null);
     setPerceivedStrength(null);
+    setFeedbackTags([]);
     setSimilarNotes('');
     setWrongNotes('');
 
@@ -629,6 +674,10 @@ export default function Mirror() {
         similar_notes: similarNotes,
         wrong_notes: wrongNotes,
         created_at: new Date().toISOString(),
+        metadata: {
+          personality_mode: personalityMode,
+          feedback_tags: feedbackTags,
+        },
       });
       setHasSubmittedFeedback(true);
       setFeedbackStatus('Feedback saved. Thank you!');
@@ -645,6 +694,22 @@ export default function Mirror() {
     if (isMirrorThinking) return 'Mirror thinking...';
     return 'Your move';
   }, [isLoading, isMirrorThinking, loadError, result, status, styleRecord]);
+
+  const styleVectorWarning = useMemo(() => {
+    if (!styleRecord) return null;
+    if (personalityMode === 'past_self' && !pastStyleRecord) {
+      return 'Past self needs an older tuned StyleVector. Play and save a Mirror game first, then this mode can use prior local evidence.';
+    }
+    return styleVectorHasThinEvidence(styleRecord.vector)
+      ? 'StyleVector evidence is still thin. Play more Mirror games or recalibrate for stronger personalization.'
+      : null;
+  }, [pastStyleRecord, personalityMode, styleRecord]);
+
+  const toggleFeedbackTag = (tag: MirrorFeedbackTag) => {
+    setFeedbackTags((current) =>
+      current.includes(tag) ? current.filter((entry) => entry !== tag) : [...current, tag]
+    );
+  };
 
   if (isLoading || loadError || !styleRecord) {
     return (
@@ -685,6 +750,8 @@ export default function Mirror() {
           <dd>{playerColor === 'white' ? 'White' : 'Black'}</dd>
           <dt>Opponent</dt>
           <dd>Mirror ({styleRecord.vector.detected_elo} Elo base)</dd>
+          <dt>Personality</dt>
+          <dd>{MIRROR_PERSONALITY_LABELS[personalityMode]}</dd>
           <dt>Theme</dt>
           <dd>{activeTheme === 'standard' ? 'Standard' : 'Kurukshetra'}</dd>
           <dt>Status</dt>
@@ -714,15 +781,48 @@ export default function Mirror() {
           </button>
         </div>
 
+        <section className="mirror-panel mirror-personality">
+          <h3>Mirror personality</h3>
+          <select
+            className="mirror-select"
+            value={personalityMode}
+            onChange={(event) => setPersonalityMode(event.target.value as MirrorPersonalityMode)}
+            disabled={isMirrorThinking}
+          >
+            {MIRROR_PERSONALITY_MODES.map((mode) => (
+              <option key={mode} value={mode}>
+                {MIRROR_PERSONALITY_LABELS[mode]}
+              </option>
+            ))}
+          </select>
+          <p>{personalityDescription(personalityMode)}</p>
+        </section>
+
         <section className="mirror-panel">
           <h3>Style source</h3>
           <p>{generateSummary(styleRecord.vector)}</p>
         </section>
 
+        {styleVectorWarning ? (
+          <section className="mirror-panel mirror-panel--warning">
+            <h3>Calibration signal</h3>
+            <p>{styleVectorWarning}</p>
+          </section>
+        ) : null}
+
         {lastMirrorLine ? (
           <section className="mirror-panel mirror-panel--line">
-            <h3>Why that move?</h3>
+            <h3>Why Mirror moved</h3>
             <p>{lastMirrorLine}</p>
+            {lastMirrorTrace ? (
+              <div className="mirror-evidence">
+                <span>Confidence: {lastMirrorTrace.confidence ?? 'medium'}</span>
+                <span>Mode: {MIRROR_PERSONALITY_LABELS[lastMirrorTrace.personalityMode ?? personalityMode]}</span>
+                {(lastMirrorTrace.evidence ?? []).slice(0, 3).map((entry) => (
+                  <span key={entry}>{entry}</span>
+                ))}
+              </div>
+            ) : null}
           </section>
         ) : null}
 
@@ -822,6 +922,20 @@ export default function Mirror() {
                   <label><input type="radio" name="perceivedStrength" value="stronger" checked={perceivedStrength === 'stronger'} onChange={() => setPerceivedStrength('stronger')} /> Stronger</label>
                 </fieldset>
 
+                <fieldset>
+                  <legend>What should Mirror remember?</legend>
+                  {MIRROR_FEEDBACK_TAGS.map((option) => (
+                    <label key={option.value}>
+                      <input
+                        type="checkbox"
+                        checked={feedbackTags.includes(option.value)}
+                        onChange={() => toggleFeedbackTag(option.value)}
+                      />{' '}
+                      {option.label}
+                    </label>
+                  ))}
+                </fieldset>
+
                 <label style={{ display: 'flex', flexDirection: 'column' }}>
                   What felt similar?
                   <textarea value={similarNotes} onChange={(e) => setSimilarNotes(e.target.value)} rows={2}></textarea>
@@ -883,6 +997,37 @@ export default function Mirror() {
   );
 }
 
+function personalityDescription(mode: MirrorPersonalityMode): string {
+  if (mode === 'aggressive_self') {
+    return 'Leans into your capture, attack, and forcing-move tendencies when the CP window is safe.';
+  }
+
+  if (mode === 'past_self') {
+    return 'Uses an older saved StyleVector when available, so you can spar with earlier local habits.';
+  }
+
+  if (mode === 'cautious_self') {
+    return 'Keeps your profile but prefers safer king position, lower risk, and steadier choices.';
+  }
+
+  if (mode === 'blunder_prone_self') {
+    return 'Practices against your known weak habits, with controlled CP-loss bounds so it stays useful.';
+  }
+
+  if (mode === 'improved_self') {
+    return 'Keeps your recognizable style while reducing known weakness and avoidable CP loss.';
+  }
+
+  return 'Closest to your current StyleVector, reranking Stockfish candidates to match local evidence.';
+}
+
+function styleVectorHasThinEvidence(vector: StyleVectorRecord['vector']): boolean {
+  const openingCount = vector.opening_white_top3.length + vector.opening_black_top3.length;
+  const motifValues = Object.values(vector.motif_blindness);
+  const motifLooksDefault = motifValues.length === 0 || motifValues.every((value) => value >= 0.95);
+  return openingCount === 0 && motifLooksDefault && vector.avg_move_time_ms <= 0;
+}
+
 function uciToMove(uci: string): { from: string; to: string; promotion?: Promotion } {
   const from = uci.slice(0, 2);
   const to = uci.slice(2, 4);
@@ -920,9 +1065,10 @@ function nextMoveNumber(game: Chess): number {
 }
 
 function makeId(prefix: string): string {
+  fallbackMirrorIdCounter += 1;
   const randomId =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      : `${Date.now()}-${fallbackMirrorIdCounter}`;
   return `${prefix}-${randomId}`;
 }

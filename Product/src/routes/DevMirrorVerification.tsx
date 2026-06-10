@@ -45,9 +45,9 @@ export default function DevMirrorVerification() {
         const turnColor = game.turn() === 'w' ? 'white' : 'black';
 
         if (turnColor === playerColor) {
-          // Player's turn: play random valid move
+          // Player's turn: play a deterministic legal move so verification is reproducible.
           const moves = game.moves();
-          const move = moves[Math.floor(Math.random() * moves.length)];
+          const move = moves[(game.history().length + moveNumber) % moves.length];
           game.move(move);
           if (game.turn() === 'w') moveNumber++;
         } else {

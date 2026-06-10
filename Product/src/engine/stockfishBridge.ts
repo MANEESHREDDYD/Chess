@@ -433,6 +433,8 @@ class StockfishEngineController {
   private recordInfo(message: EngineMessage): void {
     if (!this.activeSearch) return;
 
+    this.activeSearch.candidates = this.activeSearch.candidates ?? new Map<number, EngineCandidate>();
+
     const candidateMove = message.pv?.[0] ?? null;
     if (candidateMove) {
       const multipv = message.multipv ?? 1;
@@ -497,7 +499,8 @@ class StockfishEngineController {
     window.clearTimeout(activeSearch.timeoutId);
 
     const bestmove = message.move && message.move !== '(none)' ? message.move : null;
-    const candidates = Array.from(activeSearch.candidates.values()).sort((a, b) => a.multipv - b.multipv);
+    const candidatesMap = activeSearch.candidates ?? new Map<number, EngineCandidate>();
+    const candidates = Array.from(candidatesMap.values()).sort((a, b) => a.multipv - b.multipv);
 
     if (candidates.length === 0 && bestmove) {
       candidates.push({

@@ -25,9 +25,12 @@ When a user completes calibration, MIRROR converts task outputs into StyleVector
 ## Mirror Opponent Behavior
 When the user plays against their "Mirror", the engine does not just play the best move.
 1. Stockfish generates the top N moves (MultiPV).
-2. A custom **Reranking Algorithm** scores each of those N moves based on how well they align with the user's `StyleVector`. 
-3. The engine intentionally plays "human-like" sub-optimal moves if they align perfectly with the player's typical aggression or complexity.
-4. **CP-Gap Verification**: We continuously monitor the Centipawn (CP) loss of the Mirror's choices to ensure it remains bounded and doesn't blunder pieces wildly, maintaining a challenging but realistic difficulty.
+2. A custom **Reranking Algorithm** scores each legal candidate based on StyleVector evidence, candidate move features, and the selected Mirror personality mode.
+3. The personality modes are deterministic local variants: current self, past self, aggressive self, cautious self, blunder-prone self, and improved self.
+4. The engine can intentionally play human-like sub-optimal moves when they match the selected personality and stay inside bounded CP-loss windows.
+5. **CP-Gap Verification**: We continuously monitor the Centipawn (CP) loss of the Mirror's choices to ensure it remains bounded and doesn't blunder pieces wildly, maintaining a challenging but realistic difficulty.
+
+Mirror 2.0 extracts candidate features such as CP loss, captures, checks, early queen movement, material proxy, king-safety proxy, opening preference, and risk proxy. Stockfish supplies candidate strength; MIRROR reranks those candidates locally. This is not a trained neural network.
 
 ## Adaptive Clue Selection
 During training puzzles, MIRROR uses the StyleVector to identify the user's "Motif Blindness" (e.g., they often miss discovered attacks). It curates Clue Hints based on these specific algorithmic weaknesses rather than generic tooltips.

@@ -484,6 +484,14 @@ export async function getCurrentStyleVectorRecord(
   return row?.player_id === playerId ? row : null;
 }
 
+export async function getStyleVectorRecord(
+  styleVectorId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<StyleVectorRecord | undefined> {
+  const db = await openMirrorDb(dbName);
+  return db.get('style_vectors', styleVectorId);
+}
+
 export async function putMirrorMatchRecord(
   record: MirrorMatchRecord,
   dbName = MIRROR_DB_NAME
@@ -776,11 +784,14 @@ function createV6Schema(db: IDBPDatabase<MirrorDB>) {
   store.createIndex('earned_at', 'earned_at');
 }
 
+let fallbackDbIdCounter = 0;
+
 function makeId(prefix: string): string {
+  fallbackDbIdCounter += 1;
   const randomId =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      : `${Date.now()}-${fallbackDbIdCounter}`;
   return `${prefix}-${randomId}`;
 }
 

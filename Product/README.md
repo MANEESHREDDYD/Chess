@@ -6,7 +6,7 @@ MIRROR is an offline-first, progressive web application that reimagines chess tr
 MIRROR is not just a frontend chess board. It combines a client-side chess product with behavioral profiling, post-game CP-loss analytics, spaced repetition learning, a Mahabharata/Kurukshetra story layer, deterministic local coaching, and a local-first architecture with optional cloud backup.
 
 ## Why MIRROR is Unique
-Unlike traditional platforms, MIRROR adapts to *how* you play. The current code models StyleVector as 11 behavioral/profile fields plus `schema_version` metadata. The "Mirror Engine" reranks Stockfish evaluations against that profile to simulate your specific playstyle and expose blind spots.
+Unlike traditional platforms, MIRROR adapts to *how* you play. The current code models StyleVector as 11 behavioral/profile fields plus `schema_version` metadata. The "Mirror Engine" reranks Stockfish evaluations against that profile to simulate your specific playstyle and expose blind spots, with deterministic personality variants for current, past, aggressive, cautious, blunder-prone, and improved versions of the player.
 
 ## Recruiter / Hiring Manager Summary
 This repository demonstrates professional-grade engineering across multiple domains:
@@ -21,7 +21,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 ## Skill Showcase Map
 - **Data Engineering**: IndexedDB schema design, migrations, export/import pipeline, cloud backup schema, Supabase Storage policies, backup merge strategy.
 - **Data Science / Analytics**: CP-loss analysis, move classification, accuracy estimate, puzzle solved-rate, weak motif detection, progression metrics, review scheduling.
-- **AI / ML**: StyleVector, personalized Mirror opponent, move reranking, Stockfish evaluation, adaptive clue selection.
+- **AI / ML**: StyleVector, personalized Mirror opponent, personality-based move reranking, Stockfish evaluation, adaptive clue selection.
 - **Frontend**: React, Vite, route architecture, state management, chessboard UI, responsive app shell.
 - **UI/UX**: Onboarding, story mode, clue hints, progression dashboard, backup warnings, theme toggle, audio feedback.
 - **Backend / Full Stack**: Supabase Auth, Supabase Storage, RLS policies, cloud backup service wrapper, account linking.
@@ -35,6 +35,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [AI & ML Methodology](docs/ai-ml-methodology.md)
 - [Analytics & Progression](docs/analytics-and-progression.md)
 - [Data / AI Engineering Showcase](docs/data-ai-showcase.md)
+- [Mirror 2.0 Personality Opponent Report](docs/mirror-2-personality-opponent-report.md)
 - [Local GenAI Coach Design](docs/local-genai-coach-design.md)
 - [Coach Context Schema](docs/coach-context-schema.md)
 - [Local Coach Safety Evaluation](docs/local-coach-safety-eval.md)
@@ -103,6 +104,7 @@ npm run build
 npx tsx scripts/validate-puzzles.ts
 node scripts/run-mirror-verification.mjs
 npm run stockfish:stability
+node scripts/run-mirror-personality-verification.mjs
 ```
 
 ## Screenshots
@@ -134,9 +136,9 @@ npm run stockfish:stability
 - `v1.18.4-local-genai-coach-stub-2`
 - `v1.18.5-local-genai-coach-safety-eval-1`
 - `v1.18.6-stockfish-stability-hotfix-1`
+- `v1.19.0-mirror-2-personality-opponent`
 
 ## Market-Grade Product Roadmap
-- `M-MIRROR-2-PERSONALITY-OPPONENT`: play current, past, aggressive, cautious, and improved versions of yourself.
 - `M-PGN-IMPORT-PIPELINE-1`: import outside games locally and update StyleVector/analytics from real player history.
 - `M-GAME-REVIEW-PRO-1`: Chess.com-level review with MIRROR-specific explanations and practice recommendations.
 - `M-ADVANCED-ANALYTICS-DASHBOARD-1`: in-app analytics dashboards with every chart ending in a recommended action.

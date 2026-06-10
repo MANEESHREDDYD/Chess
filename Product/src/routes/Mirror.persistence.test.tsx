@@ -9,10 +9,12 @@ const dbMocks = vi.hoisted(() => ({
   getCurrentStyleVectorRecord: vi.fn(),
   getMirrorMatchesForPlayer: vi.fn(),
   getMirrorMatchRecord: vi.fn(),
+  getStyleVectorRecord: vi.fn(),
   logAnonymousEvent: vi.fn(),
   mergeMirrorMatchMetadata: vi.fn(),
   putMirrorMatchRecord: vi.fn(),
   putStyleVectorRecord: vi.fn(),
+  saveFeedbackRecord: vi.fn(),
   setCurrentStyleVector: vi.fn(),
   getAnalysisForMatch: vi.fn().mockResolvedValue(undefined),
 }));
@@ -29,10 +31,12 @@ vi.mock('../data/db', () => ({
   getCurrentStyleVectorRecord: dbMocks.getCurrentStyleVectorRecord,
   getMirrorMatchesForPlayer: dbMocks.getMirrorMatchesForPlayer,
   getMirrorMatchRecord: dbMocks.getMirrorMatchRecord,
+  getStyleVectorRecord: dbMocks.getStyleVectorRecord,
   logAnonymousEvent: dbMocks.logAnonymousEvent,
   mergeMirrorMatchMetadata: dbMocks.mergeMirrorMatchMetadata,
   putMirrorMatchRecord: dbMocks.putMirrorMatchRecord,
   putStyleVectorRecord: dbMocks.putStyleVectorRecord,
+  saveFeedbackRecord: dbMocks.saveFeedbackRecord,
   setCurrentStyleVector: dbMocks.setCurrentStyleVector,
   getAnalysisForMatch: dbMocks.getAnalysisForMatch,
 }));
@@ -90,6 +94,7 @@ describe('Mirror match persistence failure recovery', () => {
     vi.clearAllMocks();
     usePlayerStore.setState({ activePlayerId: 'local-player' });
     dbMocks.getCurrentStyleVectorRecord.mockResolvedValue(styleRecord());
+    dbMocks.getStyleVectorRecord.mockResolvedValue(undefined);
     dbMocks.getMirrorMatchesForPlayer.mockResolvedValue([]);
     dbMocks.getMirrorMatchRecord.mockResolvedValue(undefined);
     dbMocks.logAnonymousEvent.mockResolvedValue({ id: 'event-1', created_at: 'now' });
@@ -120,6 +125,20 @@ describe('Mirror match persistence failure recovery', () => {
       expect(dbMocks.putMirrorMatchRecord).toHaveBeenCalledTimes(2);
     });
     expect(await screen.findByText(/Match saved. Your Mirror has been sharpened/i)).toBeInTheDocument();
+  });
+
+  it('renders the Mirror personality selector', async () => {
+    dbMocks.putMirrorMatchRecord.mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <Mirror />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('combobox')).toHaveValue('current_self');
+    expect(screen.getByText(/Improved self/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Why Mirror moved/i)).not.toBeInTheDocument();
   });
 });
 
