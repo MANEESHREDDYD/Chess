@@ -44,7 +44,7 @@ describe('personalizedReview', () => {
 
     expect(summary.headline).toContain('pin');
     expect(actions[0].type).toBe('retry');
-    expect(actions.some((action) => action.route === '/clue-chess')).toBe(true);
+    expect(actions.some((action) => action.route === '/clue-chess?mode=adaptive&motif=pin')).toBe(true);
   });
 });
 

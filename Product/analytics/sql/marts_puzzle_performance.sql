@@ -17,7 +17,13 @@ with attempt_rollup as (
             end
         ) as multi_move_failures,
         avg(hints_used) as average_hints_used,
-        avg(time_spent_ms) as average_time_spent_ms
+        avg(time_spent_ms) as average_time_spent_ms,
+        avg(case when solved_without_reveal then 1.0 else 0.0 end) as solved_without_reveal_rate,
+        avg(case when used_final_reveal then 1.0 else 0.0 end) as final_reveal_rate,
+        max(streak_count) as best_streak,
+        sum(case when boss_cleared then 1 else 0 end) as boss_completion_count,
+        sum(case when mode = 'review' then 1 else 0 end) as review_mode_attempts,
+        sum(case when mode = 'review' and solved and not coalesce(used_final_reveal, false) then 1 else 0 end) as review_mode_successes
     from clue_attempts
     group by player_id, coalesce(motif, 'unknown')
 ),
@@ -57,6 +63,14 @@ combined as (
         end as multi_move_failure_rate,
         coalesce(a.average_hints_used, 0) as average_hints_used,
         coalesce(a.average_time_spent_ms, 0) as average_time_spent_ms,
+        coalesce(a.solved_without_reveal_rate, 0) as solved_without_reveal_rate,
+        coalesce(a.final_reveal_rate, 0) as final_reveal_rate,
+        coalesce(a.best_streak, 0) as best_streak,
+        coalesce(a.boss_completion_count, 0) as boss_completion_count,
+        case
+            when coalesce(a.review_mode_attempts, 0) = 0 then 0
+            else cast(a.review_mode_successes as decimal(18, 4)) / a.review_mode_attempts
+        end as review_mode_success_rate,
         coalesce(r.average_review_ease, 0) as average_review_ease
     from motif_keys k
     left join attempt_rollup a
@@ -92,6 +106,11 @@ select
     multi_move_failure_rate,
     average_hints_used,
     average_time_spent_ms,
+    solved_without_reveal_rate,
+    final_reveal_rate,
+    review_mode_success_rate,
+    best_streak,
+    boss_completion_count,
     average_review_ease,
     case when weakest_rank = 1 then motif else null end as weakest_motif,
     case when strongest_rank = 1 then motif else null end as strongest_motif

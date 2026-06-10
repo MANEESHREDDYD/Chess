@@ -13,6 +13,11 @@ Player: Arjuna_Sample (player-sample-001)
 - Game Review Pro records: 1
 - Clue solve rate: 50.0%
 - Multi-move solve rate: 100.0%
+- Most used clue level: 2
+- Solved without reveal rate: 40.0%
+- Review-mode success rate: 0.0%
+- Best clue streak: 2
+- Boss completions: 0
 - Active days: 23 with an estimated 2-day current streak
 - Achievements earned: 5
 - Import sources: lichess_pgn:1; manual_pgn:1

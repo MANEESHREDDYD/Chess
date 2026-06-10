@@ -46,7 +46,17 @@ When the user plays against their "Mirror", the engine does not just play the be
 Mirror 2.0 extracts candidate features such as CP loss, captures, checks, early queen movement, material proxy, king-safety proxy, opening preference, and risk proxy. Stockfish supplies candidate strength; MIRROR reranks those candidates locally. This is not a trained neural network.
 
 ## Adaptive Clue Selection
-During training puzzles, MIRROR uses the StyleVector to identify the user's "Motif Blindness" (e.g., they often miss discovered attacks). It curates Clue Hints based on these specific algorithmic weaknesses rather than generic tooltips.
+During training puzzles, MIRROR uses local evidence to choose clue difficulty and training mode. Evidence can come from StyleVector motif blindness, Game Review Pro motif tags, puzzle attempt history, spaced-repetition review rows, and `/analytics` weak-motif links.
+
+Clue Chess now uses five deterministic levels:
+
+- Level 1 theme clue: identifies the tactical idea.
+- Level 2 candidate area clue: points to a board region or candidate piece.
+- Level 3 threat clue: explains what the opponent is vulnerable to.
+- Level 4 calculation clue: suggests the forcing sequence idea without exact move.
+- Level 5 near-solution clue: gives a strong constraint without revealing exact SAN.
+
+Final reveal is separate and only appears after failed attempts or explicit request. Adaptive mode avoids repeating the same clue variant for the same player, puzzle, and level unless review mode is intentionally being used for recall. If local evidence is missing, MIRROR says so and uses a neutral clue sequence instead of inventing a personal weakness.
 
 ## Game Review Pro
 Game Review Pro is a local-first review loop for completed local matches, Mirror matches, and valid imported games.

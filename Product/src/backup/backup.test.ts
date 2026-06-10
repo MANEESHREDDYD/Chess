@@ -38,6 +38,7 @@ describe('Backup Service', () => {
       | 'local_matches'
       | 'saved_analyses'
       | 'clue_attempts'
+      | 'clue_memory'
       | 'story_progress'
       | 'achievements'
       | 'puzzle_reviews'
@@ -92,6 +93,16 @@ describe('Backup Service', () => {
       difficulty: 'Beginner', result: 'draw', result_label: 'Draw', pgn: '', move_count: 0, 
       created_at: '2020-01-01', completed_at: '2020-01-01' 
     });
+    await db.put('clue_memory', {
+      id: 'clue-memory-p1',
+      player_id: 'p1',
+      puzzle_id: 'seed-pin-1',
+      clue_level: 2,
+      clue_variant_id: 'seed-pin-1:L2:v1:standard',
+      shown_at: '2020-01-01T00:00:00.000Z',
+      attempt_context: 'adaptive',
+      mode: 'adaptive',
+    });
 
     mockLocalStorage.setItem('mirror-settings', JSON.stringify({ state: { activeTheme: 'dark' } }));
 
@@ -105,6 +116,8 @@ describe('Backup Service', () => {
     expect(backupActive.data.local_matches[0].id).toBe('m1');
     expect(backupActive.data.imported_games.length).toBe(1);
     expect(backupActive.data.imported_games[0].id).toBe('ig1');
+    expect(backupActive.data.clue_memory?.length).toBe(1);
+    expect(backupActive.data.clue_memory?.[0].puzzle_id).toBe('seed-pin-1');
     expect(backupActive.data.settings['mirror-settings']).toBeDefined();
 
     // Export all data
@@ -112,6 +125,7 @@ describe('Backup Service', () => {
     expect(backupAll.data.players.length).toBe(2);
     expect(backupAll.data.local_matches.length).toBe(2);
     expect(backupAll.data.imported_games.length).toBe(1);
+    expect(backupAll.data.clue_memory?.length).toBe(1);
   });
 
   it('validates backup files correctly', () => {

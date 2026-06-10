@@ -174,7 +174,28 @@ create table clue_attempts (
     current_step integer,
     solved_steps integer,
     total_steps integer,
-    failed_step integer
+    failed_step integer,
+    clue_level_used integer,
+    attempts_before_solve integer,
+    solved_without_reveal boolean,
+    used_final_reveal boolean,
+    mode varchar(32),
+    score_delta integer,
+    streak_count integer,
+    boss_sequence_id varchar(160),
+    boss_cleared boolean,
+    recommended_action_source varchar(64)
+);
+
+create table clue_memory (
+    id varchar(220) primary key,
+    player_id varchar(128) not null,
+    puzzle_id varchar(128) not null,
+    clue_level integer not null,
+    clue_variant_id varchar(160) not null,
+    shown_at timestamp,
+    attempt_context varchar(256),
+    mode varchar(32)
 );
 
 create table puzzle_reviews (

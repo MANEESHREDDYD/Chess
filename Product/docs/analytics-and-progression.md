@@ -64,9 +64,29 @@ Dashboard exports are summary-first:
 Exports exclude raw PGN, raw backup JSON, auth tokens, and service-role keys.
 
 ## Training Analytics
-MIRROR tracks user interactions with Clue Chess puzzles.
-- **Puzzle Solved Rate**: Tracks the percentage of puzzles completed without using heavy hints.
-- **Motif Weakness Detection**: If a user frequently fails puzzles tagged with specific motifs (e.g., "Pin", "Fork"), the analytics layer flags this as a weakness, feeding this data back into the adaptive clue selection system.
+MIRROR tracks user interactions with Clue Chess puzzles and turns them into local training signals.
+
+- **Puzzle solved rate**: tracks the percentage of puzzles completed.
+- **Solved without reveal rate**: tracks clean solves where the final answer was not revealed.
+- **Clue level usage**: records the highest clue level used from Level 1 theme clue through Level 5 near-solution clue.
+- **Motif weakness detection**: if a user frequently fails puzzles tagged with specific motifs, the analytics layer flags the motif as a candidate weakness only when local evidence exists.
+- **No-repeat clue memory**: stores which clue variants were shown for each player/puzzle/level so adaptive mode avoids repeating the same clue unless review mode explicitly allows recall repetition.
+- **Review-mode success**: measures whether due review puzzles are solved without final reveal.
+- **Streak and boss metrics**: records streak counts and boss puzzle clears without adding currency or an economy.
+
+These fields feed `/analytics`, the Python backup reports, and local Clue Chess selection. They do not upload puzzle data and do not use runtime GenAI.
+
+## Adaptive Clue Chess
+
+The `/clue-chess` route now has five local modes:
+
+- **Adaptive Training**: default mode using StyleVector, Game Review motif tags, puzzle attempts, spaced repetition, and Analytics query parameters.
+- **Review Mode**: prioritizes due `puzzle_reviews` and allows repeated recall clues.
+- **Streak Mode**: uses deterministic streak scoring and resets on missed/revealed puzzles.
+- **Boss Puzzle Mode**: creates a 3-5 puzzle sequence around a weak motif or requested motif.
+- **Kids Mode**: uses shorter, gentler clue wording and avoids harsh failure copy.
+
+Every mode remains local-first. Missing evidence produces an insufficient-data note instead of invented weakness.
 
 ## Spaced Repetition Schedule
 To optimize learning, MIRROR employs a SuperMemo-style spaced repetition algorithm for puzzle review:

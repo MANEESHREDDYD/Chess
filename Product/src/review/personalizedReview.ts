@@ -153,7 +153,7 @@ export function buildRecommendedActions(
       type: 'clue',
       title: `Practice ${motif}`,
       description: `Open Clue Chess with this motif in mind, then return to the reviewed position.`,
-      route: '/clue-chess',
+      route: `/clue-chess?mode=adaptive&motif=${encodeURIComponent(motif)}`,
       evidence: [`${motif} appeared in reviewed issue tags.`],
       priority: 'high',
     });

@@ -60,6 +60,7 @@ describe('analytics dashboard service', () => {
     expect(priorities).toEqual([...priorities].sort((a, b) => a - b));
     expect(snapshot.recommended_actions.every((action) => action.evidence.length > 0)).toBe(true);
     expect(snapshot.recommended_actions.some((action) => action.type === 'review_puzzles')).toBe(true);
+    expect(snapshot.recommended_actions.some((action) => action.route?.startsWith('/clue-chess?mode=adaptive'))).toBe(true);
   });
 
   it('generates summary exports without raw PGN, FEN, or token-like content', async () => {

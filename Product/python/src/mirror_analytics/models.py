@@ -353,10 +353,37 @@ class ClueAttemptRecord:
     total_steps: Optional[int] = None
     line_attempts: Optional[list[str]] = None
     failed_step: Optional[int] = None
+    clue_level_used: Optional[int] = None
+    clue_variant_ids_seen: list[str] = field(default_factory=list)
+    attempts_before_solve: Optional[int] = None
+    solved_without_reveal: Optional[bool] = None
+    used_final_reveal: Optional[bool] = None
+    mode: Optional[str] = None
+    score_delta: Optional[float] = None
+    streak_count: Optional[int] = None
+    boss_sequence_id: Optional[str] = None
+    boss_cleared: Optional[bool] = None
+    recommended_action_source: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "ClueAttemptRecord":
+        return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
+
+
+@dataclass
+class ClueMemoryRecord:
+    id: str = ""
+    player_id: str = ""
+    puzzle_id: str = ""
+    clue_level: int = 0
+    clue_variant_id: str = ""
+    shown_at: str = ""
+    attempt_context: str = ""
+    mode: str = "adaptive"
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "ClueMemoryRecord":
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
@@ -432,6 +459,7 @@ class MirrorBackupData:
     saved_analyses: list[AnalysisRecord] = field(default_factory=list)
     game_reviews: list[GameReviewRecord] = field(default_factory=list)
     clue_attempts: list[ClueAttemptRecord] = field(default_factory=list)
+    clue_memory: list[ClueMemoryRecord] = field(default_factory=list)
     puzzle_reviews: list[PuzzleReviewRecord] = field(default_factory=list)
     story_progress: list[StoryProgressRecord] = field(default_factory=list)
     achievements: list[AchievementRecord] = field(default_factory=list)

@@ -22,6 +22,8 @@ import {
   updateImportedGameRecord,
   putGameReviewRecord,
   getGameReviewForSource,
+  putClueMemoryRecord,
+  getClueMemoryForPuzzleLevel,
   type PlayerRecord,
   type StyleVector,
   type StyleVectorRecord,
@@ -59,6 +61,7 @@ describe('openMirrorDb', () => {
       'achievements',
       'calibration_runs',
       'clue_attempts',
+      'clue_memory',
       'feedback',
       'game_reviews',
       'imported_games',
@@ -97,6 +100,15 @@ describe('openMirrorDb', () => {
       'source_type',
     ]);
     await reviewTx.done;
+
+    const clueMemoryTx = db.transaction('clue_memory', 'readonly');
+    expect(indexNames(clueMemoryTx.objectStore('clue_memory'))).toEqual([
+      'clue_key',
+      'player_id',
+      'puzzle_id',
+      'shown_at',
+    ]);
+    await clueMemoryTx.done;
   });
 
   it('reopens idempotently without dropping existing rows', async () => {
@@ -447,6 +459,32 @@ describe('clue tracking', () => {
     const p1Clues = await getClueAttemptsForPlayer('p1', 10, dbName);
     expect(p1Clues.length).toBe(1);
     expect(p1Clues[0].id).toBe('c1');
+  });
+
+  it('stores clue memory records by player, puzzle, and level', async () => {
+    const dbName = nextDbName();
+    await putClueMemoryRecord({
+      id: 'memory-1',
+      player_id: 'p1',
+      puzzle_id: 'seed-fork-1',
+      clue_level: 1,
+      clue_variant_id: 'seed-fork-1:L1:v1:standard',
+      shown_at: '2026-06-10T00:00:00.000Z',
+      attempt_context: 'adaptive',
+      mode: 'adaptive',
+    }, dbName);
+    await putClueMemoryRecord({
+      id: 'memory-2',
+      player_id: 'p2',
+      puzzle_id: 'seed-fork-1',
+      clue_level: 1,
+      clue_variant_id: 'seed-fork-1:L1:v1:standard',
+      shown_at: '2026-06-10T00:00:00.000Z',
+      attempt_context: 'adaptive',
+      mode: 'adaptive',
+    }, dbName);
+
+    await expect(getClueMemoryForPuzzleLevel('p1', 'seed-fork-1', 1, dbName)).resolves.toHaveLength(1);
   });
 
   it('getClueStatsForPlayer computes solved rate and average hints', async () => {

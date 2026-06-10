@@ -5,7 +5,7 @@ import type { GameReviewRecord } from '../review/reviewTypes';
 export type { EloBand, StyleVector, SwindlePreference } from '../ml/styleVector';
 
 export const MIRROR_DB_NAME = 'mirror-pwa';
-export const MIRROR_DB_VERSION = 10;
+export const MIRROR_DB_VERSION = 11;
 
 export type CalibrationRunStatus = 'in_progress' | 'completed' | 'abandoned';
 export type StyleVectorSource = 'calibration' | 'tuned' | 'imported';
@@ -243,7 +243,29 @@ export interface ClueAttemptRecord {
   total_steps?: number;
   line_attempts?: string[];
   failed_step?: number;
+  clue_level_used?: number;
+  clue_variant_ids_seen?: string[];
+  attempts_before_solve?: number;
+  solved_without_reveal?: boolean;
+  used_final_reveal?: boolean;
+  mode?: "adaptive" | "review" | "streak" | "boss" | "kids";
+  score_delta?: number;
+  streak_count?: number;
+  boss_sequence_id?: string;
+  boss_cleared?: boolean;
+  recommended_action_source?: string;
   metadata?: Record<string, unknown>;
+}
+
+export interface ClueMemoryRecord {
+  id: string;
+  player_id: string;
+  puzzle_id: string;
+  clue_level: number;
+  clue_variant_id: string;
+  shown_at: string;
+  attempt_context: string;
+  mode: "adaptive" | "review" | "streak" | "boss" | "kids";
 }
 
 import type { StoryProgressRecord } from '../story/storyTypes';
@@ -323,6 +345,16 @@ export interface MirrorDB extends DBSchema {
       created_at: string;
       motif: string;
       solved: number; // indexeddb doesn't index booleans well, but we can store true/false and use string/number
+    };
+  };
+  clue_memory: {
+    key: string;
+    value: ClueMemoryRecord;
+    indexes: {
+      player_id: string;
+      puzzle_id: string;
+      clue_key: string;
+      shown_at: string;
     };
   };
   story_progress: {
@@ -405,6 +437,9 @@ export function openMirrorDb(dbName = MIRROR_DB_NAME): Promise<IDBPDatabase<Mirr
       }
       if (oldVersion < 10) {
         createV10Schema(db);
+      }
+      if (oldVersion < 11) {
+        createV11Schema(db);
       }
     },
   });
@@ -900,6 +935,36 @@ export async function getClueStatsForPlayer(playerId: string, dbName = MIRROR_DB
   };
 }
 
+// -----------------------------------------------------------------------------
+// CLUE MEMORY API
+// -----------------------------------------------------------------------------
+
+export async function putClueMemoryRecord(record: ClueMemoryRecord, dbName = MIRROR_DB_NAME): Promise<void> {
+  const db = await openMirrorDb(dbName);
+  await db.put('clue_memory', record);
+}
+
+export async function getClueMemoryForPlayer(
+  playerId: string,
+  dbName = MIRROR_DB_NAME
+): Promise<ClueMemoryRecord[]> {
+  const db = await openMirrorDb(dbName);
+  return db.getAllFromIndex('clue_memory', 'player_id', playerId);
+}
+
+export async function getClueMemoryForPuzzleLevel(
+  playerId: string,
+  puzzleId: string,
+  clueLevel: number,
+  dbName = MIRROR_DB_NAME
+): Promise<ClueMemoryRecord[]> {
+  const db = await openMirrorDb(dbName);
+  const rows = await db.getAllFromIndex('clue_memory', 'puzzle_id', puzzleId);
+  return rows
+    .filter((row) => row.player_id === playerId && row.clue_level === clueLevel)
+    .sort((a, b) => b.shown_at.localeCompare(a.shown_at));
+}
+
 function createV1Schema(db: IDBPDatabase<MirrorDB>): void {
   db.createObjectStore('players', { keyPath: 'id' });
 
@@ -1082,5 +1147,15 @@ function createV10Schema(db: IDBPDatabase<MirrorDB>) {
     store.createIndex('source_id', 'source_id', { unique: false });
     store.createIndex('source_type', 'source_type', { unique: false });
     store.createIndex('created_at', 'created_at', { unique: false });
+  }
+}
+
+function createV11Schema(db: IDBPDatabase<MirrorDB>) {
+  if (!db.objectStoreNames.contains('clue_memory')) {
+    const store = db.createObjectStore('clue_memory', { keyPath: 'id' });
+    store.createIndex('player_id', 'player_id', { unique: false });
+    store.createIndex('puzzle_id', 'puzzle_id', { unique: false });
+    store.createIndex('clue_key', ['player_id', 'puzzle_id', 'clue_level'], { unique: false });
+    store.createIndex('shown_at', 'shown_at', { unique: false });
   }
 }

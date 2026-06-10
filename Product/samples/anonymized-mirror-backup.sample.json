@@ -578,7 +578,17 @@
         "created_at": "2026-05-03T10:00:00.000Z",
         "current_step": 1,
         "solved_steps": 1,
-        "total_steps": 1
+        "total_steps": 1,
+        "clue_level_used": 0,
+        "clue_variant_ids_seen": [],
+        "attempts_before_solve": 1,
+        "solved_without_reveal": true,
+        "used_final_reveal": false,
+        "mode": "adaptive",
+        "score_delta": 140,
+        "streak_count": 1,
+        "boss_cleared": false,
+        "recommended_action_source": "Analytics"
       },
       {
         "id": "clue-sample-002",
@@ -598,7 +608,17 @@
         "created_at": "2026-05-03T10:05:00.000Z",
         "current_step": 1,
         "solved_steps": 0,
-        "total_steps": 1
+        "total_steps": 1,
+        "clue_level_used": 2,
+        "clue_variant_ids_seen": ["pin-001:L2:v1:standard"],
+        "attempts_before_solve": 1,
+        "solved_without_reveal": false,
+        "used_final_reveal": false,
+        "mode": "adaptive",
+        "score_delta": 10,
+        "streak_count": 0,
+        "boss_cleared": false,
+        "recommended_action_source": "StyleVector"
       },
       {
         "id": "clue-sample-003",
@@ -618,7 +638,17 @@
         "created_at": "2026-05-06T14:00:00.000Z",
         "current_step": 1,
         "solved_steps": 0,
-        "total_steps": 1
+        "total_steps": 1,
+        "clue_level_used": 3,
+        "clue_variant_ids_seen": ["pin-002:L2:v1:standard", "pin-002:L3:v1:standard"],
+        "attempts_before_solve": 1,
+        "solved_without_reveal": false,
+        "used_final_reveal": true,
+        "mode": "review",
+        "score_delta": 0,
+        "streak_count": 0,
+        "boss_cleared": false,
+        "recommended_action_source": "Review Queue"
       },
       {
         "id": "clue-sample-004",
@@ -638,7 +668,17 @@
         "created_at": "2026-05-09T11:00:00.000Z",
         "current_step": 1,
         "solved_steps": 1,
-        "total_steps": 1
+        "total_steps": 1,
+        "clue_level_used": 0,
+        "clue_variant_ids_seen": [],
+        "attempts_before_solve": 1,
+        "solved_without_reveal": true,
+        "used_final_reveal": false,
+        "mode": "streak",
+        "score_delta": 143,
+        "streak_count": 2,
+        "boss_cleared": false,
+        "recommended_action_source": "Puzzle History"
       },
       {
         "id": "clue-sample-005",
@@ -658,7 +698,18 @@
         "created_at": "2026-05-11T16:00:00.000Z",
         "current_step": 1,
         "solved_steps": 0,
-        "total_steps": 1
+        "total_steps": 1,
+        "clue_level_used": 1,
+        "clue_variant_ids_seen": ["skewer-001:L1:v1:standard"],
+        "attempts_before_solve": 1,
+        "solved_without_reveal": false,
+        "used_final_reveal": false,
+        "mode": "boss",
+        "score_delta": 20,
+        "streak_count": 0,
+        "boss_sequence_id": "boss-skewer-sample",
+        "boss_cleared": false,
+        "recommended_action_source": "Game Review"
       },
       {
         "id": "clue-sample-006",
@@ -698,7 +749,17 @@
         "created_at": "2026-05-16T10:00:00.000Z",
         "current_step": 2,
         "solved_steps": 2,
-        "total_steps": 2
+        "total_steps": 2,
+        "clue_level_used": 2,
+        "clue_variant_ids_seen": ["mate-001:L2:v1:kids"],
+        "attempts_before_solve": 2,
+        "solved_without_reveal": false,
+        "used_final_reveal": false,
+        "mode": "kids",
+        "score_delta": 92,
+        "streak_count": 1,
+        "boss_cleared": false,
+        "recommended_action_source": "Insufficient Data"
       },
       {
         "id": "clue-sample-008",
@@ -759,6 +820,38 @@
         "current_step": 1,
         "solved_steps": 0,
         "total_steps": 1
+      }
+    ],
+    "clue_memory": [
+      {
+        "id": "clue-memory-sample-001",
+        "player_id": "player-sample-001",
+        "puzzle_id": "pin-001",
+        "clue_level": 2,
+        "clue_variant_id": "pin-001:L2:v1:standard",
+        "shown_at": "2026-05-03T10:05:03.000Z",
+        "attempt_context": "adaptive weak motif training",
+        "mode": "adaptive"
+      },
+      {
+        "id": "clue-memory-sample-002",
+        "player_id": "player-sample-001",
+        "puzzle_id": "pin-002",
+        "clue_level": 2,
+        "clue_variant_id": "pin-002:L2:v1:standard",
+        "shown_at": "2026-05-06T14:00:04.000Z",
+        "attempt_context": "review recall clue",
+        "mode": "review"
+      },
+      {
+        "id": "clue-memory-sample-003",
+        "player_id": "player-sample-001",
+        "puzzle_id": "pin-002",
+        "clue_level": 3,
+        "clue_variant_id": "pin-002:L3:v1:standard",
+        "shown_at": "2026-05-06T14:00:09.000Z",
+        "attempt_context": "review recall clue",
+        "mode": "review"
       }
     ],
     "puzzle_reviews": [

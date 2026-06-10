@@ -13,6 +13,7 @@ The package reads the same backup envelope produced by the app:
 - `saved_analyses`
 - `game_reviews`
 - `clue_attempts`
+- `clue_memory`
 - `puzzle_reviews`
 - `story_progress`
 - `achievements`
@@ -45,6 +46,7 @@ The analytics layer computes interpretable features rather than decorative summa
 - Game Review Pro: reviewed-game count, review average CP loss, review blunders/mistakes, weakest phase, and most common review label.
 - In-app dashboard: CP-loss trend, move-label distribution, phase weakness bars, StyleVector profile bars, weak motif rows, review queue, imported-game coverage, Mirror feedback, story/progression summary, and prioritized recommendations.
 - Puzzle performance: motif solve rates, weakest motif, strongest motif, review lapses, multi-move failure rate.
+- Adaptive Clue Chess: clue levels used, solved-without-reveal rate, final reveal rate, review-mode success rate, best clue streak, boss completions, and no-repeat clue memory rows.
 - Analysis quality: average centipawn loss, accuracy estimate, mistakes, blunders, trend against previous analyses.
 - Story progress: completed chapters, available chapters, attempts, and completion state.
 
@@ -84,6 +86,7 @@ The SQL marts show how exported MIRROR data could be queried in a warehouse:
 - `analytics/sql/schema.sql` defines portable staging tables for backup records.
 - `marts_player_summary.sql` aggregates player progress, imported-game coverage, activity, analyses, reviews, achievements, and latest StyleVector fields.
 - `marts_puzzle_performance.sql` detects motif weakness and review priority.
+- Adaptive Clue Chess fields are modeled in `clue_attempts`, `clue_memory`, `marts_player_summary.sql`, and `marts_puzzle_performance.sql`.
 - `marts_story_progress.sql` models narrative completion and retry friction.
 - `marts_analysis_quality.sql` tracks CP-loss, accuracy, mistakes, blunders, analysis trend, and Game Review Pro rows.
 
@@ -109,6 +112,8 @@ The CLI emits:
 - `mirror_features.json`
 
 The sample backup includes anonymized imported PGN rows and one anonymized Game Review Pro record. Valid imported games can contribute to StyleVector evidence and review records; invalid imported games are kept as data-quality rows and excluded from StyleVector updates and analysis.
+
+The sample backup also includes anonymized adaptive Clue Chess fields and clue memory rows. These demonstrate local no-repeat clue tracking and clue-effectiveness analytics without storing secrets, account tokens, or private player data.
 
 ## Forward Deployment And GenAI Readiness
 

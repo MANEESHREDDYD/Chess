@@ -249,6 +249,14 @@ export default function GameReview() {
                   ))}
                 </div>
                 {selectedMove.stylevector_note ? <p className="play-note">{selectedMove.stylevector_note}</p> : null}
+                {selectedMove.motif_tags.length > 0 ? (
+                  <Link
+                    className="btn btn-secondary"
+                    to={`/clue-chess?mode=adaptive&motif=${encodeURIComponent(selectedMove.motif_tags[0])}`}
+                  >
+                    Train this motif in Clue Chess
+                  </Link>
+                ) : null}
                 {selectedMove.retry_available ? (
                   <button className="btn btn-primary" type="button" onClick={() => handleRetry(selectedMove)}>
                     Retry this move

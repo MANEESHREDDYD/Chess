@@ -94,7 +94,13 @@ clue_rollup as (
         count(*) as clue_attempts,
         sum(case when solved then 1 else 0 end) as clue_solved,
         sum(case when coalesce(total_steps, 1) > 1 then 1 else 0 end) as multi_move_attempts,
-        sum(case when coalesce(total_steps, 1) > 1 and solved then 1 else 0 end) as multi_move_solved
+        sum(case when coalesce(total_steps, 1) > 1 and solved then 1 else 0 end) as multi_move_solved,
+        avg(case when solved_without_reveal then 1.0 else 0.0 end) as solved_without_reveal_rate,
+        avg(case when used_final_reveal then 1.0 else 0.0 end) as final_reveal_rate,
+        max(streak_count) as best_clue_streak,
+        sum(case when boss_cleared then 1 else 0 end) as boss_completion_count,
+        sum(case when mode = 'review' then 1 else 0 end) as review_mode_attempts,
+        sum(case when mode = 'review' and solved and not coalesce(used_final_reveal, false) then 1 else 0 end) as review_mode_successes
     from clue_attempts
     group by player_id
 ),
@@ -162,6 +168,14 @@ select
         when coalesce(cr.multi_move_attempts, 0) = 0 then 0
         else cast(cr.multi_move_solved as decimal(18, 4)) / cr.multi_move_attempts
     end as multi_move_solve_rate,
+    coalesce(cr.solved_without_reveal_rate, 0) as solved_without_reveal_rate,
+    coalesce(cr.final_reveal_rate, 0) as final_reveal_rate,
+    case
+        when coalesce(cr.review_mode_attempts, 0) = 0 then 0
+        else cast(cr.review_mode_successes as decimal(18, 4)) / cr.review_mode_attempts
+    end as review_mode_success_rate,
+    coalesce(cr.best_clue_streak, 0) as best_clue_streak,
+    coalesce(cr.boss_completion_count, 0) as boss_completion_count,
     coalesce(rr.review_due_count, 0) as review_due_count,
     coalesce(ach.achievement_count, 0) as achievement_count,
     coalesce(act.active_days, 0) as active_days,

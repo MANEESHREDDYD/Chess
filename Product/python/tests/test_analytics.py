@@ -35,6 +35,7 @@ def test_backup_loading_parses_core_stores(backup):
     assert len(backup.data.saved_analyses) == 4
     assert len(backup.data.game_reviews) == 1
     assert len(backup.data.clue_attempts) == 10
+    assert len(backup.data.clue_memory) == 3
     assert len(backup.data.puzzle_reviews) == 3
     assert len(backup.data.story_progress) == 5
     assert len(backup.data.achievements) == 5
@@ -81,6 +82,12 @@ def test_player_summary_metrics(backup):
     assert row["review_most_common_classification"] == "best"
     assert row["story_chapters_completed"] == 4
     assert row["clue_attempts"] == 10
+    assert row["most_used_clue_level"] == "2"
+    assert row["solved_without_reveal_rate"] > 0
+    assert row["final_reveal_rate"] > 0
+    assert row["review_mode_success_rate"] == 0
+    assert row["best_clue_streak"] >= 2
+    assert row["boss_completion_count"] == 0
     assert row["clue_solve_rate"] == 0.5
     assert row["multi_move_solve_rate"] == 1.0
     assert row["review_due_count"] == 3
@@ -95,6 +102,8 @@ def test_puzzle_solved_rate_and_weakest_motif_detection(backup):
     assert rows["pin"]["failed_motif_count"] == 3
     assert rows["pin"]["weakest_motif"] == "pin"
     assert rows["fork"]["strongest_motif"] == "fork"
+    assert rows["pin"]["most_used_clue_level"] in {"2", "3"}
+    assert rows["pin"]["final_reveal_rate"] > 0
 
 
 def test_cp_loss_aggregation(backup):

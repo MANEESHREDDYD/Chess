@@ -1,7 +1,7 @@
-player_id,motif,attempts,solved_count,failed_motif_count,solved_rate,review_lapse_count,review_due_count,multi_move_attempts,multi_move_failure_rate,weakest_motif,strongest_motif
-player-sample-001,endgame,1,1,0,1.0,0,0,0,0.0,pin,fork
-player-sample-001,fork,3,3,0,1.0,0,0,0,0.0,pin,fork
-player-sample-001,mate,1,1,0,1.0,0,0,1,0.0,pin,fork
-player-sample-001,pin,3,0,3,0.0,2,1,0,0.0,pin,fork
-player-sample-001,removing_the_defender,1,0,1,0.0,2,1,0,0.0,pin,fork
-player-sample-001,skewer,1,0,1,0.0,1,1,0,0.0,pin,fork
+player_id,motif,attempts,solved_count,failed_motif_count,solved_rate,review_lapse_count,review_due_count,multi_move_attempts,multi_move_failure_rate,most_used_clue_level,solved_without_reveal_rate,final_reveal_rate,review_mode_success_rate,best_streak,boss_completion_count,weakest_motif,strongest_motif
+player-sample-001,endgame,1,1,0,1.0,0,0,0,0.0,,1.0,0.0,0.0,0,0,pin,fork
+player-sample-001,fork,3,3,0,1.0,0,0,0,0.0,,1.0,0.0,0.0,2,0,pin,fork
+player-sample-001,mate,1,1,0,1.0,0,0,1,0.0,2,0.0,0.0,0.0,1,0,pin,fork
+player-sample-001,pin,3,0,3,0.0,2,1,0,0.0,2,0.0,0.3333,0.0,0,0,pin,fork
+player-sample-001,removing_the_defender,1,0,1,0.0,2,1,0,0.0,,0.0,0.0,0.0,0,0,pin,fork
+player-sample-001,skewer,1,0,1,0.0,1,1,0,0.0,1,0.0,0.0,0.0,0,0,pin,fork

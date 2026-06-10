@@ -3,7 +3,7 @@
 MIRROR is an offline-first, progressive web application that reimagines chess training as a personalized AI chess improvement platform with regular chess, a user-like Mirror opponent, story gameplay, adaptive training, analytics, and future multiplayer.
 
 ## Product Overview
-MIRROR is not just a frontend chess board. It combines a client-side chess product with behavioral profiling, local PGN import, Game Review Pro, an in-app Advanced Analytics Dashboard, post-game CP-loss analytics, spaced repetition learning, a Mahabharata/Kurukshetra story layer, deterministic local coaching, and a local-first architecture with optional cloud backup.
+MIRROR is not just a frontend chess board. It combines a client-side chess product with behavioral profiling, local PGN import, Game Review Pro, an in-app Advanced Analytics Dashboard, adaptive Clue Chess training, post-game CP-loss analytics, spaced repetition learning, a Mahabharata/Kurukshetra story layer, deterministic local coaching, and a local-first architecture with optional cloud backup.
 
 ## Why MIRROR is Unique
 Unlike traditional platforms, MIRROR adapts to *how* you play. The current code models StyleVector as 11 behavioral/profile fields plus `schema_version` metadata. The "Mirror Engine" reranks Stockfish evaluations against that profile to simulate your specific playstyle and expose blind spots, with deterministic personality variants for current, past, aggressive, cautious, blunder-prone, and improved versions of the player.
@@ -12,7 +12,7 @@ Unlike traditional platforms, MIRROR adapts to *how* you play. The current code 
 This repository demonstrates professional-grade engineering across multiple domains:
 - **Data Engineering**: Robust IndexedDB relational schema, zero-downtime migrations, PGN import pipeline, atomic backup import/export, and conflict-aware cloud merges.
 - **AI/ML Thinking**: Behavioral profiling (`StyleVector`), custom move-reranking algorithms, and structured data preparation for future GenAI integration.
-- **Analytics**: in-app Advanced Analytics Dashboard, Game Review Pro records, CP-loss telemetry, motif weakness detection, imported-game coverage, Mirror feedback aggregation, and SuperMemo-style spaced repetition scheduling.
+- **Analytics**: in-app Advanced Analytics Dashboard, Game Review Pro records, CP-loss telemetry, motif weakness detection, adaptive clue effectiveness, imported-game coverage, Mirror feedback aggregation, and SuperMemo-style spaced repetition scheduling.
 - **Frontend / Product Design**: Responsive React/Vite PWA, modular state management, cohesive onboarding, and a deeply creative narrative UX.
 - **Full-Stack Architecture**: Local-first data models with seamless, optional Supabase Auth and Storage integration (enforced by RLS policies).
 - **Deployment / Security**: Environment-aware CI commands, stringent verification scripts, and a strict no-secret policy.
@@ -21,7 +21,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 ## Skill Showcase Map
 - **Data Engineering**: IndexedDB schema design, migrations, PGN parser/import pipeline, backup export/import pipeline, cloud backup schema, Supabase Storage policies, backup merge strategy.
 - **Data Science / Analytics**: Advanced Analytics Dashboard, Game Review Pro, CP-loss analysis, deterministic move classification, MIRROR internal accuracy estimates, puzzle solved-rate, weak motif detection, progression metrics, review scheduling.
-- **AI / ML**: StyleVector, personalized Mirror opponent, personality-based move reranking, Stockfish evaluation, adaptive clue selection.
+- **AI / ML**: StyleVector, personalized Mirror opponent, personality-based move reranking, Stockfish evaluation, adaptive clue selection, and deterministic local training recommendations.
 - **Frontend**: React, Vite, route architecture, state management, chessboard UI, responsive app shell.
 - **UI/UX**: Onboarding, story mode, clue hints, progression dashboard, backup warnings, theme toggle, audio feedback.
 - **Backend / Full Stack**: Supabase Auth, Supabase Storage, RLS policies, cloud backup service wrapper, account linking.
@@ -40,6 +40,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Game Review Pro Report](docs/m-game-review-pro-1-report.md)
 - [Stockfish Boot Timeout Hotfix 2 Report](docs/m-stockfish-boot-timeout-hotfix-2-report.md)
 - [Advanced Analytics Dashboard Report](docs/m-advanced-analytics-dashboard-1-report.md)
+- [Adaptive Clue Chess Report](docs/m-clue-chess-adaptive-2-report.md)
 - [Local GenAI Coach Design](docs/local-genai-coach-design.md)
 - [Coach Context Schema](docs/coach-context-schema.md)
 - [Local Coach Safety Evaluation](docs/local-coach-safety-eval.md)
@@ -55,6 +56,7 @@ MIRROR includes a real local-first Python and SQL analytics layer that runs on e
 - **Imported game analytics**: backup exports and the Python layer include `imported_games`, valid/imported counts, source/result breakdowns, and imported-game analysis coverage.
 - **Game Review Pro analytics**: backup exports and the Python/SQL layer include `game_reviews`, reviewed-game counts, review CP-loss, review blunders/mistakes, weakest phase, and most common review label.
 - **In-app Advanced Analytics Dashboard**: `/analytics` turns local IndexedDB records into player intelligence, review trends, StyleVector bars, weak motifs, puzzle review queue, imported-game coverage, Mirror feedback, story progress, and prioritized next actions.
+- **Adaptive Clue Chess**: `/clue-chess` now supports Adaptive Training, Review Mode, Streak Mode, Boss Puzzle Mode, and Kids Mode. It uses clue levels 1-5, no-repeat clue memory, due-review prioritization, local evidence badges, final reveal, deterministic scoring, and deep links from Analytics/Game Review.
 - **Action-first analytics**: every dashboard section ends in a recommendation or an explicit insufficient-data note instead of decorative charts.
 - **Behavioral analytics**: StyleVector is treated as MIRROR's behavioral personalization layer, with aggression, risk, time-pressure, tactical weakness, and positional preference features.
 - **Local-first pipeline**: the CLI reads local JSON and writes CSV, Markdown, and JSON artifacts without cloud credentials.
@@ -118,6 +120,7 @@ node scripts/run-mirror-personality-verification.mjs
 node scripts/run-pgn-import-verification.mjs
 node scripts/run-game-review-pro-verification.mjs
 node scripts/run-analytics-dashboard-verification.mjs
+node scripts/run-clue-chess-adaptive-verification.mjs
 ```
 
 ## Screenshots
@@ -154,9 +157,10 @@ node scripts/run-analytics-dashboard-verification.mjs
 - `v1.19.2-game-review-pro-1`
 - `v1.19.3-stockfish-boot-timeout-hotfix-2`
 - `v1.19.4-advanced-analytics-dashboard-1`
+- `v1.19.5-clue-chess-adaptive-2`
 
 ## Market-Grade Product Roadmap
-- `M-CLUE-CHESS-ADAPTIVE-2`: deeper clue levels, adaptive difficulty, review mode, streaks, and kid-friendly wording.
-- Later phases sequence progression, invite multiplayer, random matchmaking, 3D Kurukshetra visuals, kids mode, E2EE backup, and release hardening.
+- `M-BATTLE-PROFILE-PROGRESSION-2`: battle level, honor score, capture ratio, streaks, tactical rating, Mirror mastery, story rank, puzzle league, badges, and season-ready schema.
+- Later phases sequence invite multiplayer, random matchmaking, 3D Kurukshetra visuals, kids onboarding/mini-games, E2EE backup, and release hardening.
 
 Runtime GenAI adapter work, story implementation expansion, 3D visuals, multiplayer, and E2EE are deliberately sequenced after core reliability and product execution milestones. Runtime GenAI coaching is still not implemented.

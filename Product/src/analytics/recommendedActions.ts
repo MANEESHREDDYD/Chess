@@ -41,7 +41,11 @@ export function generateAnalyticsRecommendedActions(
       [`Due motifs: ${formatList(snapshot.review_queue_summary.due_motifs)}.`],
       3,
       'puzzle',
-      '/clue-chess'
+      clueRoute({
+        mode: snapshot.puzzle_summary.weakest_motif ? 'adaptive' : 'review',
+        motif: snapshot.puzzle_summary.weakest_motif ?? snapshot.review_queue_summary.due_motifs[0],
+        review: true,
+      })
     ));
   }
 
@@ -87,7 +91,11 @@ export function generateAnalyticsRecommendedActions(
       ],
       6,
       'puzzle',
-      '/clue-chess'
+      clueRoute({
+        mode: 'adaptive',
+        motif: snapshot.puzzle_summary.weakest_motif,
+        review: snapshot.review_queue_summary.due_reviews_count > 0,
+      })
     ));
   }
 
@@ -207,4 +215,12 @@ function formatList(values: string[]): string {
 
 function formatMotif(value: string): string {
   return value.replace(/_/g, ' ');
+}
+
+function clueRoute(input: { mode: 'adaptive' | 'review'; motif?: string; review?: boolean }): string {
+  const params = new URLSearchParams();
+  params.set('mode', input.mode);
+  if (input.motif) params.set('motif', input.motif);
+  if (input.review) params.set('review', 'true');
+  return `/clue-chess?${params.toString()}`;
 }

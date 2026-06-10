@@ -11,6 +11,7 @@ type BackupStoreName =
   | 'saved_analyses'
   | 'game_reviews'
   | 'clue_attempts'
+  | 'clue_memory'
   | 'puzzle_reviews'
   | 'story_progress'
   | 'achievements'
@@ -41,6 +42,7 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     saved_analyses: await db.getAll('saved_analyses'),
     game_reviews: await db.getAll('game_reviews'),
     clue_attempts: await db.getAll('clue_attempts'),
+    clue_memory: await db.getAll('clue_memory'),
     puzzle_reviews: await db.getAll('puzzle_reviews'),
     story_progress: await db.getAll('story_progress'),
     achievements: await db.getAll('achievements'),
@@ -69,6 +71,9 @@ export async function exportMirrorBackup(playerId?: string): Promise<MirrorBacku
     data.saved_analyses = data.saved_analyses.filter(x => x.player_id === playerId);
     data.game_reviews = data.game_reviews.filter(x => x.player_id === playerId);
     data.clue_attempts = data.clue_attempts.filter(x => x.player_id === playerId);
+    if (data.clue_memory) {
+      data.clue_memory = data.clue_memory.filter(x => x.player_id === playerId);
+    }
     data.puzzle_reviews = data.puzzle_reviews.filter(x => x.player_id === playerId);
     data.story_progress = data.story_progress.filter(x => x.player_id === playerId);
     data.achievements = data.achievements.filter(x => x.player_id === playerId);
@@ -135,6 +140,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   expectArray('saved_analyses');
   expectArray('game_reviews');
   expectArray('clue_attempts');
+  expectArray('clue_memory');
   expectArray('puzzle_reviews');
   expectArray('story_progress');
   expectArray('achievements');
@@ -155,6 +161,7 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
     saved_analyses: (dataObj.saved_analyses as unknown as MirrorBackupData['saved_analyses']) || [],
     game_reviews: (dataObj.game_reviews as unknown as MirrorBackupData['game_reviews']) || [],
     clue_attempts: (dataObj.clue_attempts as unknown as MirrorBackupData['clue_attempts']) || [],
+    clue_memory: (dataObj.clue_memory as unknown as MirrorBackupData['clue_memory']) || [],
     puzzle_reviews: (dataObj.puzzle_reviews as unknown as MirrorBackupData['puzzle_reviews']) || [],
     story_progress: (dataObj.story_progress as unknown as MirrorBackupData['story_progress']) || [],
     achievements: (dataObj.achievements as unknown as MirrorBackupData['achievements']) || [],
@@ -180,6 +187,9 @@ export function validateBackupFile(raw: unknown): MirrorBackupFile {
   validateIds(safeData.saved_analyses, 'saved_analyses');
   validateIds(safeData.game_reviews, 'game_reviews');
   validateIds(safeData.clue_attempts, 'clue_attempts');
+  if (safeData.clue_memory) {
+    validateIds(safeData.clue_memory, 'clue_memory');
+  }
   validateIds(safeData.puzzle_reviews, 'puzzle_reviews');
   validateIds(safeData.story_progress, 'story_progress');
   validateIds(safeData.achievements, 'achievements');
@@ -203,6 +213,7 @@ export function getBackupSummary(backup: MirrorBackupFile) {
     analyses: d.saved_analyses.length,
     game_reviews: d.game_reviews.length,
     clue_attempts: d.clue_attempts.length,
+    clue_memory: d.clue_memory?.length ?? 0,
     puzzle_reviews: d.puzzle_reviews.length,
     achievements: d.achievements.length,
     story_progress: d.story_progress.filter((s: StoryProgressRecord) => s.status === 'complete').length,
@@ -225,7 +236,7 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
     // If replacePlayerId is set, delete only that player's data. Otherwise wipe everything.
     const stores = [
       'players', 'local_matches', 'mirror_matches', 'imported_games', 'calibration_runs',
-      'style_vectors', 'saved_analyses', 'game_reviews', 'clue_attempts', 'puzzle_reviews',
+      'style_vectors', 'saved_analyses', 'game_reviews', 'clue_attempts', 'clue_memory', 'puzzle_reviews',
       'story_progress', 'achievements', 'account_links'
     ] as const;
 
@@ -306,6 +317,11 @@ export async function importMirrorBackup(backup: MirrorBackupFile, options: Impo
   await mergeRecords('saved_analyses', data.saved_analyses);
   await mergeRecords('game_reviews', data.game_reviews);
   await mergeRecords('clue_attempts', data.clue_attempts);
+  await mergeRecords('clue_memory', data.clue_memory ?? [], (local, remote) => {
+    const localDate = local.shown_at ? new Date(local.shown_at) : new Date(0);
+    const remoteDate = remote.shown_at ? new Date(remote.shown_at) : new Date(0);
+    return remoteDate > localDate ? remote : local;
+  });
   
   // Custom conflict resolvers
   await mergeRecords('story_progress', data.story_progress, (local: StoryProgressRecord, remote: StoryProgressRecord) => {

@@ -62,6 +62,7 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
         solved_clues = sum(1 for attempt in clue_attempts if attempt.solved)
         multi_attempts = [attempt for attempt in clue_attempts if is_multi_move_attempt(attempt)]
         solved_multi = sum(1 for attempt in multi_attempts if attempt.solved)
+        clue_effectiveness = clue_effectiveness_summary(clue_attempts)
         due_reviews = [
             review
             for review in puzzle_reviews
@@ -91,6 +92,12 @@ def player_summary_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
             "clue_solve_rate": safe_rate(solved_clues, total_clues),
             "multi_move_solve_rate": safe_rate(solved_multi, len(multi_attempts)),
             "review_due_count": len(due_reviews),
+            "most_used_clue_level": clue_effectiveness["most_used_clue_level"],
+            "solved_without_reveal_rate": clue_effectiveness["solved_without_reveal_rate"],
+            "final_reveal_rate": clue_effectiveness["final_reveal_rate"],
+            "review_mode_success_rate": clue_effectiveness["review_mode_success_rate"],
+            "best_clue_streak": clue_effectiveness["best_streak"],
+            "boss_completion_count": clue_effectiveness["boss_completion_count"],
             "achievement_count": len(achievements),
             "active_days": len(active_dates),
             "streak_estimate_days": estimate_streak_days(active_dates),
@@ -160,6 +167,7 @@ def puzzle_motif_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
         failed_count = len(attempts) - solved_count
         multi_attempts = [attempt for attempt in attempts if is_multi_move_attempt(attempt)]
         multi_failed = sum(1 for attempt in multi_attempts if not attempt.solved)
+        effectiveness = clue_effectiveness_summary(attempts)
         due_count = sum(
             1
             for review in reviews
@@ -178,6 +186,12 @@ def puzzle_motif_features(backup: MirrorBackupFile) -> list[dict[str, Any]]:
                 "review_due_count": due_count,
                 "multi_move_attempts": len(multi_attempts),
                 "multi_move_failure_rate": safe_rate(multi_failed, len(multi_attempts)),
+                "most_used_clue_level": effectiveness["most_used_clue_level"],
+                "solved_without_reveal_rate": effectiveness["solved_without_reveal_rate"],
+                "final_reveal_rate": effectiveness["final_reveal_rate"],
+                "review_mode_success_rate": effectiveness["review_mode_success_rate"],
+                "best_streak": effectiveness["best_streak"],
+                "boss_completion_count": effectiveness["boss_completion_count"],
                 "weakest_motif": "",
                 "strongest_motif": "",
             }
@@ -423,6 +437,16 @@ def backup_feature_bundle(backup: MirrorBackupFile) -> dict[str, Any]:
             {"id": row.id, "player_id": row.player_id, "source": row.source, "vector": asdict(row.vector)}
             for row in backup.data.style_vectors
         ],
+        "clue_memory": [
+            {
+                "player_id": row.player_id,
+                "puzzle_id": row.puzzle_id,
+                "clue_level": row.clue_level,
+                "mode": row.mode,
+                "shown_at": row.shown_at,
+            }
+            for row in backup.data.clue_memory
+        ],
     }
 
 
@@ -546,6 +570,39 @@ def common_text(values: Iterable[str]) -> str:
     if not counts:
         return "insufficient_data"
     return counts.most_common(1)[0][0]
+
+
+def clue_effectiveness_summary(attempts: list[ClueAttemptRecord]) -> dict[str, Any]:
+    levels = Counter(
+        str(attempt.clue_level_used)
+        for attempt in attempts
+        if attempt.clue_level_used is not None and attempt.clue_level_used > 0
+    )
+    review_mode_attempts = [attempt for attempt in attempts if attempt.mode == "review"]
+    solved_without_reveal = sum(
+        1
+        for attempt in attempts
+        if attempt.solved_without_reveal is True
+        or (
+            attempt.solved
+            and not attempt.used_final_reveal
+            and attempt.hints_used == 0
+        )
+    )
+    final_reveals = sum(1 for attempt in attempts if attempt.used_final_reveal)
+    boss_completions = sum(1 for attempt in attempts if attempt.boss_cleared)
+    streaks = [attempt.streak_count or 0 for attempt in attempts]
+    return {
+        "most_used_clue_level": levels.most_common(1)[0][0] if levels else "",
+        "solved_without_reveal_rate": safe_rate(solved_without_reveal, len(attempts)),
+        "final_reveal_rate": safe_rate(final_reveals, len(attempts)),
+        "review_mode_success_rate": safe_rate(
+            sum(1 for attempt in review_mode_attempts if attempt.solved and not attempt.used_final_reveal),
+            len(review_mode_attempts),
+        ),
+        "best_streak": max(streaks) if streaks else 0,
+        "boss_completion_count": boss_completions,
+    }
 
 
 def is_multi_move_attempt(attempt: ClueAttemptRecord) -> bool:

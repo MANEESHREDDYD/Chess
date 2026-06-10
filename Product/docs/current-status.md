@@ -1,9 +1,9 @@
 ﻿# Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.19.4-advanced-analytics-dashboard-1`
-> **Latest Completed Milestone**: `M-ADVANCED-ANALYTICS-DASHBOARD-1`
-> **Current / Next Milestone**: `M-CLUE-CHESS-ADAPTIVE-2`
+> **Latest Tag**: `v1.19.5-clue-chess-adaptive-2`
+> **Latest Completed Milestone**: `M-CLUE-CHESS-ADAPTIVE-2`
+> **Current / Next Milestone**: `M-BATTLE-PROFILE-PROGRESSION-2`
 > **Launch Status**: READY FOR NEXT MILESTONE (Iterative Releases)
 
 ---
@@ -43,6 +43,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.19.2-game-review-pro-1`**: Local Game Review Pro with deterministic move classifications, side-normalized CP-loss, MIRROR internal accuracy estimates, key moments, retry mistakes, phase summaries, StyleVector notes, imported-game review support, Markdown export, and Python/SQL review metrics.
 *   **`v1.19.3-stockfish-boot-timeout-hotfix-2`**: Fixed production-preview Stockfish worker boot timeout by replacing the unsafe generated `data:video/mp2t` worker URL path with a Vite-emitted worker asset URL, adding boot-phase telemetry, local WASM asset checks, diagnostics UI, and browser build/preview verification.
 *   **`v1.19.4-advanced-analytics-dashboard-1`**: In-app Advanced Analytics Dashboard with local player intelligence, Game Review Pro summaries, StyleVector visualization, weak motif analytics, puzzle review queue, imported-game coverage, Mirror feedback, story/progression summaries, prioritized actions, and safe Markdown/JSON exports.
+*   **`v1.19.5-clue-chess-adaptive-2`**: Adaptive Clue Chess modes with clue levels 1-5, no-repeat clue memory, review mode, streak mode, boss puzzles, kids wording, deterministic scoring, Analytics deep links, Game Review motif links, backup support, and Python/SQL clue-effectiveness metrics.
 
 ## Current Implemented Features
 
@@ -54,7 +55,7 @@ The following features and milestones have been successfully completed and tagge
 *   **Advanced Analytics Dashboard**: `/analytics` aggregates local IndexedDB data into player intelligence, CP-loss trends, move-label distribution, StyleVector bars, weak motifs, puzzle review queue, imported-game coverage, Mirror feedback, story/progression summary, and evidence-backed recommended actions.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
-*   **Progressive Puzzle Engine**: Multi-move sequences that adapt hints based on user weakness (Motif Blindness).
+*   **Adaptive Clue Chess**: `/clue-chess` supports Adaptive Training, Review Mode, Streak Mode, Boss Puzzle Mode, and Kids Mode using local StyleVector, Game Review motif tags, puzzle attempts, spaced repetition, and Analytics recommendations. Clues use levels 1-5, no-repeat memory, explicit final reveal, deterministic scoring, and insufficient-data notes.
 *   **Local Coach Preview**: `/coach-preview` provides deterministic, local-only training focus, weak motif, review queue, story recommendations, prioritized coach cards, evidence, and local exports.
 *   **Coach Safety Evaluation**: deterministic local checks validate coach cards, prompt contexts, Markdown exports, and JSON exports without LLM calls.
 *   **Data / AI Showcase Layer**: Python analytics, SQL marts, anonymized sample backup data, generated reports, and `mirror_features.json`.
@@ -71,5 +72,5 @@ The following features and milestones have been successfully completed and tagge
 
 ## Next Recommended Milestones
 
-*   **M-CLUE-CHESS-ADAPTIVE-2**: deepen Clue Chess with adaptive clue levels, review mode, streaks, boss puzzle flow, and child-friendly wording.
+*   **M-BATTLE-PROFILE-PROGRESSION-2**: add market-grade battle profile progression with level, honor score, capture ratio, streaks, tactical rating, Mirror mastery, story rank, puzzle league, badges, and season-ready schema.
 *   **Paused Until Sequenced Later**: runtime GenAI adapter, story implementation expansion, 3D visuals, multiplayer, and E2EE remain future phases rather than the immediate next milestone.
