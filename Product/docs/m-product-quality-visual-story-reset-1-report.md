@@ -73,3 +73,4 @@ The app should describe current visuals as a Mahabharata/Kurukshetra-inspired pl
 - Story still reuses puzzle mechanics internally.
 - Full campaign reward/victory loops are future work.
 - Realistic/stylized 3D battlefield work remains a separate milestone.
+- Follow-up screenshot review showed that this milestone did not fully solve frontend production layout quality. The `/play` screen could still overlap board, controls, review actions, and history at normal desktop widths. `M-FRONTEND-PRODUCTION-REDESIGN-1` supersedes the visual layout portion with a shared app shell, rebuilt Play/Profile layouts, and screenshot/bounding-box QA.

@@ -27,7 +27,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - **Backend / Full Stack**: Supabase Auth, Supabase Storage, RLS policies, cloud backup service wrapper, account linking.
 - **Forward Deployment**: Environment configuration, verification scripts, CI-ready commands, safe fallback when cloud env is missing.
 - **GenAI-readiness**: MIRROR structures personalization and coaching-ready data for future integration. *(Note: Runtime GenAI conversational coaching is a future milestone, not currently implemented).*
-- **Product Quality**: shared promotion legality guard, product mode contracts, Story campaign reset, visual honesty audit, design-system cleanup, and browser visual QA.
+- **Product Quality**: shared promotion legality guard, product mode contracts, Story campaign reset, visual honesty audit, production app shell, reusable UI components, rebuilt Play/Profile layouts, screenshot artifacts, and bounding-box visual QA.
 - **Creativity**: Mahabharata/Kurukshetra-inspired placeholder theme, Story Acts I-III campaign shell, Pandava/Kaurava visual identity, custom audio FX.
 
 ## Technical Architecture
@@ -43,6 +43,10 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Advanced Analytics Dashboard Report](docs/m-advanced-analytics-dashboard-1-report.md)
 - [Adaptive Clue Chess Report](docs/m-clue-chess-adaptive-2-report.md)
 - [Product Quality Visual Story Reset Report](docs/m-product-quality-visual-story-reset-1-report.md)
+- [Frontend Production Redesign Report](docs/m-frontend-production-redesign-1-report.md)
+- [Frontend Forensic Audit](docs/frontend-forensic-audit.md)
+- [Frontend Design System](docs/frontend-design-system.md)
+- [Frontend Responsive QA](docs/frontend-responsive-qa.md)
 - [Product Mode Contracts](docs/product-mode-contracts.md)
 - [Story Campaign Redesign Plan](docs/story-campaign-redesign-plan.md)
 - [Visual Reality Audit](docs/visual-reality-audit.md)
@@ -63,7 +67,7 @@ MIRROR includes a real local-first Python and SQL analytics layer that runs on e
 - **Game Review Pro analytics**: backup exports and the Python/SQL layer include `game_reviews`, reviewed-game counts, review CP-loss, review blunders/mistakes, weakest phase, and most common review label.
 - **In-app Advanced Analytics Dashboard**: `/analytics` turns local IndexedDB records into player intelligence, review trends, StyleVector bars, weak motifs, puzzle review queue, imported-game coverage, Mirror feedback, story progress, and prioritized next actions.
 - **Adaptive Clue Chess**: `/clue-chess` now supports Adaptive Training, Review Mode, Streak Mode, Boss Puzzle Mode, and Kids Mode. It uses clue levels 1-5, no-repeat clue memory, due-review prioritization, local evidence badges, final reveal, deterministic scoring, and deep links from Analytics/Game Review.
-- **Product-quality reset**: promotion dialogs are guarded by shared chess.js legality checks, Story presents as a campaign surface rather than Clue Chess, and the app has a shared design-system polish layer for major screens.
+- **Product-quality reset**: promotion dialogs are guarded by shared chess.js legality checks, Story presents as a campaign surface rather than Clue Chess, and the app now has a production-grade shared shell, navigation hierarchy, UI primitives, rebuilt Play/Profile layouts, and screenshot/bounding-box visual QA.
 - **Action-first analytics**: every dashboard section ends in a recommendation or an explicit insufficient-data note instead of decorative charts.
 - **Behavioral analytics**: StyleVector is treated as MIRROR's behavioral personalization layer, with aggression, risk, time-pressure, tactical weakness, and positional preference features.
 - **Local-first pipeline**: the CLI reads local JSON and writes CSV, Markdown, and JSON artifacts without cloud credentials.
@@ -129,6 +133,7 @@ node scripts/run-game-review-pro-verification.mjs
 node scripts/run-analytics-dashboard-verification.mjs
 node scripts/run-clue-chess-adaptive-verification.mjs
 node scripts/run-product-quality-visual-check.mjs
+node scripts/run-frontend-production-redesign-check.mjs
 ```
 
 ## Screenshots
@@ -167,6 +172,7 @@ node scripts/run-product-quality-visual-check.mjs
 - `v1.19.4-advanced-analytics-dashboard-1`
 - `v1.19.5-clue-chess-adaptive-2`
 - `v1.19.6-product-quality-visual-story-reset-1`
+- `v1.19.7-frontend-production-redesign-1`
 
 ## Market-Grade Product Roadmap
 - `M-STORY-CAMPAIGN-LOOP-1`: implement mission intro, victory/reward screen, chapter outcome handling, and boss encounter structure.

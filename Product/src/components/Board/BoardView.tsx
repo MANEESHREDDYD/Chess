@@ -30,6 +30,8 @@ type PendingPromotion = {
   to: string;
 } | null;
 
+const MAX_BOARD_WIDTH = 680;
+
 export function BoardView({
   fen,
   playerColor,
@@ -68,7 +70,7 @@ export function BoardView({
 
     const syncBoardWidth = () => {
       const width = Math.floor(frame.clientWidth);
-      if (width > 0) setBoardWidth(Math.min(520, width));
+      if (width > 0) setBoardWidth(Math.min(MAX_BOARD_WIDTH, width));
     };
 
     syncBoardWidth();
@@ -240,7 +242,7 @@ export function BoardView({
   const isMahabharata = themeManifest?.id === 'mahabharata';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '520px' }}>
+    <div className="board-shell">
       {isMahabharata && (
         <div style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: 600, textAlign: playerColor === 'white' ? 'left' : 'right', opacity: 0.8 }}>
           {playerColor === 'white' ? 'Kaurava (Black)' : 'Pandava (White)'}

@@ -1,20 +1,28 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
 import { BoardView } from '../components/Board/BoardView';
-import { useGameStore, type Difficulty } from '../state/gameStore';
-import { useSettingsStore } from '../state/settingsStore';
+import { PageFrame } from '../components/layout/PageFrame';
+import { PageHeader } from '../components/layout/PageHeader';
+import { Badge } from '../components/ui/Badge';
+import { Button, ButtonLink } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
+import { SegmentedControl } from '../components/ui/SegmentedControl';
+import { TableCard } from '../components/ui/TableCard';
 import { getLocalMatchesForPlayer, type LocalMatchRecord } from '../data/db';
 import { getStockfishDiagnostics } from '../engine/stockfishBridge';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
-import { usePlayerStore } from '../state/playerStore';
-import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
 import { useAudioFx } from '../audio/useAudioFx';
+import { useGameStore, type Difficulty } from '../state/gameStore';
+import { usePlayerStore } from '../state/playerStore';
+import { useSettingsStore } from '../state/settingsStore';
 
 declare global {
   interface Window {
     __MIRROR_PLAY_TEST__?: {
       startGame: (side: 'white' | 'black' | 'random', difficulty?: Difficulty) => void;
       makePlayerMove: (from: string, to: string, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
+      forceGameOverForLayout: (recordId: string) => void;
       getState: () => {
         status: string;
         playerColor: string;
@@ -28,6 +36,13 @@ declare global {
     };
   }
 }
+
+const DIFFICULTY_OPTIONS: Array<{ value: Difficulty; label: string }> = [
+  { value: 'Beginner', label: 'Beginner' },
+  { value: 'Casual', label: 'Casual' },
+  { value: 'Club', label: 'Club' },
+  { value: 'Strong', label: 'Strong' },
+];
 
 export default function Play() {
   const status = useGameStore((s) => s.status);
@@ -45,6 +60,7 @@ export default function Play() {
   const fen = useGameStore((s) => s.fen);
   const history = useGameStore((s) => s.history);
   const currentDifficulty = useGameStore((s) => s.difficulty);
+  const savedRecordId = useGameStore((s) => s.savedRecordId);
 
   useAudioFx(history);
 
@@ -55,7 +71,6 @@ export default function Play() {
   const [themeManifest, setThemeManifest] = useState<Awaited<ReturnType<typeof loadThemeManifest>>>(null);
   const [themeError, setThemeError] = useState<string | null>(null);
   const [localMatches, setLocalMatches] = useState<LocalMatchRecord[]>([]);
-
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Club');
 
   useEffect(() => {
@@ -64,6 +79,20 @@ export default function Play() {
     window.__MIRROR_PLAY_TEST__ = {
       startGame,
       makePlayerMove,
+      forceGameOverForLayout: (recordId: string) => {
+        useGameStore.setState({
+          status: 'game-over',
+          result: 'Draw',
+          resultLabel: 'draw',
+          playerColor: 'white',
+          engineThinking: false,
+          enginePhase: 'idle',
+          engineError: null,
+          savedRecordId: recordId,
+          history: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6'],
+          difficulty: 'Club',
+        });
+      },
       getState: () => {
         const state = useGameStore.getState();
         return {
@@ -88,7 +117,7 @@ export default function Play() {
     if (status === 'idle') {
       startGame('random', selectedDifficulty);
     }
-  }, [status, startGame, selectedDifficulty]);
+  }, [selectedDifficulty, startGame, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,26 +141,21 @@ export default function Play() {
       }
     }
     void loadTheme();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeTheme]);
 
   useEffect(() => {
-    if (status === 'game-over' && activePlayerId) {
-      getLocalMatchesForPlayer(activePlayerId).then(matches => {
-        setLocalMatches(matches);
-      });
-    }
-  }, [status, activePlayerId]);
-
-  useEffect(() => {
-    if (activePlayerId && status === 'idle') {
-      getLocalMatchesForPlayer(activePlayerId).then(matches => {
-        setLocalMatches(matches);
-      });
+    if (!activePlayerId) return;
+    if (status === 'game-over' || status === 'idle') {
+      void getLocalMatchesForPlayer(activePlayerId).then((matches) => setLocalMatches(matches));
     }
   }, [activePlayerId, status]);
 
-
+  const statusLabel = getStatusLabel(status, result, engineThinking, enginePhase);
+  const statusVariant = enginePhase === 'unavailable' || enginePhase === 'retry-failed' ? 'danger' : 'active';
+  const activeThemeLabel = activeTheme === 'mahabharata' ? 'Kurukshetra' : 'Classic';
 
   const handleDownloadPgn = () => {
     const pgn = exportPgn();
@@ -160,7 +184,7 @@ export default function Play() {
       completed_at: match.completed_at,
       engine_settings: {
         difficulty: match.difficulty,
-      }
+      },
     };
     const json = JSON.stringify(exportRecord, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -179,177 +203,218 @@ export default function Play() {
   };
 
   return (
-    <div className="play">
-      <aside className="play-sidebar">
-        <h2 className="play-title">Match</h2>
-        <dl className="play-meta">
-          <dt>You play</dt>
-          <dd>{playerColor === 'white' ? 'White' : 'Black'}</dd>
-          <dt>Opponent</dt>
-          <dd>Stockfish ({currentDifficulty})</dd>
-          <dt>Theme</dt>
-          <dd>{activeTheme === 'standard' ? 'Standard' : 'Kurukshetra'}</dd>
-          <dt>Status</dt>
-          <dd>
-            {status === 'playing' && (
-              enginePhase === 'unavailable' || enginePhase === 'retry-failed'
-                ? 'Engine unavailable'
-                : engineThinking
-                ? enginePhase === 'starting'
-                  ? 'Engine starting...'
-                  : enginePhase === 'restarting'
-                    ? 'Engine restarting...'
-                    : 'Engine thinking...'
-                : 'Your move'
-            )}
-            {status === 'game-over' && (result ?? 'Game over')}
-            {status === 'idle' && 'Setting up...'}
-          </dd>
-        </dl>
-
-        {engineError && (
-          <div style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem', padding: '0.5rem', background: '#ffebee', borderRadius: '4px' }}>
-            <div>{engineError}</div>
-            {import.meta.env.DEV && engineErrorDetails && (
-              <details style={{ marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
-                <summary>Debug details</summary>
-                <div>{engineErrorDetails}</div>
-              </details>
-            )}
+    <PageFrame className="play-page">
+      <PageHeader
+        actions={
+          <div className="play-status-strip" data-qa="play-status-strip">
+            <Badge variant="neutral">You play {playerColor === 'white' ? 'White' : 'Black'}</Badge>
+            <Badge variant="info">Stockfish {currentDifficulty}</Badge>
+            <Badge variant="neutral">{activeThemeLabel}</Badge>
+            <Badge variant={statusVariant}>{statusLabel}</Badge>
           </div>
-        )}
+        }
+        eyebrow="Regular Chess"
+        title="Match"
+      >
+        Board-first Stockfish play with contained controls, review tools, and local match history.
+      </PageHeader>
 
-        <div className="play-actions">
-          <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {(['Beginner', 'Casual', 'Club', 'Strong'] as Difficulty[]).map(d => (
-              <button 
-                key={d} 
-                className={`btn ${selectedDifficulty === d ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setSelectedDifficulty(d)}
-                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+      <div className="play play-layout" data-qa="play-layout">
+        <aside className="play-sidebar" data-qa="play-controls">
+          <Card className="play-control-card" variant="game-panel">
+            <h2 className="play-title">Match controls</h2>
+            <dl className="play-meta play-meta--chips">
+              <div>
+                <dt>You play</dt>
+                <dd>{playerColor === 'white' ? 'White' : 'Black'}</dd>
+              </div>
+              <div>
+                <dt>Opponent</dt>
+                <dd>Stockfish ({currentDifficulty})</dd>
+              </div>
+              <div>
+                <dt>Theme</dt>
+                <dd>{activeThemeLabel}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{statusLabel}</dd>
+              </div>
+            </dl>
 
-          <button
-            className="btn btn-secondary"
-            onClick={() => setActiveTheme(activeTheme === 'standard' ? 'kurukshetra' : 'standard')}
-          >
-            Theme · {activeTheme === 'standard' ? 'Standard' : 'Kurukshetra'}
-          </button>
-          <button className="btn btn-secondary" onClick={() => startGame('white', selectedDifficulty)}>
-            New game · White
-          </button>
-          <button className="btn btn-secondary" onClick={() => startGame('black', selectedDifficulty)}>
-            New game · Black
-          </button>
-          <button className="btn btn-secondary" onClick={() => startGame('random', selectedDifficulty)}>
-            New game · Random
-          </button>
-          {status === 'game-over' && (
-            <div style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>
-              Game Over - {result}
-            </div>
-          )}
-          {status === 'playing' && (
-            <>
-              <button className="btn btn-warn" onClick={resign}>
-                Resign
-              </button>
-              <button className="btn btn-ghost" onClick={claimDraw}>
-                Claim Draw
-              </button>
-            </>
-          )}
-          <button className="btn btn-ghost" onClick={handleDownloadPgn}>
-            Download PGN
-          </button>
-        </div>
+            {engineError ? (
+              <section className="ui-alert ui-alert--danger">
+                <strong>{engineError}</strong>
+                {import.meta.env.DEV && engineErrorDetails ? (
+                  <details>
+                    <summary>Debug details</summary>
+                    <pre>{engineErrorDetails}</pre>
+                  </details>
+                ) : null}
+              </section>
+            ) : null}
 
-        {history.length > 0 && (
-          <div style={{ marginTop: '1rem', maxHeight: '200px', overflowY: 'auto', background: '#f5f5f5', padding: '0.5rem', borderRadius: '4px' }}>
-            <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0' }}>Move History</h3>
-            <ol style={{ paddingLeft: '1.5rem', margin: 0, fontSize: '0.9rem' }}>
-              {Array.from({ length: Math.ceil(history.length / 2) }).map((_, i) => (
-                <li key={i}>
-                  {history[i * 2]} {history[i * 2 + 1] || ''}
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
-      </aside>
-
-      <section className="play-board-wrap">
-        <BoardView
-          fen={fen}
-          playerColor={playerColor}
-          status={status}
-          engineThinking={engineThinking}
-          onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
-          onPromotionCheck={handlePromotionCheck}
-          onPromotionPieceSelect={() => false}
-          themeManifest={themeManifest}
-          themeError={themeError}
-        />
-        
-        {status === 'game-over' && activePlayerId && useGameStore.getState().savedRecordId && (
-          <>
-            <AnalysisPanel
-              pgn={exportPgn()}
-              playerId={activePlayerId}
-              matchId={useGameStore.getState().savedRecordId!}
-              matchType="computer"
+            <SegmentedControl
+              label="Difficulty"
+              onChange={setSelectedDifficulty}
+              options={DIFFICULTY_OPTIONS}
+              value={selectedDifficulty}
             />
-            <p className="play-note" style={{ marginTop: '0.75rem' }}>
-              <Link to={`/review/local_match/${useGameStore.getState().savedRecordId}`}>Open Game Review Pro</Link>
-            </p>
-          </>
-        )}
-        
-        {localMatches.length > 0 && (
-          <div style={{ marginTop: '2rem', borderTop: '1px solid #ccc', paddingTop: '1rem' }}>
-            <h3>Local Match History</h3>
-            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Mode</th>
-                  <th>Side</th>
-                  <th>Difficulty</th>
-                  <th>Moves</th>
-                  <th>Result</th>
-                  <th>Export</th>
-                  <th>Review</th>
-                </tr>
-              </thead>
-              <tbody>
-                {localMatches.slice(0, 10).map(match => (
-                  <tr key={match.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '0.5rem 0' }}>{new Date(match.created_at).toLocaleDateString()}</td>
-                    <td>{match.mode}</td>
-                    <td>{match.side}</td>
-                    <td>{match.difficulty}</td>
-                    <td>{match.move_count}</td>
-                    <td>{match.result}</td>
-                    <td>
-                      <button className="btn btn-ghost" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleExportJson(match)}>
-                        JSON
-                      </button>
-                    </td>
-                    <td>
-                      <Link to={`/review/local_match/${match.id}`}>Review</Link>
-                    </td>
-                  </tr>
+
+            <label className="ui-field">
+              <span>Board theme</span>
+              <select value={activeTheme} onChange={(event) => setActiveTheme(event.target.value)}>
+                <option value="standard">Classic</option>
+                <option value="mahabharata">Kurukshetra</option>
+              </select>
+            </label>
+
+            <div className="play-action-group" aria-label="New game actions">
+              <Button onClick={() => startGame('white', selectedDifficulty)} variant="primary">
+                New game - White
+              </Button>
+              <Button onClick={() => startGame('black', selectedDifficulty)} variant="secondary">
+                New game - Black
+              </Button>
+              <Button onClick={() => startGame('random', selectedDifficulty)} variant="ghost">
+                New game - Random
+              </Button>
+            </div>
+
+            {status === 'playing' ? (
+              <div className="play-action-group play-action-group--inline">
+                <Button onClick={resign} variant="danger">
+                  Resign
+                </Button>
+                <Button onClick={claimDraw} variant="ghost">
+                  Claim Draw
+                </Button>
+              </div>
+            ) : null}
+
+            <Button onClick={handleDownloadPgn} variant="ghost">
+              Download PGN
+            </Button>
+          </Card>
+        </aside>
+
+        <section className="play-board-wrap" data-qa="play-board">
+          <Card className="play-board-card" variant="battlefield">
+            <BoardView
+              engineThinking={engineThinking}
+              fen={fen}
+              onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
+              onPromotionCheck={handlePromotionCheck}
+              onPromotionPieceSelect={() => false}
+              playerColor={playerColor}
+              status={status}
+              themeError={themeError}
+              themeManifest={themeManifest}
+            />
+          </Card>
+        </section>
+
+        <aside className="play-side-panel" data-qa="play-history">
+          <Card className="play-review-card" variant="game-panel">
+            <h2>Review tools</h2>
+            {status === 'game-over' && result ? <Badge variant="success">Game over - {result}</Badge> : null}
+            {status === 'game-over' && activePlayerId && savedRecordId ? (
+              <>
+                <AnalysisPanel
+                  matchId={savedRecordId}
+                  matchType="computer"
+                  pgn={exportPgn()}
+                  playerId={activePlayerId}
+                />
+                <ButtonLink to={`/review/local_match/${savedRecordId}`} variant="primary">
+                  Open Game Review Pro
+                </ButtonLink>
+              </>
+            ) : (
+              <EmptyState eyebrow="After the game" title="Review unlocks at game end">
+                Finish this match to analyze it locally and open Game Review Pro.
+              </EmptyState>
+            )}
+          </Card>
+
+          <Card className="play-move-card" variant="default">
+            <h2>Move history</h2>
+            {history.length > 0 ? (
+              <ol className="play-move-list">
+                {Array.from({ length: Math.ceil(history.length / 2) }).map((_, index) => (
+                  <li key={index}>
+                    <span>{index + 1}.</span>
+                    <strong>{history[index * 2]}</strong>
+                    {history[index * 2 + 1] ? <strong>{history[index * 2 + 1]}</strong> : null}
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </div>
+              </ol>
+            ) : (
+              <p className="ui-muted">Moves will appear here as the game develops.</p>
+            )}
+          </Card>
+
+          {localMatches.length > 0 ? (
+            <TableCard
+              className="play-history-card"
+              description="Contained locally. Scroll inside the card if columns need more room."
+              title="Local Match History"
+            >
+              <table className="ui-data-table play-history-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th>Side</th>
+                    <th>Difficulty</th>
+                    <th>Moves</th>
+                    <th>Result</th>
+                    <th>Export</th>
+                    <th>Review</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {localMatches.slice(0, 10).map((match) => (
+                    <tr key={match.id}>
+                      <td>{new Date(match.created_at).toLocaleDateString()}</td>
+                      <td>{match.mode}</td>
+                      <td>{match.side}</td>
+                      <td>{match.difficulty}</td>
+                      <td>{match.move_count}</td>
+                      <td>{match.result}</td>
+                      <td>
+                        <Button onClick={() => handleExportJson(match)} size="compact" variant="ghost">
+                          JSON
+                        </Button>
+                      </td>
+                      <td>
+                        <ButtonLink size="compact" to={`/review/local_match/${match.id}`} variant="secondary">
+                          Review
+                        </ButtonLink>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableCard>
+          ) : null}
+        </aside>
+      </div>
+    </PageFrame>
   );
+}
+
+function getStatusLabel(
+  status: ReturnType<typeof useGameStore.getState>['status'],
+  result: ReturnType<typeof useGameStore.getState>['result'],
+  engineThinking: boolean,
+  enginePhase: ReturnType<typeof useGameStore.getState>['enginePhase']
+): string {
+  if (status === 'idle') return 'Setting up';
+  if (status === 'game-over') return result ?? 'Game over';
+  if (enginePhase === 'unavailable' || enginePhase === 'retry-failed') return 'Engine unavailable';
+  if (!engineThinking) return 'Your move';
+  if (enginePhase === 'starting') return 'Engine starting';
+  if (enginePhase === 'restarting') return 'Engine restarting';
+  return 'Engine thinking';
 }

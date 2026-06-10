@@ -101,7 +101,7 @@ export function AnalysisPanel({ pgn, playerId, matchId, matchType, styleVector }
 
   return (
     <div className="analysis-panel" style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--surface-sunken)', borderRadius: '8px', textAlign: 'center' }}>
-      <button className="btn-primary" onClick={handleAnalyze}>
+      <button className="btn btn-primary" onClick={handleAnalyze}>
         Analyze Game
       </button>
       {error && <p style={{ color: 'var(--danger-color)', marginTop: '0.5rem' }}>{error}</p>}

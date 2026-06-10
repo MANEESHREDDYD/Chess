@@ -1,19 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageFrame } from '../components/layout/PageFrame';
+import { PageHeader } from '../components/layout/PageHeader';
+import { Badge } from '../components/ui/Badge';
+import { ButtonLink } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
+import { MetricCard } from '../components/ui/MetricCard';
+import { getPlayerProgressSummary, scanAndGrantAchievements, type PlayerProgressSummary } from '../progression/progression';
 import { usePlayerStore } from '../state/playerStore';
-import { 
-  getPlayerProgressSummary, 
-  scanAndGrantAchievements, 
-  type PlayerProgressSummary 
-} from '../progression/progression';
 
 export const Progress: React.FC = () => {
   const navigate = useNavigate();
-  const activePlayer = usePlayerStore(s => s.activePlayer);
+  const activePlayer = usePlayerStore((s) => s.activePlayer);
+  const loadActivePlayer = usePlayerStore((s) => s.loadActivePlayer);
   const [summary, setSummary] = useState<PlayerProgressSummary | null>(null);
+  const [attemptedProfileLoad, setAttemptedProfileLoad] = useState(false);
 
   useEffect(() => {
     if (!activePlayer) {
+      if (!attemptedProfileLoad) {
+        void loadActivePlayer().finally(() => setAttemptedProfileLoad(true));
+        return;
+      }
       navigate('/');
       return;
     }
@@ -25,16 +34,20 @@ export const Progress: React.FC = () => {
       if (isMounted) setSummary(data);
     };
 
-    load();
+    void load();
 
-    return () => { isMounted = false; };
-  }, [activePlayer, navigate]);
+    return () => {
+      isMounted = false;
+    };
+  }, [activePlayer, attemptedProfileLoad, loadActivePlayer, navigate]);
 
   if (!activePlayer || !summary) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[var(--surface-color)] text-[var(--text-color)]">
-        <p>Loading Progression...</p>
-      </div>
+      <PageFrame className="profile-page">
+        <EmptyState eyebrow="Profile" title="Loading player profile">
+          MIRROR is preparing your local progression summary.
+        </EmptyState>
+      </PageFrame>
     );
   }
 
@@ -43,106 +56,132 @@ export const Progress: React.FC = () => {
   const xpInCurrentLevel = summary.total_xp - currentLevelBaseXp;
   const xpRequiredForNext = nextLevelXp - currentLevelBaseXp;
   const progressPercent = Math.min(100, Math.max(0, (xpInCurrentLevel / xpRequiredForNext) * 100));
+  const xpText = `${xpInCurrentLevel} / ${xpRequiredForNext} XP`;
 
   return (
-    <div className="min-h-screen bg-[var(--surface-color)] text-[var(--text-color)] p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex justify-between items-end border-b border-[var(--border-color)] pb-4">
+    <PageFrame className="profile-page">
+      <PageHeader
+        actions={<Badge variant="active">{summary.current_streak_days} day streak</Badge>}
+        eyebrow="Profile and progression"
+        title={activePlayer.display_name}
+      >
+        Your local MIRROR identity, training activity, and next improvement action.
+      </PageHeader>
+
+      <section className="profile-hero">
+        <Card className="profile-hero__main" variant="battlefield">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--primary-color)]">Player Progression</h1>
-            <p className="text-sm opacity-80 mt-1">{activePlayer.display_name}</p>
+            <span className="page-header__eyebrow">Battle profile preview</span>
+            <h2>Level {summary.level}</h2>
+            <p>{summary.next_action}</p>
           </div>
-          <button 
-            onClick={() => navigate('/')} 
-            className="px-4 py-2 border border-[var(--border-color)] rounded hover:bg-[var(--primary-color)] hover:text-white transition-colors"
-          >
-            Back Home
-          </button>
-        </div>
-
-        <div className="flex justify-end">
-          <Link to="/backup" className="text-sm text-[var(--ink-soft)] underline hover:text-[var(--primary-color)]">
-            Backup your progress
-          </Link>
-        </div>
-
-        {/* Level and XP */}
-        <section className="bg-[var(--surface-color-alt)] border border-[var(--border-color)] rounded-lg p-6 flex flex-col md:flex-row items-center gap-6">
-          <div className="flex-shrink-0 text-center">
-            <div className="text-5xl font-bold text-[var(--primary-color)]">{summary.level}</div>
-            <div className="text-xs uppercase tracking-widest opacity-70 mt-1">Level</div>
-          </div>
-          <div className="flex-grow w-full">
-            <div className="flex justify-between text-sm mb-2">
-              <span>{summary.total_xp} XP</span>
-              <span className="opacity-70">{nextLevelXp} XP</span>
+          <div className="profile-xp">
+            <div>
+              <span>{xpText}</span>
+              <strong>{Math.round(progressPercent)}%</strong>
             </div>
-            <div className="h-4 bg-[var(--surface-color)] rounded-full overflow-hidden border border-[var(--border-color)]">
-              <div 
-                className="h-full bg-[var(--primary-color)] transition-all duration-1000"
-                style={{ width: `${progressPercent}%` }}
-              />
+            <div className="profile-xp__track" aria-label={`XP progress ${xpText}`}>
+              <span style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
-          <div className="flex-shrink-0 text-center border-l border-[var(--border-color)] pl-6 min-w-[120px]">
-            <div className="text-3xl font-bold text-orange-400">{summary.current_streak_days}</div>
-            <div className="text-xs uppercase tracking-widest opacity-70 mt-1">Day Streak</div>
+        </Card>
+        <Card className="profile-backup-card" variant="game-panel">
+          <h2>Backup your progress</h2>
+          <p>Export your local gameplay, puzzle, review, and analytics data when you want a manual copy.</p>
+          <ButtonLink to="/backup" variant="primary">
+            Open Backup
+          </ButtonLink>
+        </Card>
+      </section>
+
+      <section className="profile-metric-grid" aria-label="Core profile metrics">
+        <MetricCard label="Games played" value={summary.total_games} action="Play or import games to expand this." />
+        <MetricCard label="Mirror matches" value={summary.total_mirror_matches} action="Use Mirror to pressure-test your habits." />
+        <MetricCard label="Analyses saved" value={summary.total_analyses} action="Review games to unlock CP-loss trends." />
+        <MetricCard
+          label="Story chapters"
+          value={`${summary.story_chapters_complete} / ${summary.story_total_chapters}`}
+          action="Continue campaign missions when ready."
+        />
+        <MetricCard
+          label="Puzzles solved"
+          value={`${summary.clue_solved} / ${summary.clue_attempts}`}
+          action="Adaptive Clue Chess improves this signal."
+        />
+        <MetricCard
+          label="Solve rate"
+          value={`${summary.clue_solved_rate.toFixed(1)}%`}
+          action={summary.weakest_motif ? `Train ${summary.weakest_motif.replace(/_/g, ' ')} next.` : 'More puzzle data needed.'}
+        />
+      </section>
+
+      <section className="profile-layout">
+        <Card className="profile-progression-card" variant="elevated">
+          <h2>Progression</h2>
+          <div className="profile-stat-list">
+            <ProfileStat label="XP" value={xpText} />
+            <ProfileStat label="Level" value={`Level ${summary.level}`} />
+            <ProfileStat label="Streak" value={`${summary.current_streak_days} day streak`} />
+            <ProfileStat
+              label="Story"
+              value={`${summary.story_chapters_complete} / ${summary.story_total_chapters} chapters`}
+            />
+            <ProfileStat label="Multi-move solved" value={summary.multi_move_solved} />
+            <ProfileStat
+              label="Weakest motif"
+              value={summary.weakest_motif ? summary.weakest_motif.replace(/_/g, ' ') : 'Insufficient data'}
+            />
           </div>
-        </section>
+        </Card>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Activity Stats */}
-          <div className="bg-[var(--surface-color-alt)] border border-[var(--border-color)] rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4 border-b border-[var(--border-color)] pb-2">Activity</h2>
-            <ul className="space-y-3">
-              <li className="flex justify-between"><span>Games Played</span> <strong>{summary.total_games}</strong></li>
-              <li className="flex justify-between"><span>Mirror Matches</span> <strong>{summary.total_mirror_matches}</strong></li>
-              <li className="flex justify-between"><span>Analyses Saved</span> <strong>{summary.total_analyses}</strong></li>
-              <li className="flex justify-between"><span>Story Chapters</span> <strong>{summary.story_chapters_complete} / {summary.story_total_chapters}</strong></li>
-            </ul>
+        <Card className="profile-action-card" variant="game-panel">
+          <h2>Training next action</h2>
+          <p>{summary.next_action}</p>
+          <div className="profile-action-grid">
+            <ButtonLink to="/analytics" variant="primary">
+              Open Analytics
+            </ButtonLink>
+            <ButtonLink to="/clue-chess" variant="secondary">
+              Train Clue Chess
+            </ButtonLink>
+            <ButtonLink to="/mirror" variant="secondary">
+              Play Mirror
+            </ButtonLink>
+            <ButtonLink to="/import-pgn" variant="ghost">
+              Import Games
+            </ButtonLink>
           </div>
+        </Card>
+      </section>
 
-          {/* Clue Stats */}
-          <div className="bg-[var(--surface-color-alt)] border border-[var(--border-color)] rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4 border-b border-[var(--border-color)] pb-2">Tactics</h2>
-            <ul className="space-y-3">
-              <li className="flex justify-between"><span>Puzzles Solved</span> <strong>{summary.clue_solved} / {summary.clue_attempts}</strong></li>
-              <li className="flex justify-between"><span>Solve Rate</span> <strong>{summary.clue_solved_rate.toFixed(1)}%</strong></li>
-              <li className="flex justify-between"><span>Multi-Move Solved</span> <strong>{summary.multi_move_solved}</strong></li>
-              {summary.weakest_motif && (
-                <li className="flex justify-between text-red-400"><span>Weakest Motif</span> <strong className="capitalize">{summary.weakest_motif.replace(/_/g, ' ')}</strong></li>
-              )}
-            </ul>
+      <section className="profile-activity">
+        <h2>Recent activity</h2>
+        {summary.achievements.length === 0 ? (
+          <EmptyState eyebrow="Activity" title="No achievements earned yet">
+            Play, review, import, or train to start filling your local profile timeline.
+          </EmptyState>
+        ) : (
+          <div className="profile-achievement-grid">
+            {summary.achievements.map((achievement) => (
+              <Card key={achievement.id} className="profile-achievement" variant="default">
+                <Badge variant="success">Achievement</Badge>
+                <h3>{achievement.title}</h3>
+                <p>{achievement.description}</p>
+                <time>{new Date(achievement.earned_at).toLocaleDateString()}</time>
+              </Card>
+            ))}
           </div>
-        </section>
-
-        {/* Next Action */}
-        <section className="bg-[var(--primary-color)] text-white rounded-lg p-6 text-center shadow-lg">
-          <h2 className="text-sm uppercase tracking-widest opacity-80 mb-2">Recommended Next Action</h2>
-          <p className="text-xl font-bold">{summary.next_action}</p>
-        </section>
-
-        {/* Achievements */}
-        <section>
-          <h2 className="text-2xl font-bold mb-4">Achievements</h2>
-          {summary.achievements.length === 0 ? (
-            <p className="opacity-70 italic">No achievements earned yet. Keep playing!</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {summary.achievements.map(a => (
-                <div key={a.id} className="bg-[var(--surface-color-alt)] border border-[var(--border-color)] rounded p-4 flex flex-col">
-                  <span className="font-bold text-[var(--primary-color)]">{a.title}</span>
-                  <span className="text-sm opacity-80 mt-1">{a.description}</span>
-                  <span className="text-xs opacity-50 mt-auto pt-4 text-right">
-                    {new Date(a.earned_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-      </div>
-    </div>
+        )}
+      </section>
+    </PageFrame>
   );
 };
+
+function ProfileStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}

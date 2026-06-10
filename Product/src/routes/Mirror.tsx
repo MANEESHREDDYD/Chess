@@ -740,7 +740,7 @@ export default function Mirror() {
         <div className="play-actions">
           <button
             className="btn btn-secondary"
-            onClick={() => setActiveTheme(activeTheme === 'standard' ? 'kurukshetra' : 'standard')}
+            onClick={() => setActiveTheme(activeTheme === 'standard' ? 'mahabharata' : 'standard')}
           >
             Theme - {activeTheme === 'standard' ? 'Standard' : 'Kurukshetra'}
           </button>

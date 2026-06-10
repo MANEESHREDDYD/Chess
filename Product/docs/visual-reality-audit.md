@@ -20,6 +20,7 @@ MIRROR currently has a Mahabharata/Kurukshetra-inspired 2D theme, audio cues, bo
 - Promotion dialog uses a centered modal variant and clearer styling.
 - Story landing now uses campaign act paths instead of a clue-first list.
 - Shared design-system classes improve panels, buttons, badges, mode cards, and empty states.
+- A later frontend production redesign added a shared app shell, grouped navigation, reusable UI primitives, rebuilt Play/Profile layouts, screenshot artifacts, and bounding-box QA. That milestone improves product presentation but still does not implement realistic 3D visuals.
 
 ## Visual Target
 
