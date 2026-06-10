@@ -1,14 +1,37 @@
 import { Chess } from 'chess.js';
+import {
+  STOCKFISH_BOOT_TIMEOUT_CODES,
+  STOCKFISH_BOOT_TIMEOUTS_MS,
+  type StockfishBootEvent,
+  type StockfishBootFlags,
+  type StockfishBootPhase,
+  type StockfishEnvironment,
+} from './stockfishTelemetry';
+import stockfishWorkerUrl from './stockfish.worker.ts?worker&url';
 
 interface EngineMessage {
-  type?: 'ready' | 'error' | 'bestmove' | 'info';
+  type?: 'ready' | 'error' | 'bestmove' | 'info' | 'worker_booted' | 'boot_event';
   requestId?: number | null;
+  request_id?: number | null;
   move?: string | null;
   cp?: number | null;
   mate?: number | null;
   multipv?: number;
   pv?: string[];
   message?: string;
+  phase?: StockfishBootPhase;
+  elapsed_ms?: number;
+  timestamp?: string;
+  worker_url?: string;
+  worker_source_kind?: string;
+  environment?: StockfishEnvironment;
+  user_agent?: string;
+  raw?: string;
+  wasm_path?: string;
+  wasm_reached?: boolean;
+  wasm_content_type?: string | null;
+  uciok_seen?: boolean;
+  readyok_seen?: boolean;
 }
 
 interface WorkerCommand {
@@ -82,11 +105,17 @@ export type StockfishStateListener = (
   failure: StockfishEngineError | null
 ) => void;
 
-const DEFAULT_WORKER_URL = new URL('./stockfish.worker.ts', import.meta.url);
-const DEFAULT_READY_TIMEOUT_MS = 8000;
+const DEFAULT_WORKER_URL = stockfishWorkerUrl;
+const DEFAULT_READY_TIMEOUT_MS =
+  STOCKFISH_BOOT_TIMEOUTS_MS.worker_booted +
+  STOCKFISH_BOOT_TIMEOUTS_MS.stockfish_script_loaded +
+  STOCKFISH_BOOT_TIMEOUTS_MS.uciok_received +
+  STOCKFISH_BOOT_TIMEOUTS_MS.readyok_received;
 const DEFAULT_SEARCH_READY_TIMEOUT_MS = 6000;
 const DEFAULT_SEARCH_TIMEOUT_MS = 15000;
 const DEFAULT_HEALTHCHECK_DEPTH = 8;
+const MAX_DIAGNOSTIC_EVENTS = 80;
+const MAX_RAW_WORKER_MESSAGES = 40;
 
 export class StockfishEngineError extends Error {
   readonly code: string;
@@ -107,11 +136,30 @@ export interface StockfishHealthCheckResult {
   bestMove: string | null;
   evaluation: Evaluation;
   state: StockfishEngineState;
+  diagnostics?: StockfishDiagnosticsSnapshot;
   error?: {
     code: string;
     message: string;
     details: string | null;
   };
+}
+
+export interface StockfishDiagnosticsSnapshot {
+  state: StockfishEngineState;
+  lastFailure: {
+    code: string;
+    message: string;
+    details: string | null;
+  } | null;
+  environment: StockfishEnvironment;
+  userAgent: string;
+  workerUrl: string;
+  workerSourceKind: string;
+  bootStartedAt: string | null;
+  bootElapsedMs: number | null;
+  bootFlags: StockfishBootFlags;
+  bootTimeline: StockfishBootEvent[];
+  rawWorkerMessages: string[];
 }
 
 class StockfishEngineController {
@@ -121,6 +169,14 @@ class StockfishEngineController {
   private bootResolve: (() => void) | null = null;
   private bootReject: ((error: Error) => void) | null = null;
   private bootTimer: number | null = null;
+  private bootStartedAtMs: number | null = null;
+  private bootStartedAtIso: string | null = null;
+  private expectedBootPhase: keyof typeof STOCKFISH_BOOT_TIMEOUTS_MS | null = null;
+  private workerUrl = DEFAULT_WORKER_URL;
+  private workerSourceKind = 'vite-module-worker';
+  private bootFlags: StockfishBootFlags = createEmptyBootFlags();
+  private bootTimeline: StockfishBootEvent[] = [];
+  private rawWorkerMessages: string[] = [];
   private readyWaiter: ReadyWaiter | null = null;
   private activeSearch: SearchSession | null = null;
   private lastFailure: StockfishEngineError | null = null;
@@ -155,6 +211,28 @@ class StockfishEngineController {
 
   getLastFailure(): StockfishEngineError | null {
     return this.lastFailure;
+  }
+
+  getDiagnostics(): StockfishDiagnosticsSnapshot {
+    return {
+      state: this.state,
+      lastFailure: this.lastFailure
+        ? {
+            code: this.lastFailure.code,
+            message: this.lastFailure.message,
+            details: this.lastFailure.details,
+          }
+        : null,
+      environment: getStockfishEnvironment(),
+      userAgent: getUserAgent(),
+      workerUrl: this.workerUrl,
+      workerSourceKind: this.workerSourceKind,
+      bootStartedAt: this.bootStartedAtIso,
+      bootElapsedMs: this.bootStartedAtMs === null ? null : Math.round(performance.now() - this.bootStartedAtMs),
+      bootFlags: { ...this.bootFlags },
+      bootTimeline: [...this.bootTimeline],
+      rawWorkerMessages: [...this.rawWorkerMessages],
+    };
   }
 
   subscribe(listener: StockfishStateListener): () => void {
@@ -220,6 +298,7 @@ class StockfishEngineController {
         bestMove,
         evaluation,
         state: this.getState(),
+        diagnostics: this.getDiagnostics(),
       };
     } catch (error) {
       const failure = this.normalizeError(error);
@@ -228,6 +307,7 @@ class StockfishEngineController {
         bestMove: null,
         evaluation: { cp: null, mate: null },
         state: this.getState(),
+        diagnostics: this.getDiagnostics(),
         error: {
           code: failure.code,
           message: failure.message,
@@ -334,24 +414,29 @@ class StockfishEngineController {
   private async bootWorker(timeoutMs: number): Promise<void> {
     this.clearBootTimer();
     this.lastFailure = null;
+    this.startBootDiagnostics();
     this.setState('booting');
 
-    const worker = this.createWorker();
+    let worker: Worker;
+    try {
+      worker = this.createWorker();
+    } catch (error) {
+      const failure = new StockfishEngineError(
+        'WORKER_CONSTRUCTOR_FAILED',
+        'Stockfish worker could not be constructed.',
+        this.buildFailureDetails('worker_constructing', this.formatError(error)),
+        true
+      );
+      this.recordBootEvent('boot_failed', { message: failure.message });
+      this.failBoot(failure);
+      throw failure;
+    }
     this.worker = worker;
+    this.armBootPhaseTimeout('worker_booted', Math.min(timeoutMs, STOCKFISH_BOOT_TIMEOUTS_MS.worker_booted));
 
     return new Promise<void>((resolve, reject) => {
       this.bootResolve = resolve;
       this.bootReject = reject;
-      this.bootTimer = window.setTimeout(() => {
-        this.failBoot(
-          new StockfishEngineError(
-            'ENGINE_BOOT_TIMEOUT',
-            `Stockfish worker did not become ready in time after ${timeoutMs}ms.`,
-            'The worker did not report ready after UCI startup.',
-            true
-          )
-        );
-      }, timeoutMs);
 
       try {
         this.postToWorker({ cmd: 'init' });
@@ -369,7 +454,15 @@ class StockfishEngineController {
   }
 
   private createWorker(): Worker {
+    this.recordBootEvent('worker_constructing', {
+      worker_url: this.workerUrl,
+      worker_source_kind: this.workerSourceKind,
+    });
     const worker = new Worker(DEFAULT_WORKER_URL, { type: 'module' });
+    this.recordBootEvent('worker_constructed', {
+      worker_url: this.workerUrl,
+      worker_source_kind: this.workerSourceKind,
+    });
     worker.addEventListener('message', (event: MessageEvent<EngineMessage>) => {
       this.handleMessage(event.data);
     });
@@ -378,14 +471,19 @@ class StockfishEngineController {
         new StockfishEngineError(
           this.state === 'booting' ? 'ENGINE_BOOT_FAILED' : 'ENGINE_CRASHED',
           event.message || 'Stockfish worker crashed.',
-          event.message || null,
+          this.buildFailureDetails(this.expectedBootPhase ?? 'boot_failed', event.message || null),
           true
         )
       );
     });
     worker.addEventListener('messageerror', () => {
       this.handleWorkerFailure(
-        new StockfishEngineError('ENGINE_CRASHED', 'Stockfish worker posted an unreadable message.', null, true)
+        new StockfishEngineError(
+          'ENGINE_CRASHED',
+          'Stockfish worker posted an unreadable message.',
+          this.buildFailureDetails(this.expectedBootPhase ?? 'boot_failed', 'messageerror'),
+          true
+        )
       );
     });
     return worker;
@@ -393,6 +491,32 @@ class StockfishEngineController {
 
   private handleMessage(message: EngineMessage): void {
     if (!message || typeof message !== 'object') return;
+    this.recordRawWorkerMessage(message);
+
+    if (message.type === 'worker_booted') {
+      this.recordBootEvent('worker_booted', {
+        message: 'Outer Stockfish worker script executed.',
+      });
+      this.armBootPhaseTimeout('stockfish_script_loaded', STOCKFISH_BOOT_TIMEOUTS_MS.stockfish_script_loaded);
+      return;
+    }
+
+    if (message.type === 'boot_event' && message.phase) {
+      this.recordBootEvent(message.phase, {
+        message: message.message,
+        raw: message.raw,
+        worker_url: message.worker_url,
+        worker_source_kind: message.worker_source_kind,
+        wasm_path: message.wasm_path,
+        wasm_reached: message.wasm_reached,
+        wasm_content_type: message.wasm_content_type,
+        uciok_seen: message.uciok_seen,
+        readyok_seen: message.readyok_seen,
+        request_id: message.requestId ?? message.request_id ?? null,
+      });
+      this.updateBootDeadlineFromPhase(message.phase);
+      return;
+    }
 
     if (message.type === 'ready') {
       if (typeof message.requestId === 'number' && this.readyWaiter?.requestId === message.requestId) {
@@ -411,7 +535,7 @@ class StockfishEngineController {
         new StockfishEngineError(
           this.state === 'booting' ? 'ENGINE_BOOT_FAILED' : 'ENGINE_CRASHED',
           message.message || 'Stockfish worker reported an error.',
-          message.message || null,
+          this.buildFailureDetails(this.expectedBootPhase ?? 'boot_failed', message.message || null),
           true
         )
       );
@@ -428,6 +552,130 @@ class StockfishEngineController {
     if (message.type === 'bestmove') {
       this.finishSearchSuccess(message);
     }
+  }
+
+  private startBootDiagnostics(): void {
+    this.bootStartedAtMs = performance.now();
+    this.bootStartedAtIso = new Date().toISOString();
+    this.expectedBootPhase = null;
+    this.bootFlags = createEmptyBootFlags();
+    this.bootTimeline = [];
+    this.rawWorkerMessages = [];
+  }
+
+  private recordBootEvent(phase: StockfishBootPhase, event: Partial<StockfishBootEvent> = {}): void {
+    const elapsed = this.bootStartedAtMs === null ? 0 : Math.round(performance.now() - this.bootStartedAtMs);
+    const bootEvent: StockfishBootEvent = {
+      phase,
+      elapsed_ms: typeof event.elapsed_ms === 'number' ? event.elapsed_ms : elapsed,
+      timestamp: event.timestamp ?? new Date().toISOString(),
+      worker_url: event.worker_url ?? this.workerUrl,
+      worker_source_kind: event.worker_source_kind ?? this.workerSourceKind,
+      environment: event.environment ?? getStockfishEnvironment(),
+      user_agent: event.user_agent ?? getUserAgent(),
+      message: event.message,
+      raw: event.raw,
+      wasm_path: event.wasm_path,
+      wasm_reached: event.wasm_reached,
+      wasm_content_type: event.wasm_content_type,
+      uciok_seen: event.uciok_seen,
+      readyok_seen: event.readyok_seen,
+      request_id: event.request_id,
+    };
+
+    this.bootTimeline.push(bootEvent);
+    if (this.bootTimeline.length > MAX_DIAGNOSTIC_EVENTS) {
+      this.bootTimeline.shift();
+    }
+
+    if (phase === 'worker_booted') this.bootFlags.worker_booted_seen = true;
+    if (phase === 'stockfish_script_loaded') this.bootFlags.stockfish_script_loaded_seen = true;
+    if (phase === 'uciok_received') this.bootFlags.uciok_seen = true;
+    if (phase === 'readyok_received') this.bootFlags.readyok_seen = true;
+    if (phase === 'first_search_started') this.bootFlags.first_search_started = true;
+    if (phase === 'first_bestmove_received') this.bootFlags.first_bestmove_received = true;
+    if (event.wasm_reached) this.bootFlags.wasm_path_reached = true;
+  }
+
+  private recordRawWorkerMessage(message: EngineMessage): void {
+    const compact = JSON.stringify({
+      type: message.type,
+      phase: message.phase,
+      requestId: message.requestId ?? message.request_id ?? null,
+      move: message.move,
+      cp: message.cp,
+      mate: message.mate,
+      multipv: message.multipv,
+      message: message.message,
+      raw: message.raw,
+    });
+    this.rawWorkerMessages.push(compact);
+    if (this.rawWorkerMessages.length > MAX_RAW_WORKER_MESSAGES) {
+      this.rawWorkerMessages.shift();
+    }
+  }
+
+  private updateBootDeadlineFromPhase(phase: StockfishBootPhase): void {
+    if (phase === 'stockfish_script_loading') {
+      this.armBootPhaseTimeout('stockfish_script_loaded', STOCKFISH_BOOT_TIMEOUTS_MS.stockfish_script_loaded);
+      return;
+    }
+
+    if (phase === 'stockfish_script_loaded' || phase === 'uci_sent') {
+      this.armBootPhaseTimeout('uciok_received', STOCKFISH_BOOT_TIMEOUTS_MS.uciok_received);
+      return;
+    }
+
+    if (phase === 'uciok_received' || phase === 'isready_sent') {
+      this.armBootPhaseTimeout('readyok_received', STOCKFISH_BOOT_TIMEOUTS_MS.readyok_received);
+      return;
+    }
+
+    if (phase === 'readyok_received' || phase === 'stockfish_runtime_ready') {
+      this.clearBootTimer();
+      this.expectedBootPhase = null;
+    }
+  }
+
+  private armBootPhaseTimeout(expectedPhase: keyof typeof STOCKFISH_BOOT_TIMEOUTS_MS, timeoutMs: number): void {
+    this.clearBootTimer();
+    this.expectedBootPhase = expectedPhase;
+    this.bootTimer = window.setTimeout(() => {
+      const code = STOCKFISH_BOOT_TIMEOUT_CODES[expectedPhase];
+      const failure = new StockfishEngineError(
+        code,
+        stockfishPhaseTimeoutMessage(expectedPhase, timeoutMs),
+        this.buildFailureDetails(expectedPhase, `Timed out waiting for ${expectedPhase}.`),
+        true
+      );
+      this.recordBootEvent('boot_failed', {
+        message: failure.message,
+        uciok_seen: this.bootFlags.uciok_seen,
+        readyok_seen: this.bootFlags.readyok_seen,
+      });
+      this.failBoot(failure);
+    }, timeoutMs);
+  }
+
+  private buildFailureDetails(phase: StockfishBootPhase | keyof typeof STOCKFISH_BOOT_TIMEOUTS_MS, raw: string | null): string {
+    return JSON.stringify(
+      {
+        phase,
+        elapsed_ms: this.bootStartedAtMs === null ? null : Math.round(performance.now() - this.bootStartedAtMs),
+        worker_url: this.workerUrl,
+        worker_source_kind: this.workerSourceKind,
+        environment: getStockfishEnvironment(),
+        user_agent: getUserAgent(),
+        raw_worker_error: raw,
+        wasm_path_reached: this.bootFlags.wasm_path_reached,
+        uciok_seen: this.bootFlags.uciok_seen,
+        readyok_seen: this.bootFlags.readyok_seen,
+        timeline: this.bootTimeline,
+        recent_raw_worker_messages: this.rawWorkerMessages,
+      },
+      null,
+      2
+    );
   }
 
   private recordInfo(message: EngineMessage): void {
@@ -494,6 +742,10 @@ class StockfishEngineController {
   private finishSearchSuccess(message: EngineMessage): void {
     const activeSearch = this.activeSearch;
     if (!activeSearch) return;
+
+    if (!this.bootFlags.first_bestmove_received) {
+      this.recordBootEvent('first_bestmove_received', { request_id: activeSearch.requestId });
+    }
 
     this.activeSearch = null;
     window.clearTimeout(activeSearch.timeoutId);
@@ -585,10 +837,16 @@ class StockfishEngineController {
     await this.prepareSearch(timeoutMs);
 
     const requestId = this.nextRequestId();
+    const isFirstSearchForBoot = !this.bootFlags.first_search_started;
+    if (isFirstSearchForBoot) {
+      this.recordBootEvent('first_search_started', { request_id: requestId });
+    }
     const timeoutId = window.setTimeout(() => {
       const failure = new StockfishEngineError(
-        'ENGINE_TIMEOUT',
-        `Stockfish search timed out after ${timeoutMs}ms.`,
+        isFirstSearchForBoot ? 'FIRST_SEARCH_TIMEOUT' : 'ENGINE_TIMEOUT',
+        isFirstSearchForBoot
+          ? `Stockfish first search timed out after ${timeoutMs}ms.`
+          : `Stockfish search timed out after ${timeoutMs}ms.`,
         `mode=${mode}; depth=${depth}; multipv=${multipv}; fen=${fen}`,
         true
       );
@@ -781,6 +1039,10 @@ export function getStockfishEngineFailure(): StockfishEngineError | null {
   return controller.getLastFailure();
 }
 
+export function getStockfishDiagnostics(): StockfishDiagnosticsSnapshot {
+  return controller.getDiagnostics();
+}
+
 export async function runStockfishHealthCheck(timeoutMs = DEFAULT_SEARCH_TIMEOUT_MS): Promise<StockfishHealthCheckResult> {
   const freshController = new StockfishEngineController();
   try {
@@ -788,4 +1050,52 @@ export async function runStockfishHealthCheck(timeoutMs = DEFAULT_SEARCH_TIMEOUT
   } finally {
     freshController.dispose();
   }
+}
+
+export async function runStockfishBootDiagnostics(timeoutMs = DEFAULT_SEARCH_TIMEOUT_MS): Promise<StockfishHealthCheckResult> {
+  return runStockfishHealthCheck(timeoutMs);
+}
+
+function createEmptyBootFlags(): StockfishBootFlags {
+  return {
+    worker_booted_seen: false,
+    stockfish_script_loaded_seen: false,
+    wasm_path_reached: false,
+    uciok_seen: false,
+    readyok_seen: false,
+    first_search_started: false,
+    first_bestmove_received: false,
+  };
+}
+
+function stockfishPhaseTimeoutMessage(
+  phase: keyof typeof STOCKFISH_BOOT_TIMEOUTS_MS,
+  timeoutMs: number
+): string {
+  if (phase === 'worker_booted') {
+    return `Stockfish worker script did not start within ${timeoutMs}ms.`;
+  }
+  if (phase === 'stockfish_script_loaded') {
+    return `Stockfish engine asset did not load within ${timeoutMs}ms.`;
+  }
+  if (phase === 'uciok_received') {
+    return `Stockfish did not complete the UCI handshake within ${timeoutMs}ms.`;
+  }
+  if (phase === 'readyok_received') {
+    return `Stockfish did not report readyok within ${timeoutMs}ms.`;
+  }
+  return `Stockfish did not return the first best move within ${timeoutMs}ms.`;
+}
+
+function getStockfishEnvironment(): StockfishEnvironment {
+  if (import.meta.env.MODE === 'test') return 'test';
+  if (import.meta.env.DEV) return 'dev';
+  if (typeof window !== 'undefined' && window.location.port === '4173') return 'preview';
+  if (import.meta.env.PROD) return 'build';
+  return 'unknown';
+}
+
+function getUserAgent(): string {
+  if (typeof navigator === 'undefined') return 'unknown';
+  return navigator.userAgent || 'unknown';
 }

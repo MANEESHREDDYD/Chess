@@ -14,6 +14,9 @@ class MockWorker extends EventTarget {
   constructor(readonly url: string) {
     super();
     MockWorker.instances.push(this);
+    queueMicrotask(() => {
+      if (!this.terminated) this.emitMessage({ type: 'worker_booted' });
+    });
   }
 
   postMessage(message: unknown): void {
@@ -24,7 +27,20 @@ class MockWorker extends EventTarget {
 
     if (command.cmd === 'init') {
       queueMicrotask(() => {
-        if (!this.terminated) this.emitMessage({ type: 'ready' });
+        if (this.terminated) return;
+        this.emitMessage({ type: 'boot_event', phase: 'stockfish_script_loading' });
+        this.emitMessage({
+          type: 'boot_event',
+          phase: 'stockfish_script_loaded',
+          wasm_reached: true,
+          wasm_content_type: 'application/wasm',
+        });
+        this.emitMessage({ type: 'boot_event', phase: 'uci_sent' });
+        this.emitMessage({ type: 'boot_event', phase: 'uciok_received', uciok_seen: true });
+        this.emitMessage({ type: 'boot_event', phase: 'isready_sent' });
+        this.emitMessage({ type: 'boot_event', phase: 'readyok_received', readyok_seen: true });
+        this.emitMessage({ type: 'boot_event', phase: 'stockfish_runtime_ready' });
+        this.emitMessage({ type: 'ready' });
       });
       return;
     }
@@ -84,13 +100,19 @@ describe('stockfishBridge lifecycle', () => {
   });
 
   it('boots deterministically through the worker init lifecycle', async () => {
-    const { waitForEngine, getStockfishEngineState } = await import('./stockfishBridge');
+    const { waitForEngine, getStockfishEngineState, getStockfishDiagnostics } = await import('./stockfishBridge');
 
     await waitForEngine(1000);
 
     expect(MockWorker.instances).toHaveLength(1);
     expect(MockWorker.instances[0].posted).toContainEqual({ cmd: 'init' });
     expect(getStockfishEngineState()).toBe('ready');
+    expect(getStockfishDiagnostics().bootFlags).toMatchObject({
+      worker_booted_seen: true,
+      stockfish_script_loaded_seen: true,
+      uciok_seen: true,
+      readyok_seen: true,
+    });
   });
 
   it('runs search through newgame, ready, and go commands', async () => {

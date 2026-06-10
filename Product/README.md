@@ -16,7 +16,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - **Frontend / Product Design**: Responsive React/Vite PWA, modular state management, cohesive onboarding, and a deeply creative narrative UX.
 - **Full-Stack Architecture**: Local-first data models with seamless, optional Supabase Auth and Storage integration (enforced by RLS policies).
 - **Deployment / Security**: Environment-aware CI commands, stringent verification scripts, and a strict no-secret policy.
-- **Engine Reliability**: Stable Stockfish worker manager with UCI readiness checks, serialized searches, one automatic worker restart, health checks, and clearer engine UI states.
+- **Engine Reliability**: Stable Stockfish worker manager with boot-phase telemetry, worker heartbeat, UCI readiness checks, serialized searches, one automatic worker restart, browser preview boot checks, and clearer engine UI states.
 
 ## Skill Showcase Map
 - **Data Engineering**: IndexedDB schema design, migrations, PGN parser/import pipeline, backup export/import pipeline, cloud backup schema, Supabase Storage policies, backup merge strategy.
@@ -38,6 +38,7 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Mirror 2.0 Personality Opponent Report](docs/mirror-2-personality-opponent-report.md)
 - [PGN Import Pipeline Report](docs/m-pgn-import-pipeline-1-report.md)
 - [Game Review Pro Report](docs/m-game-review-pro-1-report.md)
+- [Stockfish Boot Timeout Hotfix 2 Report](docs/m-stockfish-boot-timeout-hotfix-2-report.md)
 - [Local GenAI Coach Design](docs/local-genai-coach-design.md)
 - [Coach Context Schema](docs/coach-context-schema.md)
 - [Local Coach Safety Evaluation](docs/local-coach-safety-eval.md)
@@ -108,6 +109,8 @@ npm run build
 npx tsx scripts/validate-puzzles.ts
 node scripts/run-mirror-verification.mjs
 npm run stockfish:stability
+npm run stockfish:browser
+node scripts/run-stockfish-browser-boot-check.mjs
 node scripts/run-mirror-personality-verification.mjs
 node scripts/run-pgn-import-verification.mjs
 node scripts/run-game-review-pro-verification.mjs
@@ -145,6 +148,7 @@ node scripts/run-game-review-pro-verification.mjs
 - `v1.19.0-mirror-2-personality-opponent`
 - `v1.19.1-pgn-import-pipeline-1`
 - `v1.19.2-game-review-pro-1`
+- `v1.19.3-stockfish-boot-timeout-hotfix-2`
 
 ## Market-Grade Product Roadmap
 - `M-ADVANCED-ANALYTICS-DASHBOARD-1`: in-app analytics dashboards with every chart ending in a recommended action.

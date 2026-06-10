@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Chess } from 'chess.js';
 import {
   getBestMove,
+  getStockfishDiagnostics,
   stopThinking,
   StockfishEngineError,
   subscribeStockfishEngineState,
@@ -95,6 +96,34 @@ function checkGameEnd(game: Chess, playerColor: Color): { status: Status; result
   }
 
   return { status: 'game-over', result: 'Game ended', resultLabel: 'abandoned' };
+}
+
+function formatEngineFailure(failure: StockfishEngineError | null, fallback: unknown): { message: string; details: string | null } {
+  const diagnostics = getStockfishDiagnostics();
+  const code = failure?.code ?? 'ENGINE_UNAVAILABLE';
+  const phase =
+    diagnostics.bootTimeline.length > 0
+      ? diagnostics.bootTimeline[diagnostics.bootTimeline.length - 1].phase
+      : 'unknown';
+  const base =
+    code === 'ENGINE_RETRY_FAILED'
+      ? 'Engine unavailable after one automatic restart.'
+      : 'Engine unavailable while preparing Stockfish.';
+  const action =
+    phase === 'worker_constructing' || phase === 'worker_booted'
+      ? 'Worker startup failed; reload once or use Stockfish Diagnostics.'
+      : phase === 'stockfish_script_loaded' || phase === 'uciok_received' || phase === 'readyok_received'
+        ? 'The worker started but Stockfish did not finish its ready handshake.'
+        : 'Use Stockfish Diagnostics to copy the boot timeline if this repeats.';
+
+  return {
+    message: `${base} ${code}${phase !== 'unknown' ? ` at ${phase}` : ''}. ${action}`,
+    details: failure
+      ? `${failure.code}: ${failure.message}${failure.details ? `\n${failure.details}` : ''}`
+      : fallback instanceof Error
+        ? fallback.message
+        : String(fallback),
+  };
 }
 
 async function saveLocalMatch(game: Chess, selectedSide: 'white'|'black'|'random', playerColor: Color, difficulty: Difficulty, resultLabel: ResultLabel) {
@@ -263,19 +292,12 @@ export const useGameStore = create<GameState>((set, get) => {
       if (get().gameId === gameId) {
         const failure = err instanceof StockfishEngineError ? err : null;
         const retryExhausted = Boolean(failure?.code === 'ENGINE_RETRY_FAILED');
+        const formatted = formatEngineFailure(failure, err);
         set({
           engineThinking: false,
           enginePhase: retryExhausted ? 'retry-failed' : 'unavailable',
-          engineError: retryExhausted
-            ? 'Engine unavailable after one automatic restart. Please reload or switch engine difficulty.'
-            : 'Engine unavailable. Please reload or switch engine difficulty.',
-          engineErrorDetails: import.meta.env.DEV
-            ? failure
-              ? `${failure.code}: ${failure.message}${failure.details ? `\n${failure.details}` : ''}`
-              : err instanceof Error
-                ? err.message
-                : String(err)
-            : null,
+          engineError: formatted.message,
+          engineErrorDetails: formatted.details,
         });
       }
     }

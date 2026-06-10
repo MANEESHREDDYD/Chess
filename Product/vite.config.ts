@@ -1,20 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
-
-// The `stockfish` npm package has restructured its layout multiple times.
-// Copy every browser engine artifact we can find; the worker currently loads
-// stockfish-nnue-16-single.js and its matching WASM from /stockfish/.
-const STOCKFISH_SOURCES = [
-  'node_modules/stockfish/src/*.js',
-  'node_modules/stockfish/src/*.wasm',
-  'node_modules/stockfish/src/*.worker.js',
-  'node_modules/stockfish/lib/*.js',
-  'node_modules/stockfish/lib/*.wasm',
-  'node_modules/stockfish/*.js',
-  'node_modules/stockfish/*.wasm',
-];
 
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -22,12 +8,6 @@ export default defineConfig(({ mode }) => ({
     ...(mode === 'test'
       ? []
       : [
-          viteStaticCopy({
-            targets: STOCKFISH_SOURCES.map((src) => ({
-              src,
-              dest: 'stockfish',
-            })),
-          }),
           VitePWA({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.svg', 'robots.txt'],

@@ -40,7 +40,8 @@ async function run() {
       const move = await engine.getBestMove('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 10, 10000);
       const candidates = await engine.getCandidateMoves('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 3, 8, 10000);
       const evaluation = await engine.evaluatePosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 8);
-      return { move, candidates, evaluation };
+      const diagnostics = engine.getStockfishDiagnostics();
+      return { move, candidates, evaluation, diagnostics };
     });
 
     validateLegalMove(boot.move, 'Starting position best move');
@@ -50,6 +51,7 @@ async function run() {
     if (!boot.evaluation || (boot.evaluation.cp === null && boot.evaluation.mate === null)) {
       throw new Error('Evaluation search returned no score information.');
     }
+    assertBootDiagnostics(boot.diagnostics, 'Initial dev-server boot');
 
     const blackFlow = await page.evaluate(async () => {
       const { useGameStore } = await import('/src/state/gameStore.ts');
@@ -96,6 +98,7 @@ async function run() {
     });
 
     validateLegalMove(healthOne.bestMove, 'Health check best move');
+    assertBootDiagnostics(healthOne.diagnostics, 'Isolated health check one');
 
     const healthTwo = await page.evaluate(async () => {
       const engine = await import('/src/engine/stockfishBridge.ts');
@@ -103,6 +106,7 @@ async function run() {
     });
 
     validateLegalMove(healthTwo.bestMove, 'Restarted health check best move');
+    assertBootDiagnostics(healthTwo.diagnostics, 'Isolated health check two');
 
     console.log('Stockfish stability check passed.');
   } catch (error) {
@@ -134,6 +138,24 @@ function validateLegalMove(move, label) {
     : chess.move(move);
   if (!result) {
     throw new Error(`${label} was not legal: ${move}`);
+  }
+}
+
+function assertBootDiagnostics(diagnostics, label) {
+  if (!diagnostics?.bootFlags) {
+    throw new Error(`${label} did not return Stockfish diagnostics.`);
+  }
+
+  const required = [
+    ['worker_booted_seen', 'worker_booted'],
+    ['stockfish_script_loaded_seen', 'stockfish_script_loaded'],
+    ['uciok_seen', 'uciok_received'],
+    ['readyok_seen', 'readyok_received'],
+    ['first_bestmove_received', 'first_bestmove_received'],
+  ];
+  const missing = required.filter(([flag]) => !diagnostics.bootFlags[flag]).map(([, phase]) => phase);
+  if (missing.length > 0) {
+    throw new Error(`${label} missed required Stockfish phase(s): ${missing.join(', ')}`);
   }
 }
 

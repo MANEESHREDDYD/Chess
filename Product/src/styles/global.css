@@ -1213,3 +1213,50 @@ body {
 }
 
 .about a:hover { color: var(--pandava-gold-light); }
+
+/* ---------- Stockfish Diagnostics ---------- */
+
+.stockfish-diagnostics {
+  display: grid;
+  gap: 18px;
+}
+
+.diagnostic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.diagnostic-timeline {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.diagnostic-timeline li {
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 0;
+}
+
+.diagnostic-timeline span {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin-left: 10px;
+}
+
+.diagnostic-timeline p {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+.diagnostic-json {
+  background: #111827;
+  border-radius: 6px;
+  color: #d1fae5;
+  font-size: 12px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}

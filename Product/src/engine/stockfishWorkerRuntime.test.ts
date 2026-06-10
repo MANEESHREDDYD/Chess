@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  CDN_ENGINE,
-  CDN_WASM,
   LOCAL_ENGINE,
-  READY_FALLBACK_MS,
+  LOCAL_NO_SIMD_ENGINE,
+  LOCAL_NO_SIMD_WASM,
+  LOCAL_WASM,
+  STOCKFISH_ENGINE_ASSETS,
   createStockfishWorkerRuntime,
   type StockfishWorkerRuntimeDeps,
 } from './stockfishWorkerRuntime';
@@ -37,60 +38,54 @@ class MockEngineWorker extends EventTarget {
 describe('stockfish worker runtime', () => {
   beforeEach(() => {
     MockEngineWorker.instances = [];
-    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('prefers actual readyok over the fallback timer', async () => {
+  it('reports UCI readiness only after readyok', async () => {
     const { deps, sent } = runtimeHarness();
     const runtime = createStockfishWorkerRuntime((msg) => sent.push(msg), deps);
 
     runtime.init();
+    await flushWorkerStart();
     MockEngineWorker.instances[0].emitLine('readyok');
-    await vi.advanceTimersByTimeAsync(READY_FALLBACK_MS);
 
-    expect(sent).toEqual([{ type: 'ready' }]);
-    expect(deps.console.warn).not.toHaveBeenCalledWith('[stockfish.worker] readyok not received before fallback timeout; marking ready.');
+    expect(sent.some((message) => (message as { type?: string }).type === 'ready')).toBe(true);
+    expect(
+      sent.some(
+        (message) =>
+          (message as { type?: string; phase?: string }).type === 'boot_event' &&
+          (message as { phase?: string }).phase === 'readyok_received'
+      )
+    ).toBe(true);
   });
 
-  it('logs and marks ready when the readyok fallback fires', async () => {
+  it('falls back from the SIMD worker to the local no-SIMD worker with explicit wasm URLs', async () => {
     const { deps, sent } = runtimeHarness();
     const runtime = createStockfishWorkerRuntime((msg) => sent.push(msg), deps);
 
     runtime.init();
-    await vi.advanceTimersByTimeAsync(READY_FALLBACK_MS);
-
-    expect(sent).toEqual([{ type: 'ready' }]);
-    expect(deps.console.warn).toHaveBeenCalledWith(
-      '[stockfish.worker] readyok not received before fallback timeout; marking ready.'
-    );
-  });
-
-  it('falls back from local worker load failure to the pinned CDN worker with an explicit wasm URL', () => {
-    const { deps, sent } = runtimeHarness();
-    const runtime = createStockfishWorkerRuntime((msg) => sent.push(msg), deps);
-
-    runtime.init();
+    await flushWorkerStart();
     const localWorker = MockEngineWorker.instances[0];
     localWorker.emitError('local 404');
+    await flushWorkerStart();
     const cdnWorker = MockEngineWorker.instances[1];
     cdnWorker.emitLine('readyok');
 
-    expect(localWorker.url).toBe(LOCAL_ENGINE);
+    expect(localWorker.url).toBe(`${LOCAL_ENGINE}#${encodeURIComponent(LOCAL_WASM)}`);
     expect(localWorker.terminate).toHaveBeenCalledOnce();
-    expect(cdnWorker.url).toBe(`blob:stockfish-cdn#${encodeURIComponent(CDN_WASM)}`);
-    expect(deps.URLApi.createObjectURL).toHaveBeenCalledOnce();
-    expect(sent).toEqual([{ type: 'ready' }]);
+    expect(cdnWorker.url).toBe(`${LOCAL_NO_SIMD_ENGINE}#${encodeURIComponent(LOCAL_NO_SIMD_WASM)}`);
+    expect(sent.some((message) => (message as { type?: string }).type === 'ready')).toBe(true);
   });
 
-  it('supports explicit newgame and readiness probes after startup', () => {
+  it('supports explicit newgame and readiness probes after startup', async () => {
     const { deps, sent } = runtimeHarness();
     const runtime = createStockfishWorkerRuntime((msg) => sent.push(msg), deps);
 
     runtime.init();
+    await flushWorkerStart();
     const worker = MockEngineWorker.instances[0];
     worker.emitLine('readyok');
 
@@ -100,7 +95,10 @@ describe('stockfish worker runtime', () => {
 
     expect(worker.posted).toContain('ucinewgame');
     expect(worker.posted).toContain('isready');
-    expect(sent).toEqual([{ type: 'ready' }, { type: 'ready', requestId: 42 }]);
+    expect(sent.filter((message) => (message as { type?: string }).type === 'ready')).toEqual([
+      { type: 'ready' },
+      { type: 'ready', requestId: 42 },
+    ]);
   });
 });
 
@@ -108,19 +106,17 @@ function runtimeHarness(): { deps: StockfishWorkerRuntimeDeps; sent: object[] } 
   const sent: object[] = [];
   const deps: StockfishWorkerRuntimeDeps = {
     WorkerCtor: MockEngineWorker as unknown as typeof Worker,
-    BlobCtor: Blob,
-    URLApi: {
-      createObjectURL: vi.fn(() => 'blob:stockfish-cdn'),
-      revokeObjectURL: vi.fn(),
-    },
-    setTimeout: (handler, timeout) => window.setTimeout(handler, timeout),
-    clearTimeout: (id) => window.clearTimeout(id),
     console: { warn: vi.fn() },
-    localEngine: LOCAL_ENGINE,
-    cdnEngine: CDN_ENGINE,
-    cdnWasm: CDN_WASM,
-    readyFallbackMs: READY_FALLBACK_MS,
+    engineAssets: STOCKFISH_ENGINE_ASSETS,
+    fetch: vi.fn(async () => new Response(new ArrayBuffer(8), { headers: { 'content-type': 'application/wasm' } })) as unknown as typeof fetch,
+    now: vi.fn(() => 0),
   };
 
   return { deps, sent };
+}
+
+async function flushWorkerStart(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
 }

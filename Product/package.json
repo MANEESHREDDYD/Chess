@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stockfish:stability": "node scripts/run-stockfish-stability-check.mjs",
+    "stockfish:browser": "node scripts/run-stockfish-browser-boot-check.mjs",
     "postinstall": "node scripts/setup-stockfish.js"
   },
   "dependencies": {

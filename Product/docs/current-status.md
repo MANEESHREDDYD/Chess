@@ -1,8 +1,8 @@
 ﻿# Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.19.2-game-review-pro-1`
-> **Latest Completed Milestone**: `M-GAME-REVIEW-PRO-1`
+> **Latest Tag**: `v1.19.3-stockfish-boot-timeout-hotfix-2`
+> **Latest Completed Milestone**: `M-STOCKFISH-BOOT-TIMEOUT-HOTFIX-2`
 > **Current / Next Milestone**: `M-ADVANCED-ANALYTICS-DASHBOARD-1`
 > **Launch Status**: READY FOR NEXT MILESTONE (Iterative Releases)
 
@@ -41,12 +41,13 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.19.0-mirror-2-personality-opponent`**: Personality-based Mirror opponent with current, past, aggressive, cautious, blunder-prone, and improved self modes.
 *   **`v1.19.1-pgn-import-pipeline-1`**: Local PGN paste/upload/import pipeline with legal validation, imported-game records, StyleVector evidence updates, optional capped Stockfish analysis, backup export support, and Python/SQL analytics metrics.
 *   **`v1.19.2-game-review-pro-1`**: Local Game Review Pro with deterministic move classifications, side-normalized CP-loss, MIRROR internal accuracy estimates, key moments, retry mistakes, phase summaries, StyleVector notes, imported-game review support, Markdown export, and Python/SQL review metrics.
+*   **`v1.19.3-stockfish-boot-timeout-hotfix-2`**: Fixed production-preview Stockfish worker boot timeout by replacing the unsafe generated `data:video/mp2t` worker URL path with a Vite-emitted worker asset URL, adding boot-phase telemetry, local WASM asset checks, diagnostics UI, and browser build/preview verification.
 
 ## Current Implemented Features
 
 *   **Local-First Architecture**: No backend required. IndexedDB handles all persistence for players, match histories, and story progress.
 *   **Mirror Engine**: StyleVector personalization calculated from player behavior. The current code has 11 behavioral/profile fields plus `schema_version` metadata, and the Mirror uses deterministic personality profiles to rerank legal Stockfish choices as current, past, aggressive, cautious, blunder-prone, or improved self.
-*   **Stable Stockfish Runtime**: shared browser engine manager serializes searches, waits for UCI readiness, auto-retries once with a fresh worker, and exposes `runStockfishHealthCheck()`.
+*   **Stable Stockfish Runtime**: shared browser engine manager serializes searches, records worker/asset/UCI/ready/search boot phases, waits for real `readyok`, auto-retries once with a fresh worker, exposes `runStockfishHealthCheck()`, and includes browser preview boot verification.
 *   **Local PGN Import**: `/import-pgn` lets users paste or upload user-provided PGN files, preview per-game validation, save valid/invalid rows locally, update StyleVector evidence from valid user-attributed games, and optionally analyze up to 5 imported games sequentially with Stockfish.
 *   **Game Review Pro**: `/review/:sourceType/:sourceId` reviews completed local matches, Mirror matches, and valid imported games with local Stockfish evidence, deterministic labels, key moments, retry training, phase summaries, StyleVector notes, and Markdown export.
 *   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.

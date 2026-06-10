@@ -4,10 +4,30 @@ import { BoardView } from '../components/Board/BoardView';
 import { useGameStore, type Difficulty } from '../state/gameStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { getLocalMatchesForPlayer, type LocalMatchRecord } from '../data/db';
+import { getStockfishDiagnostics } from '../engine/stockfishBridge';
 import { isStandardTheme, loadThemeManifest } from '../lib/theme';
 import { usePlayerStore } from '../state/playerStore';
 import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
 import { useAudioFx } from '../audio/useAudioFx';
+
+declare global {
+  interface Window {
+    __MIRROR_PLAY_TEST__?: {
+      startGame: (side: 'white' | 'black' | 'random', difficulty?: Difficulty) => void;
+      makePlayerMove: (from: string, to: string, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
+      getState: () => {
+        status: string;
+        playerColor: string;
+        engineThinking: boolean;
+        enginePhase: string;
+        engineError: string | null;
+        history: string[];
+        fen: string;
+        diagnostics: ReturnType<typeof getStockfishDiagnostics>;
+      };
+    };
+  }
+}
 
 export default function Play() {
   const status = useGameStore((s) => s.status);
@@ -37,6 +57,32 @@ export default function Play() {
   const [localMatches, setLocalMatches] = useState<LocalMatchRecord[]>([]);
 
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Club');
+
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('stockfishBootCheck')) return;
+
+    window.__MIRROR_PLAY_TEST__ = {
+      startGame,
+      makePlayerMove,
+      getState: () => {
+        const state = useGameStore.getState();
+        return {
+          status: state.status,
+          playerColor: state.playerColor,
+          engineThinking: state.engineThinking,
+          enginePhase: state.enginePhase,
+          engineError: state.engineError,
+          history: [...state.history],
+          fen: state.fen,
+          diagnostics: getStockfishDiagnostics(),
+        };
+      },
+    };
+
+    return () => {
+      delete window.__MIRROR_PLAY_TEST__;
+    };
+  }, [makePlayerMove, startGame]);
 
   useEffect(() => {
     if (status === 'idle') {

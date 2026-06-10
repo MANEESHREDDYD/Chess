@@ -1,3 +1,5 @@
+import type { StockfishBootEvent, StockfishBootPhase } from './stockfishTelemetry';
+
 export interface WorkerCommand {
   cmd?: 'init' | 'go' | 'stop' | 'setoption' | 'ready' | 'newgame';
   fen?: string;
@@ -8,19 +10,36 @@ export interface WorkerCommand {
   requestId?: number;
 }
 
-type EngineSource = 'local' | 'cdn';
+export type StockfishWorkerRuntimeMessage =
+  | { type: 'ready'; requestId?: number | null }
+  | { type: 'error'; message: string }
+  | { type: 'bestmove'; requestId: number | null; move: string | null }
+  | {
+      type: 'info';
+      requestId: number | null;
+      depth: number;
+      multipv: number;
+      cp: number | null;
+      mate: number | null;
+      pv: string[];
+      raw: string;
+    }
+  | ({ type: 'boot_event' } & StockfishBootEvent);
+
+export type EngineSourceKind = 'single' | 'no-simd';
+
+export interface EngineAsset {
+  source: EngineSourceKind;
+  scriptUrl: string;
+  wasmUrl: string;
+}
 
 export interface StockfishWorkerRuntimeDeps {
   WorkerCtor: typeof Worker;
-  BlobCtor: typeof Blob;
-  URLApi: Pick<typeof URL, 'createObjectURL' | 'revokeObjectURL'>;
-  setTimeout: (handler: () => void, timeout: number) => number;
-  clearTimeout: (id: number) => void;
   console: Pick<Console, 'warn'>;
-  localEngine: string;
-  cdnEngine: string;
-  cdnWasm: string;
-  readyFallbackMs: number;
+  engineAssets: EngineAsset[];
+  fetch?: typeof fetch;
+  now: () => number;
 }
 
 export interface StockfishWorkerRuntime {
@@ -29,25 +48,38 @@ export interface StockfishWorkerRuntime {
 }
 
 export const LOCAL_ENGINE = '/stockfish/stockfish-nnue-16-single.js';
-export const CDN_ENGINE = 'https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16-single.js';
-export const CDN_WASM = 'https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16-single.wasm';
-export const READY_FALLBACK_MS = 1500;
+export const LOCAL_WASM = '/stockfish/stockfish-nnue-16-single.wasm';
+export const LOCAL_NO_SIMD_ENGINE = '/stockfish/stockfish-nnue-16-no-simd.js';
+export const LOCAL_NO_SIMD_WASM = '/stockfish/stockfish-nnue-16-no-simd.wasm';
+export const STOCKFISH_ENGINE_ASSETS: EngineAsset[] = [
+  { source: 'single', scriptUrl: LOCAL_ENGINE, wasmUrl: LOCAL_WASM },
+  { source: 'no-simd', scriptUrl: LOCAL_NO_SIMD_ENGINE, wasmUrl: LOCAL_NO_SIMD_WASM },
+];
 
 export function createStockfishWorkerRuntime(
-  send: (msg: object) => void,
+  send: (msg: StockfishWorkerRuntimeMessage) => void,
   deps: StockfishWorkerRuntimeDeps
 ): StockfishWorkerRuntime {
   let engine: Worker | null = null;
   let activeRequestId: number | null = null;
   let activeReadyRequestId: number | null = null;
   let readySent = false;
-  let cdnBlobUrl: string | null = null;
-  let readyFallbackTimer: number | null = null;
+  const startedAt = deps.now();
+
+  function sendBootEvent(phase: StockfishBootPhase, event: Partial<StockfishBootEvent> = {}): void {
+    send({
+      type: 'boot_event',
+      phase,
+      elapsed_ms: Math.round(deps.now() - startedAt),
+      timestamp: new Date().toISOString(),
+      ...event,
+    });
+  }
 
   function markReady(): void {
     if (readySent) return;
     readySent = true;
-    clearReadyFallback();
+    sendBootEvent('stockfish_runtime_ready');
     send({ type: 'ready' });
   }
 
@@ -56,6 +88,7 @@ export function createStockfishWorkerRuntime(
 
     if (line === 'readyok') {
       deps.console.warn('[stockfish.worker] received readyok');
+      sendBootEvent('readyok_received', { readyok_seen: true, request_id: activeReadyRequestId });
       if (activeReadyRequestId !== null) {
         const requestId = activeReadyRequestId;
         activeReadyRequestId = null;
@@ -69,6 +102,7 @@ export function createStockfishWorkerRuntime(
 
     if (line === 'uciok') {
       deps.console.warn('[stockfish.worker] received uciok');
+      sendBootEvent('uciok_received', { uciok_seen: true });
       return;
     }
 
@@ -78,6 +112,7 @@ export function createStockfishWorkerRuntime(
       const requestId = activeRequestId;
       activeRequestId = null;
       deps.console.warn(`[stockfish.worker] received bestmove: ${move}`);
+      sendBootEvent('first_bestmove_received', { request_id: requestId });
       send({
         type: 'bestmove',
         requestId,
@@ -105,42 +140,28 @@ export function createStockfishWorkerRuntime(
     }
   }
 
-  function createEngineWorker(url: string, source: EngineSource): Worker {
-    if (source === 'cdn') {
-      const objectUrl = deps.URLApi.createObjectURL(
-        new deps.BlobCtor([`importScripts(${JSON.stringify(url)});`], {
-          type: 'application/javascript',
-        })
-      );
-      cdnBlobUrl = objectUrl;
-      return new deps.WorkerCtor(`${objectUrl}#${encodeURIComponent(deps.cdnWasm)}`);
-    }
-
-    return new deps.WorkerCtor(url);
+  function createEngineWorker(asset: EngineAsset): Worker {
+    return new deps.WorkerCtor(`${asset.scriptUrl}#${encodeURIComponent(asset.wasmUrl)}`);
   }
 
   function cleanupEngine(): void {
-    clearReadyFallback();
-
     if (engine) {
       engine.terminate();
       engine = null;
     }
-
-    if (cdnBlobUrl) {
-      deps.URLApi.revokeObjectURL(cdnBlobUrl);
-      cdnBlobUrl = null;
-    }
   }
 
-  function reportStartupFailure(localError: string, cdnError: string): void {
+  function reportStartupFailure(errors: string[]): void {
+    sendBootEvent('boot_failed', {
+      message: `Could not start Stockfish worker locally. ${errors.join(' | ')}`,
+    });
     send({
       type: 'error',
-      message: `Could not start Stockfish worker locally or via CDN. Local: ${localError}. CDN: ${cdnError}`,
+      message: `Could not start Stockfish worker locally. ${errors.join(' | ')}`,
     });
   }
 
-  function attachEngine(candidate: Worker, source: EngineSource, localError: string | null): void {
+  function attachEngine(candidate: Worker, asset: EngineAsset, fallbackErrors: string[]): void {
     engine = candidate;
 
     try {
@@ -150,65 +171,128 @@ export function createStockfishWorkerRuntime(
       candidate.addEventListener('error', (event) => {
         const message = event.message || 'Unknown Stockfish worker load error.';
         deps.console.warn(`[stockfish.worker] worker error: ${message}`);
-        if (source === 'local' && !readySent) {
+        sendBootEvent('boot_failed', {
+          message,
+          worker_url: asset.scriptUrl,
+          worker_source_kind: asset.source,
+          wasm_path: asset.wasmUrl,
+        });
+        if (!readySent && asset.source !== deps.engineAssets[deps.engineAssets.length - 1]?.source) {
           cleanupEngine();
-          startEngine('cdn', message);
+          void startEngine(deps.engineAssets.findIndex((candidateAsset) => candidateAsset.source === asset.source) + 1, [
+            ...fallbackErrors,
+            `${asset.source}: ${message}`,
+          ]);
           return;
         }
 
-        if (source === 'cdn' && localError) {
-          reportStartupFailure(localError, message);
-          return;
-        }
-
-        send({ type: 'error', message });
+        reportStartupFailure([...fallbackErrors, `${asset.source}: ${message}`]);
       });
       candidate.addEventListener('messageerror', (event) => {
         deps.console.warn(`[stockfish.worker] worker messageerror:`, event);
+        sendBootEvent('boot_failed', {
+          message: 'Stockfish worker posted an unreadable message.',
+          worker_url: asset.scriptUrl,
+          worker_source_kind: asset.source,
+          wasm_path: asset.wasmUrl,
+        });
       });
-      deps.console.warn(`[stockfish.worker] sending uci to ${source}`);
+      deps.console.warn(`[stockfish.worker] sending uci to ${asset.source}`);
+      sendBootEvent('uci_sent', {
+        worker_url: asset.scriptUrl,
+        worker_source_kind: asset.source,
+        wasm_path: asset.wasmUrl,
+      });
       candidate.postMessage('uci');
-      deps.console.warn(`[stockfish.worker] sending isready to ${source}`);
+      deps.console.warn(`[stockfish.worker] sending isready to ${asset.source}`);
+      sendBootEvent('isready_sent', {
+        worker_url: asset.scriptUrl,
+        worker_source_kind: asset.source,
+        wasm_path: asset.wasmUrl,
+      });
       candidate.postMessage('isready');
-      readyFallbackTimer = deps.setTimeout(() => {
-        if (engine !== candidate || readySent) return;
-        deps.console.warn('[stockfish.worker] readyok not received before fallback timeout; marking ready.');
-        markReady();
-      }, deps.readyFallbackMs);
     } catch (err) {
       cleanupEngine();
-      if (source === 'local') {
-        startEngine('cdn', formatError(err));
+      const message = formatError(err);
+      sendBootEvent('boot_failed', {
+        message,
+        worker_url: asset.scriptUrl,
+        worker_source_kind: asset.source,
+        wasm_path: asset.wasmUrl,
+      });
+      const nextIndex = deps.engineAssets.findIndex((candidateAsset) => candidateAsset.source === asset.source) + 1;
+      if (nextIndex < deps.engineAssets.length) {
+        void startEngine(nextIndex, [...fallbackErrors, `${asset.source}: ${message}`]);
         return;
       }
 
-      send({
-        type: 'error',
-        message: `Could not start Stockfish worker locally or via CDN. Local: ${localError ?? 'not attempted'}. CDN: ${formatError(err)}`,
-      });
+      reportStartupFailure([...fallbackErrors, `${asset.source}: ${message}`]);
     }
   }
 
-  function startEngine(source: EngineSource, localError: string | null = null): void {
-    const url = source === 'local' ? deps.localEngine : deps.cdnEngine;
-    deps.console.warn(`[stockfish.worker] worker created for ${source}: ${url}`);
+  async function probeWasm(asset: EngineAsset): Promise<Pick<StockfishBootEvent, 'wasm_reached' | 'wasm_content_type'>> {
+    if (!deps.fetch) return {};
+    try {
+      const response = await deps.fetch(asset.wasmUrl, { cache: 'no-store' });
+      return {
+        wasm_reached: response.ok,
+        wasm_content_type: response.headers.get('content-type'),
+      };
+    } catch (error) {
+      return {
+        wasm_reached: false,
+        wasm_content_type: formatError(error),
+      };
+    }
+  }
+
+  async function startEngine(assetIndex: number, fallbackErrors: string[] = []): Promise<void> {
+    const asset = deps.engineAssets[assetIndex];
+    if (!asset) {
+      reportStartupFailure(fallbackErrors.length ? fallbackErrors : ['No Stockfish engine assets were configured.']);
+      return;
+    }
+
+    deps.console.warn(`[stockfish.worker] worker created for ${asset.source}: ${asset.scriptUrl}`);
+    sendBootEvent('stockfish_script_loading', {
+      worker_url: asset.scriptUrl,
+      worker_source_kind: asset.source,
+      wasm_path: asset.wasmUrl,
+    });
+    const wasmProbe = await probeWasm(asset);
 
     try {
-      attachEngine(createEngineWorker(url, source), source, localError);
+      const candidate = createEngineWorker(asset);
+      sendBootEvent('stockfish_script_loaded', {
+        worker_url: asset.scriptUrl,
+        worker_source_kind: asset.source,
+        wasm_path: asset.wasmUrl,
+        ...wasmProbe,
+      });
+      attachEngine(candidate, asset, fallbackErrors);
     } catch (err) {
       cleanupEngine();
-      if (source === 'local') {
-        startEngine('cdn', formatError(err));
+      const message = formatError(err);
+      sendBootEvent('boot_failed', {
+        message,
+        worker_url: asset.scriptUrl,
+        worker_source_kind: asset.source,
+        wasm_path: asset.wasmUrl,
+        ...wasmProbe,
+      });
+      const nextIndex = assetIndex + 1;
+      if (nextIndex < deps.engineAssets.length) {
+        void startEngine(nextIndex, [...fallbackErrors, `${asset.source}: ${message}`]);
         return;
       }
 
-      reportStartupFailure(localError ?? 'not attempted', formatError(err));
+      reportStartupFailure([...fallbackErrors, `${asset.source}: ${message}`]);
     }
   }
 
   function init(): void {
     if (engine) return;
-    startEngine('local');
+    void startEngine(0);
   }
 
   function handleCommand(data: WorkerCommand | null | undefined): void {
@@ -232,6 +316,7 @@ export function createStockfishWorkerRuntime(
       engine.postMessage(formatSetOption('MultiPV', multipv));
       engine.postMessage(`position fen ${data.fen ?? ''}`);
       deps.console.warn(`[stockfish.worker] sending go depth ${depth}`);
+      sendBootEvent('first_search_started', { request_id: activeRequestId });
       engine.postMessage(`go depth ${depth}`);
     } else if (data.cmd === 'setoption' && data.name) {
       engine.postMessage(formatSetOption(data.name, data.value));
@@ -247,12 +332,6 @@ export function createStockfishWorkerRuntime(
         engine.postMessage('stop');
       }
     }
-  }
-
-  function clearReadyFallback(): void {
-    if (readyFallbackTimer === null) return;
-    deps.clearTimeout(readyFallbackTimer);
-    readyFallbackTimer = null;
   }
 
   return { init, handleCommand };

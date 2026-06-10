@@ -1,27 +1,24 @@
 /// <reference lib="webworker" />
 
 import {
-  CDN_ENGINE,
-  CDN_WASM,
-  LOCAL_ENGINE,
-  READY_FALLBACK_MS,
+  STOCKFISH_ENGINE_ASSETS,
   createStockfishWorkerRuntime,
   type WorkerCommand,
 } from './stockfishWorkerRuntime';
 
 const scope = self as DedicatedWorkerGlobalScope;
 
+scope.postMessage({
+  type: 'worker_booted',
+  timestamp: new Date().toISOString(),
+});
+
 const runtime = createStockfishWorkerRuntime((msg) => scope.postMessage(msg), {
   WorkerCtor: Worker,
-  BlobCtor: Blob,
-  URLApi: URL,
-  setTimeout: (handler, timeout) => scope.setTimeout(handler, timeout),
-  clearTimeout: (id) => scope.clearTimeout(id),
   console,
-  localEngine: LOCAL_ENGINE,
-  cdnEngine: CDN_ENGINE,
-  cdnWasm: CDN_WASM,
-  readyFallbackMs: READY_FALLBACK_MS,
+  engineAssets: STOCKFISH_ENGINE_ASSETS,
+  fetch: scope.fetch.bind(scope),
+  now: () => performance.now(),
 });
 
 scope.onmessage = (event: MessageEvent<WorkerCommand>) => {
