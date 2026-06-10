@@ -175,13 +175,7 @@ export default function Play() {
   };
 
   const handlePromotionCheck = (sourceSquare: string, targetSquare: string, piece: string): boolean => {
-    if (piece[1] !== 'P') return false;
-    const isWhitePromotion = piece[0] === 'w' && targetSquare[1] === '8';
-    const isBlackPromotion = piece[0] === 'b' && targetSquare[1] === '1';
-    if (!isWhitePromotion && !isBlackPromotion) return false;
-    // For now we always promote to Queen to avoid blocking UI with a promotion modal.
-    makePlayerMove(sourceSquare, targetSquare, 'q');
-    return true; // We handled it
+    return Boolean(sourceSquare && targetSquare && piece);
   };
 
   return (
@@ -295,7 +289,7 @@ export default function Play() {
           playerColor={playerColor}
           status={status}
           engineThinking={engineThinking}
-          onPieceDrop={(from, to) => makePlayerMove(from, to)}
+          onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
           onPromotionCheck={handlePromotionCheck}
           onPromotionPieceSelect={() => false}
           themeManifest={themeManifest}

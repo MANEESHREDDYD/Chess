@@ -146,6 +146,7 @@ Added design surfaces:
 Runtime surface:
 
 - `/analytics` renders the Advanced Analytics Dashboard from local IndexedDB summaries and exports safe Markdown/JSON snapshots.
+- `/story` now presents Story as a campaign-first surface with act paths and mission cards, keeping training-first clue behavior in `/clue-chess`.
 - `/coach-preview` uses local deterministic rules.
 - The route builds a summarized `MirrorCoachContext` from IndexedDB records.
 - It generates prioritized `CoachCard` objects for weakness, review, analysis, story, progression, mirror, and data quality.
@@ -153,6 +154,12 @@ Runtime surface:
 - It exports a local safety report with pass/fail status and findings by severity.
 - No LLM calls, paid APIs, cloud inference, login, or gameplay upload are required.
 - The browser app does not read `analytics_output` files directly; `mirror_features.json` and `mirror_insights.md` remain optional local artifacts from the Python analytics pipeline.
+
+Product-quality guardrails:
+
+- Shared promotion validation prevents route-level UI from inventing illegal promotion choices.
+- Product mode contracts document where Regular Chess, Mirror Chess, Story Campaign, Clue Chess, Analytics, and Profile/Progression begin and end.
+- Visual docs explicitly label the current Kurukshetra layer as a placeholder and reserve realistic 3D claims for future implementation.
 
 ## Recruiter Skill Map
 

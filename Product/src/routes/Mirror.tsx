@@ -50,7 +50,6 @@ import { useAudioFx } from '../audio/useAudioFx';
 type GameStatus = 'idle' | 'playing' | 'game-over';
 type MirrorResult = 'You won' | 'Mirror won' | 'Draw' | 'Game ended';
 type Promotion = 'q' | 'r' | 'b' | 'n';
-type PendingPromotion = { from: string; to: string } | null;
 type MirrorFeedbackTag =
   | 'felt_like_me'
   | 'too_strong'
@@ -95,7 +94,6 @@ export default function Mirror() {
   const [status, setStatus] = useState<GameStatus>('idle');
   const [result, setResult] = useState<MirrorResult | null>(null);
   const [isMirrorThinking, setIsMirrorThinking] = useState(false);
-  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black'>('white');
   const [personalityMode, setPersonalityMode] = useState<MirrorPersonalityMode>('current_self');
   
@@ -181,7 +179,6 @@ export default function Mirror() {
           setStatus('playing');
           setResult(null);
           setIsMirrorThinking(false);
-          setPendingPromotion(null);
           setExplanation(null);
           setLastMirrorLine(null);
           setLastMirrorTrace(null);
@@ -477,7 +474,6 @@ export default function Mirror() {
     setStatus(styleRecord ? 'playing' : 'idle');
     setResult(null);
     setIsMirrorThinking(false);
-    setPendingPromotion(null);
     setExplanation(null);
     setLastMirrorLine(null);
     setLastMirrorTrace(null);
@@ -510,24 +506,7 @@ export default function Mirror() {
   }, [styleRecord]);
 
   const handlePromotionCheck = (sourceSquare: string, targetSquare: string, piece: string): boolean => {
-    if (piece[1] !== 'P') return false;
-    const isWhitePromotion = piece[0] === 'w' && targetSquare[1] === '8';
-    if (!isWhitePromotion) return false;
-
-    setPendingPromotion({ from: sourceSquare, to: targetSquare });
-    return true;
-  };
-
-  const handlePromotionPieceSelect = (piece?: string): boolean => {
-    if (!piece || !pendingPromotion) {
-      setPendingPromotion(null);
-      return false;
-    }
-
-    const promotion = piece[1].toLowerCase() as Promotion;
-    const ok = makePlayerMove(pendingPromotion.from, pendingPromotion.to, promotion);
-    setPendingPromotion(null);
-    return ok;
+    return Boolean(sourceSquare && targetSquare && piece);
   };
 
   const handleResign = () => {
@@ -991,9 +970,9 @@ export default function Mirror() {
           playerColor={playerColor}
           status={status}
           engineThinking={isMirrorThinking}
-          onPieceDrop={(from, to) => makePlayerMove(from, to)}
+          onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
           onPromotionCheck={handlePromotionCheck}
-          onPromotionPieceSelect={handlePromotionPieceSelect}
+          onPromotionPieceSelect={() => false}
           themeManifest={themeManifest}
           themeError={themeError}
         />

@@ -1,9 +1,9 @@
 ﻿# Current Status
 
 > **Date**: June 10, 2026
-> **Latest Tag**: `v1.19.5-clue-chess-adaptive-2`
-> **Latest Completed Milestone**: `M-CLUE-CHESS-ADAPTIVE-2`
-> **Current / Next Milestone**: `M-BATTLE-PROFILE-PROGRESSION-2`
+> **Latest Tag**: `v1.19.6-product-quality-visual-story-reset-1`
+> **Latest Completed Milestone**: `M-PRODUCT-QUALITY-VISUAL-STORY-RESET-1`
+> **Current / Next Milestone**: `M-STORY-CAMPAIGN-LOOP-1`
 > **Launch Status**: READY FOR NEXT MILESTONE (Iterative Releases)
 
 ---
@@ -44,6 +44,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.19.3-stockfish-boot-timeout-hotfix-2`**: Fixed production-preview Stockfish worker boot timeout by replacing the unsafe generated `data:video/mp2t` worker URL path with a Vite-emitted worker asset URL, adding boot-phase telemetry, local WASM asset checks, diagnostics UI, and browser build/preview verification.
 *   **`v1.19.4-advanced-analytics-dashboard-1`**: In-app Advanced Analytics Dashboard with local player intelligence, Game Review Pro summaries, StyleVector visualization, weak motif analytics, puzzle review queue, imported-game coverage, Mirror feedback, story/progression summaries, prioritized actions, and safe Markdown/JSON exports.
 *   **`v1.19.5-clue-chess-adaptive-2`**: Adaptive Clue Chess modes with clue levels 1-5, no-repeat clue memory, review mode, streak mode, boss puzzles, kids wording, deterministic scoring, Analytics deep links, Game Review motif links, backup support, and Python/SQL clue-effectiveness metrics.
+*   **`v1.19.6-product-quality-visual-story-reset-1`**: Product-quality reset with shared chess.js promotion legality guard, BoardView stale-promotion clearing, campaign-first Story landing, visual honesty audit, design-system polish, and product-quality browser visual check.
 
 ## Current Implemented Features
 
@@ -53,7 +54,7 @@ The following features and milestones have been successfully completed and tagge
 *   **Local PGN Import**: `/import-pgn` lets users paste or upload user-provided PGN files, preview per-game validation, save valid/invalid rows locally, update StyleVector evidence from valid user-attributed games, and optionally analyze up to 5 imported games sequentially with Stockfish.
 *   **Game Review Pro**: `/review/:sourceType/:sourceId` reviews completed local matches, Mirror matches, and valid imported games with local Stockfish evidence, deterministic labels, key moments, retry training, phase summaries, StyleVector notes, and Markdown export.
 *   **Advanced Analytics Dashboard**: `/analytics` aggregates local IndexedDB data into player intelligence, CP-loss trends, move-label distribution, StyleVector bars, weak motifs, puzzle review queue, imported-game coverage, Mirror feedback, story/progression summary, and evidence-backed recommended actions.
-*   **Mahabharata Story Mode**: Narrative campaign integrated with interactive chess encounters and puzzles.
+*   **Story Campaign**: Campaign-first Story route with Act I, Act II, and Act III mission paths, locked/available/completed states, mission briefing language, and optional tactical support inside encounters.
 *   **Audio Engine**: Local, dependency-free Web Audio API sound effects for all board interactions.
 *   **Adaptive Clue Chess**: `/clue-chess` supports Adaptive Training, Review Mode, Streak Mode, Boss Puzzle Mode, and Kids Mode using local StyleVector, Game Review motif tags, puzzle attempts, spaced repetition, and Analytics recommendations. Clues use levels 1-5, no-repeat memory, explicit final reveal, deterministic scoring, and insufficient-data notes.
 *   **Local Coach Preview**: `/coach-preview` provides deterministic, local-only training focus, weak motif, review queue, story recommendations, prioritized coach cards, evidence, and local exports.
@@ -65,12 +66,13 @@ The following features and milestones have been successfully completed and tagge
 *   **No Automatic Structured Cross-Device Sync**: Manual cloud backup exists, but row-by-row sync does not.
 *   **No Platform OAuth Import Yet**: PGN import is manual and local. Chess.com and Lichess are supported only when the user provides exported PGN text/files.
 *   **No Real-Time Multiplayer**: Currently restricted to playing against the Engine or Local Pass-and-Play.
-*   **Placeholder Art Assets**: The Mahabharata theme relies on procedural CSS and data-URI SVG pieces pending final art.
+*   **Placeholder Visual Assets**: The Mahabharata/Kurukshetra-inspired theme is an improved 2D placeholder. Realistic 3D battlefield visuals, soldier-like pieces, dust/rocks, and cinematic effects are future milestones.
 *   **No Runtime GenAI Coach Yet**: GenAI and agentic coaching are designed, but the app currently uses deterministic local coach rules only.
 *   **Game Review Accuracy Is MIRROR Internal**: Move labels and accuracy estimates are deterministic local metrics based on Stockfish CP-loss thresholds, not a clone of any external platform's proprietary formula.
 *   **Coach Export Is Local Only**: Markdown and JSON exports are generated in the browser from summaries; they are not uploaded by MIRROR.
 
 ## Next Recommended Milestones
 
-*   **M-BATTLE-PROFILE-PROGRESSION-2**: add market-grade battle profile progression with level, honor score, capture ratio, streaks, tactical rating, Mirror mastery, story rank, puzzle league, badges, and season-ready schema.
-*   **Paused Until Sequenced Later**: runtime GenAI adapter, story implementation expansion, 3D visuals, multiplayer, and E2EE remain future phases rather than the immediate next milestone.
+*   **M-STORY-CAMPAIGN-LOOP-1**: implement mission intro, victory/reward screen, chapter outcome handling, and boss encounter structure so Story becomes a true campaign loop.
+*   **M-3D-KURUKSHETRA-DESIGN-1**: design the optimized Three.js/React Three Fiber battlefield plan, asset rules, 2D fallback, reduced-motion fallback, and verification before implementation.
+*   **Paused Until Sequenced Later**: battle profile progression, runtime GenAI adapter, multiplayer, and E2EE remain future phases until campaign identity and visual direction are stable.

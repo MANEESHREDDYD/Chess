@@ -27,7 +27,8 @@ This repository demonstrates professional-grade engineering across multiple doma
 - **Backend / Full Stack**: Supabase Auth, Supabase Storage, RLS policies, cloud backup service wrapper, account linking.
 - **Forward Deployment**: Environment configuration, verification scripts, CI-ready commands, safe fallback when cloud env is missing.
 - **GenAI-readiness**: MIRROR structures personalization and coaching-ready data for future integration. *(Note: Runtime GenAI conversational coaching is a future milestone, not currently implemented).*
-- **Creativity**: Mahabharata/Kurukshetra theme, Story Acts I–III, Pandava/Kaurava visual identity, custom audio FX.
+- **Product Quality**: shared promotion legality guard, product mode contracts, Story campaign reset, visual honesty audit, design-system cleanup, and browser visual QA.
+- **Creativity**: Mahabharata/Kurukshetra-inspired placeholder theme, Story Acts I-III campaign shell, Pandava/Kaurava visual identity, custom audio FX.
 
 ## Technical Architecture
 - [System Architecture](docs/architecture-overview.md)
@@ -41,6 +42,11 @@ This repository demonstrates professional-grade engineering across multiple doma
 - [Stockfish Boot Timeout Hotfix 2 Report](docs/m-stockfish-boot-timeout-hotfix-2-report.md)
 - [Advanced Analytics Dashboard Report](docs/m-advanced-analytics-dashboard-1-report.md)
 - [Adaptive Clue Chess Report](docs/m-clue-chess-adaptive-2-report.md)
+- [Product Quality Visual Story Reset Report](docs/m-product-quality-visual-story-reset-1-report.md)
+- [Product Mode Contracts](docs/product-mode-contracts.md)
+- [Story Campaign Redesign Plan](docs/story-campaign-redesign-plan.md)
+- [Visual Reality Audit](docs/visual-reality-audit.md)
+- [3D Kurukshetra Technical Plan](docs/3d-kurukshetra-technical-plan.md)
 - [Local GenAI Coach Design](docs/local-genai-coach-design.md)
 - [Coach Context Schema](docs/coach-context-schema.md)
 - [Local Coach Safety Evaluation](docs/local-coach-safety-eval.md)
@@ -57,6 +63,7 @@ MIRROR includes a real local-first Python and SQL analytics layer that runs on e
 - **Game Review Pro analytics**: backup exports and the Python/SQL layer include `game_reviews`, reviewed-game counts, review CP-loss, review blunders/mistakes, weakest phase, and most common review label.
 - **In-app Advanced Analytics Dashboard**: `/analytics` turns local IndexedDB records into player intelligence, review trends, StyleVector bars, weak motifs, puzzle review queue, imported-game coverage, Mirror feedback, story progress, and prioritized next actions.
 - **Adaptive Clue Chess**: `/clue-chess` now supports Adaptive Training, Review Mode, Streak Mode, Boss Puzzle Mode, and Kids Mode. It uses clue levels 1-5, no-repeat clue memory, due-review prioritization, local evidence badges, final reveal, deterministic scoring, and deep links from Analytics/Game Review.
+- **Product-quality reset**: promotion dialogs are guarded by shared chess.js legality checks, Story presents as a campaign surface rather than Clue Chess, and the app has a shared design-system polish layer for major screens.
 - **Action-first analytics**: every dashboard section ends in a recommendation or an explicit insufficient-data note instead of decorative charts.
 - **Behavioral analytics**: StyleVector is treated as MIRROR's behavioral personalization layer, with aggression, risk, time-pressure, tactical weakness, and positional preference features.
 - **Local-first pipeline**: the CLI reads local JSON and writes CSV, Markdown, and JSON artifacts without cloud credentials.
@@ -121,6 +128,7 @@ node scripts/run-pgn-import-verification.mjs
 node scripts/run-game-review-pro-verification.mjs
 node scripts/run-analytics-dashboard-verification.mjs
 node scripts/run-clue-chess-adaptive-verification.mjs
+node scripts/run-product-quality-visual-check.mjs
 ```
 
 ## Screenshots
@@ -158,9 +166,11 @@ node scripts/run-clue-chess-adaptive-verification.mjs
 - `v1.19.3-stockfish-boot-timeout-hotfix-2`
 - `v1.19.4-advanced-analytics-dashboard-1`
 - `v1.19.5-clue-chess-adaptive-2`
+- `v1.19.6-product-quality-visual-story-reset-1`
 
 ## Market-Grade Product Roadmap
-- `M-BATTLE-PROFILE-PROGRESSION-2`: battle level, honor score, capture ratio, streaks, tactical rating, Mirror mastery, story rank, puzzle league, badges, and season-ready schema.
-- Later phases sequence invite multiplayer, random matchmaking, 3D Kurukshetra visuals, kids onboarding/mini-games, E2EE backup, and release hardening.
+- `M-STORY-CAMPAIGN-LOOP-1`: implement mission intro, victory/reward screen, chapter outcome handling, and boss encounter structure.
+- `M-3D-KURUKSHETRA-DESIGN-1`: design the optimized 3D battlefield stack, asset rules, fallbacks, and verification plan before any 3D implementation.
+- Later phases sequence battle profile progression, invite multiplayer, random matchmaking, 3D Kurukshetra implementation, kids onboarding/mini-games, E2EE backup, and release hardening.
 
 Runtime GenAI adapter work, story implementation expansion, 3D visuals, multiplayer, and E2EE are deliberately sequenced after core reliability and product execution milestones. Runtime GenAI coaching is still not implemented.

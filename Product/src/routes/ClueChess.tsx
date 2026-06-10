@@ -452,7 +452,7 @@ export default function ClueChess() {
             engineThinking={false}
             onPieceDrop={handlePieceDrop}
             onPromotionCheck={() => true}
-            onPromotionPieceSelect={() => true}
+            onPromotionPieceSelect={() => false}
             themeManifest={themeManifest}
             themeError={themeError}
           />

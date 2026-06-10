@@ -1,9 +1,52 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getLocalMatchesForPlayer } from '../data/db';
+import {
+  getPlayerProgressSummary,
+  scanAndGrantAchievements,
+  type PlayerProgressSummary,
+} from '../progression/progression';
 import { usePlayerStore } from '../state/playerStore';
 import { useSettingsStore } from '../state/settingsStore';
-import { getLocalMatchesForPlayer } from '../data/db';
-import { getPlayerProgressSummary, scanAndGrantAchievements, type PlayerProgressSummary } from '../progression/progression';
+
+const MODE_CARDS = [
+  {
+    title: 'Regular Chess',
+    text: 'Play Stockfish locally with the stable engine runtime.',
+    route: '/play',
+    action: 'Play Chess',
+  },
+  {
+    title: 'Mirror Chess',
+    text: 'Face deterministic personality variants built from your StyleVector.',
+    route: '/mirror',
+    action: 'Play Mirror',
+  },
+  {
+    title: 'Story Campaign',
+    text: 'Progress through mission-based Kurukshetra chapters.',
+    route: '/story',
+    action: 'Open Campaign',
+  },
+  {
+    title: 'Clue Chess Training',
+    text: 'Train motifs with adaptive clue levels, review, streak, boss, and kids modes.',
+    route: '/clue-chess',
+    action: 'Train',
+  },
+  {
+    title: 'Analytics',
+    text: 'Review local CP-loss, weak motifs, imports, Mirror feedback, and next actions.',
+    route: '/analytics',
+    action: 'View Analytics',
+  },
+  {
+    title: 'Profile / Progression',
+    text: 'Track XP, badges, chapter progress, and local player state.',
+    route: '/progress',
+    action: 'Open Profile',
+  },
+];
 
 export default function Home() {
   const { activePlayer, clearActivePlayer } = usePlayerStore();
@@ -13,9 +56,9 @@ export default function Home() {
 
   useEffect(() => {
     if (activePlayer) {
-      getLocalMatchesForPlayer(activePlayer.id).then(m => setMatchCount(m.length));
-      scanAndGrantAchievements(activePlayer.id).then(() => {
-        getPlayerProgressSummary(activePlayer.id).then(setProgress);
+      void getLocalMatchesForPlayer(activePlayer.id).then((matches) => setMatchCount(matches.length));
+      void scanAndGrantAchievements(activePlayer.id).then(() => {
+        void getPlayerProgressSummary(activePlayer.id).then(setProgress);
       });
     } else {
       setProgress(null);
@@ -25,106 +68,114 @@ export default function Home() {
   const isKurukshetra = activeTheme === 'mahabharata';
 
   return (
-    <div className="home">
+    <section className="home">
       <div className="home-hero">
-        <div className="home-eyebrow">
-          {isKurukshetra ? '✦ Kurukshetra Theme Active ✦' : 'A local-first chess prototype'}
-        </div>
+        <p className="home-eyebrow">
+          {isKurukshetra ? 'Kurukshetra-inspired theme active' : 'Local-first chess improvement platform'}
+        </p>
         <h1 className="home-title">
-          Play a chess opponent <br /> built from how <em>you</em> play.
+          Play a chess opponent built from how <em>you</em> play.
         </h1>
         <p className="home-lede">
-          MIRROR is an experiment. We are testing whether a chess opponent calibrated to your
-          specific style - your openings, your time pressure, your tactical blind spots - actually
-          feels like you.
+          MIRROR combines regular chess, a personalized Mirror opponent, story campaign missions,
+          adaptive clue training, and local analytics into one improvement loop.
         </p>
-        
+
         {activePlayer ? (
-          <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'left' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Player Profile: {activePlayer.display_name}</h2>
-              <button className="btn btn-ghost" onClick={clearActivePlayer} style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}>Switch Profile</button>
+          <section className="home-profile-card ui-panel">
+            <div className="home-profile-card__header">
+              <div>
+                <span className="ui-badge">Active profile</span>
+                <h2>{activePlayer.display_name}</h2>
+              </div>
+              <button className="btn btn-ghost" onClick={clearActivePlayer} type="button">
+                Switch Profile
+              </button>
             </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', lineHeight: 1.6 }}>
+            <div className="home-profile-card__stats">
               {progress ? (
                 <>
-                  <li><strong>Level:</strong> {progress.level} ({progress.total_xp} XP)</li>
-                  <li><strong>Current Streak:</strong> {progress.current_streak_days} days</li>
-                  <li><strong>Story Progress:</strong> {progress.story_chapters_complete} / {progress.story_total_chapters} chapters</li>
-                  {progress.weakest_motif && <li><strong>Weakest Motif:</strong> <span className="capitalize">{progress.weakest_motif.replace(/_/g, ' ')}</span></li>}
-                  <li style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--primary-color)', color: 'white', borderRadius: '4px' }}>
-                    <strong>Suggested Action:</strong> {progress.next_action}
-                  </li>
+                  <Metric label="Level" value={`${progress.level} (${progress.total_xp} XP)`} />
+                  <Metric label="Streak" value={`${progress.current_streak_days} days`} />
+                  <Metric
+                    label="Story"
+                    value={`${progress.story_chapters_complete}/${progress.story_total_chapters}`}
+                  />
+                  <Metric
+                    label="Focus"
+                    value={progress.weakest_motif ? progress.weakest_motif.replace(/_/g, ' ') : 'insufficient data'}
+                  />
                 </>
               ) : (
                 <>
-                  <li><strong>Calibration Status:</strong> {activePlayer.calibration_status}</li>
-                  {activePlayer.detected_elo !== undefined && (
-                    <li><strong>Detected Elo:</strong> {activePlayer.detected_elo} ({activePlayer.elo_band})</li>
-                  )}
-                  <li><strong>Local Games Played:</strong> {matchCount}</li>
+                  <Metric label="Calibration" value={activePlayer.calibration_status ?? 'not started'} />
+                  <Metric label="Local games" value={matchCount} />
+                  <Metric
+                    label="Detected Elo"
+                    value={
+                      activePlayer.detected_elo !== undefined
+                        ? `${activePlayer.detected_elo} (${activePlayer.elo_band})`
+                        : 'insufficient data'
+                    }
+                  />
                 </>
               )}
-            </ul>
-            <div className="home-actions" style={{ justifyContent: 'flex-start' }}>
+            </div>
+            <p className="home-profile-card__action">
+              {progress?.next_action ?? 'Calibrate, import games, or play Mirror to strengthen personalization.'}
+            </p>
+            <div className="home-actions">
               <Link to="/progress" className="btn btn-primary">
-                View Full Progression
+                View Progression
               </Link>
               <Link to="/calibration" className="btn btn-secondary">
                 {activePlayer.calibration_status === 'complete' ? 'Recalibrate' : 'Start Calibration'}
               </Link>
-              <Link to="/mirror" className="btn btn-ghost">
-                Play Mirror
+              <Link to="/import-pgn" className="btn btn-ghost">
+                Import Games
               </Link>
             </div>
-          </div>
+          </section>
         ) : (
           <div className="home-actions">
             <Link to="/onboarding" className="btn btn-primary">
               Create Player Profile
             </Link>
             <Link to="/play" className="btn btn-ghost">
-              Free play
+              Free Play
             </Link>
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '2rem 0' }}>
-          <div style={{ background: 'var(--surface-sunken, #eaeaea)', padding: '1rem', borderRadius: 8, textAlign: 'center' }}>
-            <h2 style={{ margin: '0 0 0.5rem 0' }}>Story Mode</h2>
-            <p style={{ margin: '0 0 1rem 0' }}>Begin the apprentice's path through Kurukshetra.</p>
-            <Link to="/story" className="btn btn-secondary">
-              Play Story Mode
-            </Link>
-          </div>
-
-          <div style={{ background: 'var(--surface-sunken, #eaeaea)', padding: '1rem', borderRadius: 8, textAlign: 'center' }}>
-            <h2 style={{ margin: '0 0 0.5rem 0' }}>Clue Chess</h2>
-            <p style={{ margin: '0 0 1rem 0' }}>Train with adaptive hints based on your style.</p>
-            <Link to="/clue-chess" className="btn btn-secondary">
-              Play Clue Chess
-            </Link>
-          </div>
-        </div>
+        <section className="home-mode-grid" aria-label="MIRROR product modes">
+          {MODE_CARDS.map((card) => (
+            <article key={card.title} className="home-mode-card">
+              <h2>{card.title}</h2>
+              <p>{card.text}</p>
+              <Link to={card.route} className="btn btn-secondary">
+                {card.action}
+              </Link>
+            </article>
+          ))}
+        </section>
 
         <p className="home-privacy">
-          We don't track you. Games stay on your device unless you submit feedback.
+          Gameplay and training data stay on this device unless you explicitly export or use optional backup.
         </p>
-
-        <div style={{ marginTop: '2rem', textAlign: 'center', background: '#e0f2fe', padding: '1.5rem', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#0369a1' }}>Optional Cloud Sync (Beta)</h3>
-          <p style={{ margin: '0 0 1rem 0', color: '#0c4a6e', fontSize: '0.95rem' }}>Link your local profile to a cloud account for future sync capabilities.</p>
-          <Link to="/account" className="btn btn-secondary" style={{ background: '#0284c7', color: 'white' }}>
-            Setup Cloud Account
-          </Link>
-        </div>
-
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <Link to="/backup" style={{ color: 'var(--ink-soft)', fontSize: '0.9rem', textDecoration: 'underline' }}>
-            Backup or Export Your Data
-          </Link>
+        <div className="home-links">
+          <Link to="/backup">Backup or Export Your Data</Link>
+          <Link to="/account">Optional Cloud Account</Link>
         </div>
       </div>
+    </section>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }

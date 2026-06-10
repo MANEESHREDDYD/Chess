@@ -28,11 +28,6 @@ function evaluateEngineOutcome(game: Chess): 'user_lost' | 'draw' | 'continuing'
   return 'continuing';
 }
 
-type PendingPromotion = {
-  from: string;
-  to: string;
-} | null;
-
 type Task3EndgameTechniqueProps = {
   themeManifest?: ThemeManifest | null;
   onComplete?: (result: { endgame_strength: number; moveCount: number; success: boolean }) => void;
@@ -46,7 +41,6 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
   const [status, setStatus] = useState<'playing' | 'game-over'>('playing');
   const [result, setResult] = useState<string | null>(null);
   const [engineThinking, setEngineThinking] = useState(false);
-  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
   const [endgameStrength, setEndgameStrength] = useState(0);
   const mountedRef = useRef(true);
   const statusRef = useRef(status);
@@ -131,12 +125,12 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
     return true;
   };
 
-  const handleDrop = (from: string, to: string): boolean => {
+  const handleDrop = (from: string, to: string, promotion?: 'q' | 'r' | 'b' | 'n'): boolean => {
     if (currentStatus !== 'playing' || engineThinking) return false;
 
     let move;
     try {
-      move = game.move({ from, to, promotion: 'q' });
+      move = game.move({ from, to, promotion: promotion ?? 'q' });
     } catch {
       return false;
     }
@@ -147,32 +141,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
   };
 
   const handlePromotionCheck = (sourceSquare: string, targetSquare: string, piece: string): boolean => {
-    if (piece[1] !== 'P') return false;
-    const targetRank = targetSquare[1];
-    const isPromotion = (piece[0] === 'w' && targetRank === '8') || (piece[0] === 'b' && targetRank === '1');
-    if (!isPromotion) return false;
-    setPendingPromotion({ from: sourceSquare, to: targetSquare });
-    return true;
-  };
-
-  const handlePromotionPieceSelect = (piece?: string): boolean => {
-    if (!piece || !pendingPromotion) {
-      setPendingPromotion(null);
-      return false;
-    }
-
-    const promotion = piece[1].toLowerCase() as 'q' | 'r' | 'b' | 'n';
-    let move;
-    try {
-      move = game.move({ ...pendingPromotion, promotion });
-    } catch {
-      setPendingPromotion(null);
-      return false;
-    }
-    setPendingPromotion(null);
-    if (!move) return false;
-
-    return completeUserMove(moveCount + 1, Boolean(move.promotion));
+    return Boolean(sourceSquare && targetSquare && piece);
   };
 
   if (!task) return null;
@@ -207,7 +176,7 @@ export function Task3EndgameTechnique({ themeManifest = null, onComplete }: Task
         engineThinking={engineThinking}
         onPieceDrop={handleDrop}
         onPromotionCheck={handlePromotionCheck}
-        onPromotionPieceSelect={handlePromotionPieceSelect}
+        onPromotionPieceSelect={() => false}
         themeManifest={themeManifest}
       />
 

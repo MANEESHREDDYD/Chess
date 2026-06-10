@@ -99,3 +99,12 @@ To optimize learning, MIRROR employs a SuperMemo-style spaced repetition algorit
 The narrative "Mahabharata" campaign triggers analytics events upon chapter completion.
 - **XP Formula**: Players earn XP based on the CP-loss of their story encounters and puzzle accuracies.
 - **Level & Achievements**: Standard RPG-style leveling thresholds reward badges (achievements) stored locally, incentivizing continuous improvement.
+
+## Product Quality Reset
+
+`M-PRODUCT-QUALITY-VISUAL-STORY-RESET-1` intentionally pauses battle profile expansion until core trust and mode clarity are stable.
+
+- Promotion legality is now guarded by a shared chess.js helper before any promotion UI appears.
+- Story is presented as a campaign surface with missions, act paths, and progress states rather than a clue-first training screen.
+- Current Kurukshetra visuals are documented as an improved 2D placeholder, not a realistic 3D battlefield.
+- Battle profile progression should resume only after Story campaign identity and the future visual direction are stable.

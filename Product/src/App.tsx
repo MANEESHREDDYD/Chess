@@ -44,7 +44,7 @@ export default function App() {
           <Link to="/play">Play</Link>
           <Link to="/import-pgn">Import games</Link>
           <Link to="/analytics">Analytics</Link>
-          <Link to="/progress">Progress</Link>
+          <Link to="/progress">Profile</Link>
           <Link to="/coach-preview">Coach</Link>
           <Link to="/stockfish-diagnostics">Engine diagnostics</Link>
           <Link to="/about">About</Link>

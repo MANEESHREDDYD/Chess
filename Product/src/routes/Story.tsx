@@ -1,26 +1,33 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { usePlayerStore } from '../state/playerStore';
-import { useSettingsStore } from '../state/settingsStore';
-import { getStoryProgressForPlayer, initializeStoryProgressForPlayer, completeStoryChapter, type StoryProgressRecord } from '../data/db';
-import { mahabharataStorySeed } from '../story/mahabharataStorySeed';
-import { isStandardTheme, loadThemeManifest, type ThemeManifest } from '../lib/theme';
-import { BoardView } from '../components/Board/BoardView';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BoardView } from '../components/Board/BoardView';
+import {
+  completeStoryChapter,
+  getStoryProgressForPlayer,
+  initializeStoryProgressForPlayer,
+  type StoryProgressRecord,
+} from '../data/db';
 import { seedPuzzles } from '../data/cluePuzzles';
+import { isStandardTheme, loadThemeManifest, type ThemeManifest } from '../lib/theme';
+import { audioEngine } from '../audio/audioEngine';
+import { useAudioFx } from '../audio/useAudioFx';
+import { useSettingsStore } from '../state/settingsStore';
+import { useGameStore } from '../state/gameStore';
+import { usePlayerStore } from '../state/playerStore';
+import { mahabharataStorySeed } from '../story/mahabharataStorySeed';
+import type { StoryChapter, StoryChapterStatus } from '../story/storyTypes';
 import { usePuzzleSequence } from '../training/usePuzzleSequence';
 
-import { useGameStore } from '../state/gameStore';
-import { useAudioFx } from '../audio/useAudioFx';
-import { audioEngine } from '../audio/audioEngine';
+type StoryResult = 'win' | 'loss' | 'draw';
 
-function StoryEncounterView({ 
-  chapter, 
-  onComplete, 
-  onBack 
-}: { 
-  chapter: typeof mahabharataStorySeed[0], 
-  onComplete: (result?: 'win'|'loss'|'draw') => void, 
-  onBack: () => void 
+function StoryEncounterView({
+  chapter,
+  onComplete,
+  onBack,
+}: {
+  chapter: StoryChapter;
+  onComplete: (result?: StoryResult) => void;
+  onBack: () => void;
 }) {
   const { activeTheme } = useSettingsStore();
   const [themeManifest, setThemeManifest] = useState<ThemeManifest | null>(null);
@@ -29,7 +36,6 @@ function StoryEncounterView({
   useEffect(() => {
     let cancelled = false;
     async function loadTheme() {
-      // For story, if classic is active, we just use classic, but we can recommend Kurukshetra.
       if (isStandardTheme(activeTheme)) {
         setThemeManifest(null);
         setThemeError(null);
@@ -37,28 +43,39 @@ function StoryEncounterView({
       }
       try {
         const manifest = await loadThemeManifest(activeTheme);
-        if (!cancelled) setThemeManifest(manifest);
-      } catch (err) {
-        if (!cancelled) setThemeError('Failed to load theme');
+        if (!cancelled) {
+          setThemeManifest(manifest);
+          setThemeError(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setThemeManifest(null);
+          setThemeError('Failed to load theme.');
+        }
       }
     }
-    loadTheme();
-    return () => { cancelled = true; };
+    void loadTheme();
+    return () => {
+      cancelled = true;
+    };
   }, [activeTheme]);
 
   const encounter = chapter.encounter;
-  
-  // -- Play Engine State --
-  const { fen: gameFen, status: gameStatus, engineThinking, startGame, makePlayerMove, history } = useGameStore();
+  const {
+    fen: gameFen,
+    status: gameStatus,
+    engineThinking,
+    startGame,
+    makePlayerMove,
+    history,
+  } = useGameStore();
   const hasStartedEngineRef = useRef(false);
 
   useAudioFx(history);
 
-  // -- Clue Puzzle State --
-  // -- Clue Puzzle State --
   const puzzle = useMemo(() => {
     if (encounter.type === 'clue_puzzle' && encounter.puzzle_id) {
-      return seedPuzzles.find(p => p.id === encounter.puzzle_id) || null;
+      return seedPuzzles.find((candidate) => candidate.id === encounter.puzzle_id) ?? null;
     }
     return null;
   }, [encounter]);
@@ -75,21 +92,16 @@ function StoryEncounterView({
     hintLevel,
     handleGetClue,
     handleUserMove,
-    restart
+    restart,
   } = usePuzzleSequence(puzzle);
-  
-
 
   useEffect(() => {
     if (encounter.type === 'play_engine' && !hasStartedEngineRef.current) {
       hasStartedEngineRef.current = true;
-      startGame(encounter.side, encounter.engine_difficulty || 'Beginner');
+      startGame(encounter.side, encounter.engine_difficulty ?? 'Beginner');
     }
   }, [encounter, startGame]);
 
-
-
-  // Check Play Engine completion (e.g. survive max_moves)
   useEffect(() => {
     if (encounter.type === 'play_engine' && encounter.max_moves && gameStatus === 'playing') {
       const playerMoves = Math.floor(history.length / 2) + (history.length % 2);
@@ -98,40 +110,49 @@ function StoryEncounterView({
       }
     }
     if (encounter.type === 'play_engine' && gameStatus === 'game-over') {
-      onComplete('loss'); // simple assumption for now
+      onComplete('loss');
     }
-  }, [history, gameStatus, encounter, onComplete]);
+  }, [encounter, gameStatus, history, onComplete]);
 
-  const handlePieceDrop = (sourceSquare: string, targetSquare: string, promotion?: string) => {
+  const handlePieceDrop = (
+    sourceSquare: string,
+    targetSquare: string,
+    promotion?: 'b' | 'q' | 'r' | 'n'
+  ) => {
     if (encounter.type === 'play_engine') {
-      return makePlayerMove(sourceSquare, targetSquare, promotion as "b" | "q" | "r" | "n" | undefined);
-    } 
-    
+      return makePlayerMove(sourceSquare, targetSquare, promotion);
+    }
+
     if (encounter.type === 'clue_puzzle' && puzzle && !puzzleSolved) {
-      const moveStr = `${sourceSquare}${targetSquare}${promotion || ''}`;
+      const moveStr = `${sourceSquare}${targetSquare}${promotion ?? ''}`;
       return handleUserMove(moveStr);
     }
-    
+
     return false;
   };
 
-
-
-  const isComplete = (encounter.type === 'play_engine' && (Math.floor(history.length / 2) + (history.length % 2) >= (encounter.max_moves || 999))) || puzzleSolved;
+  const isComplete =
+    (encounter.type === 'play_engine' &&
+      Math.floor(history.length / 2) + (history.length % 2) >= (encounter.max_moves ?? 999)) ||
+    puzzleSolved;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto' }}>
-      <button onClick={onBack} className="btn btn-ghost" style={{ marginBottom: '1rem' }}>&larr; Back to Map</button>
-      
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: '0 0 0.5rem 0' }}>Chapter {chapter.chapter_number}: {chapter.title}</h2>
-        <div style={{ fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
-          {chapter.location} • {chapter.character}
-        </div>
-      </div>
+    <section className="story-encounter">
+      <button onClick={onBack} className="btn btn-ghost story-back" type="button">
+        Back to Campaign
+      </button>
 
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 400px' }}>
+      <header className="story-encounter__header">
+        <p className="home-eyebrow">Story Campaign Mission</p>
+        <h1>Chapter {chapter.chapter_number}: {chapter.title}</h1>
+        <p>
+          {chapter.subtitle ? `${chapter.subtitle} - ` : ''}
+          {chapter.location} with {chapter.character}
+        </p>
+      </header>
+
+      <div className="story-encounter__layout">
+        <div className="story-encounter__board">
           <BoardView
             fen={encounter.type === 'play_engine' ? gameFen : puzzleFen}
             playerColor={encounter.side}
@@ -139,76 +160,106 @@ function StoryEncounterView({
             engineThinking={encounter.type === 'play_engine' ? engineThinking : false}
             onPieceDrop={handlePieceDrop}
             onPromotionCheck={() => true}
-            onPromotionPieceSelect={() => true}
+            onPromotionPieceSelect={() => false}
             themeManifest={themeManifest}
             themeError={themeError}
           />
         </div>
 
-        <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ background: 'var(--surface-sunken)', padding: '1.5rem', borderRadius: 8 }}>
-            <h3 style={{ margin: '0 0 1rem 0' }}>{chapter.character}</h3>
+        <aside className="story-encounter__briefing">
+          <section className="ui-panel">
+            <h2>Mission briefing</h2>
+            <p className="story-encounter__speaker">{chapter.character}</p>
             {isComplete ? (
               <>
-                {chapter.win_dialogue?.map((line, i) => (
-                  <p key={i} style={{ fontStyle: line.tone === 'narrator' ? 'italic' : 'normal', margin: '0 0 0.5rem 0' }}>
+                {chapter.win_dialogue?.map((line, index) => (
+                  <p
+                    key={`${line.speaker}-${index}`}
+                    className={
+                      line.tone === 'narrator'
+                        ? 'story-dialogue story-dialogue--narrator'
+                        : 'story-dialogue'
+                    }
+                  >
                     "{line.text}"
                   </p>
                 ))}
-                <div style={{ marginTop: '2rem' }}>
-                  <button onClick={() => onComplete('win')} className="btn btn-primary">Complete Chapter</button>
+                <div className="story-encounter__actions">
+                  <button onClick={() => onComplete('win')} className="btn btn-primary" type="button">
+                    Claim Mission Reward
+                  </button>
                 </div>
               </>
             ) : (
               <>
-                {chapter.intro_dialogue.map((line, i) => (
-                  <p key={i} style={{ fontStyle: line.tone === 'narrator' ? 'italic' : 'normal', margin: '0 0 0.5rem 0' }}>
+                {chapter.intro_dialogue.map((line, index) => (
+                  <p
+                    key={`${line.speaker}-${index}`}
+                    className={
+                      line.tone === 'narrator'
+                        ? 'story-dialogue story-dialogue--narrator'
+                        : 'story-dialogue'
+                    }
+                  >
                     "{line.text}"
                   </p>
                 ))}
-                <div style={{ marginTop: '1.5rem', padding: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                <p className="story-objective">
                   <strong>Objective:</strong> {encounter.objective}
-                </div>
+                </p>
               </>
             )}
-          </div>
+          </section>
 
-          {encounter.type === 'clue_puzzle' && !isComplete && (
-            <div style={{ background: 'var(--surface-sunken)', padding: '1rem', borderRadius: 8 }}>
-              <h4>Hints</h4>
-              <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0' }}>
-                {cluesRevealed.map((c, i) => <li key={i} style={{ fontSize: '0.9rem' }}>{c}</li>)}
+          {encounter.type === 'clue_puzzle' && !isComplete ? (
+            <section className="ui-panel story-assist">
+              <h2>Optional tactical support</h2>
+              <p>
+                Campaign missions are encounters first. Request support only when you want a
+                training hint inside the mission.
+              </p>
+              <ul>
+                {cluesRevealed.map((clue, index) => (
+                  <li key={`${clue}-${index}`}>{clue}</li>
+                ))}
               </ul>
-              <button 
+              <button
                 onClick={handleGetClue}
-                disabled={!puzzle || hintLevel >= ((puzzle.step_clues && puzzle.step_clues[currentStepIndex]) ? puzzle.step_clues[currentStepIndex].length : puzzle.clue_levels.length)}
+                disabled={
+                  !puzzle ||
+                  hintLevel >=
+                    (puzzle.step_clues?.[currentStepIndex]
+                      ? puzzle.step_clues[currentStepIndex].length
+                      : puzzle.clue_levels.length)
+                }
                 className="btn btn-ghost"
+                type="button"
               >
-                Get Clue
+                Request mission hint
               </button>
-              {puzzleFailed && (
-                <div style={{ color: 'var(--danger-color)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                  Incorrect move.
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <button onClick={restart} className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.9rem' }}>Restart Sequence</button>
+              {puzzleFailed ? (
+                <div className="story-assist__warning">
+                  The mission line is not working yet.
+                  <div>
+                    <button onClick={restart} className="btn btn-ghost" type="button">
+                      Restart encounter
+                    </button>
                   </div>
                 </div>
-              )}
-              {isMultiMove && (
-                <div style={{ marginTop: '1rem', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                  Step {currentStepIndex + 1} of {totalSteps}
+              ) : null}
+              {isMultiMove ? (
+                <div className="story-assist__progress">
+                  Mission sequence {currentStepIndex + 1} of {totalSteps}
                 </div>
-              )}
-              {opponentReply && (
-                <div style={{ marginTop: '0.5rem', fontStyle: 'italic', color: 'var(--ink-soft)', fontSize: '0.9rem' }}>
-                  Opponent replies: {opponentReply}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+              ) : null}
+              {opponentReply ? (
+                <div className="story-assist__reply">Opponent replies: {opponentReply}</div>
+              ) : null}
+            </section>
+          ) : null}
+        </aside>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -226,19 +277,21 @@ export default function Story() {
       const records = await getStoryProgressForPlayer(activePlayer.id);
       if (mounted) setProgress(records);
     }
-    loadProgress();
-    return () => { mounted = false; };
+    void loadProgress();
+    return () => {
+      mounted = false;
+    };
   }, [activePlayer]);
 
-  const handleChapterComplete = async (chapterId: string, result?: 'win'|'loss'|'draw') => {
+  const handleChapterComplete = async (chapterId: string, result?: StoryResult) => {
     if (!activePlayer) return;
     await completeStoryChapter(activePlayer.id, chapterId, result);
-    
+
     if (result === 'win') {
       const { audioEnabled, audioVolume } = useSettingsStore.getState();
       if (audioEnabled) audioEngine.playStoryCompleteSound({ theme: activeTheme, volume: audioVolume });
     }
-    
+
     const records = await getStoryProgressForPlayer(activePlayer.id);
     setProgress(records);
     setActiveChapterId(null);
@@ -246,94 +299,148 @@ export default function Story() {
 
   if (!activePlayer) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h2>Story Mode</h2>
-        <p>You must create a player profile to begin the campaign.</p>
-        <Link to="/onboarding" className="btn btn-primary">Create Profile</Link>
-      </div>
+      <section className="story-campaign story-campaign--empty">
+        <p className="home-eyebrow">Story Campaign</p>
+        <h1>Begin the Kurukshetra campaign.</h1>
+        <p>Create a local profile to unlock chapters, mission progress, and rewards.</p>
+        <Link to="/onboarding" className="btn btn-primary">
+          Create Profile
+        </Link>
+      </section>
     );
   }
 
   if (activeChapterId) {
-    const chapter = mahabharataStorySeed.find(c => c.id === activeChapterId)!;
-    return <StoryEncounterView 
-             chapter={chapter} 
-             onComplete={(r) => handleChapterComplete(chapter.id, r)} 
-             onBack={() => setActiveChapterId(null)} 
-           />;
+    const chapter = mahabharataStorySeed.find((candidate) => candidate.id === activeChapterId);
+    if (!chapter) {
+      return (
+        <section className="story-campaign story-campaign--empty">
+          <p className="home-eyebrow">Story Campaign</p>
+          <h1>Mission unavailable</h1>
+          <button className="btn btn-secondary" type="button" onClick={() => setActiveChapterId(null)}>
+            Back to Campaign
+          </button>
+        </section>
+      );
+    }
+    return (
+      <StoryEncounterView
+        chapter={chapter}
+        onComplete={(result) => void handleChapterComplete(chapter.id, result)}
+        onBack={() => setActiveChapterId(null)}
+      />
+    );
   }
 
+  const completedCount = progress.filter((record) => record.status === 'complete').length;
+  const availableCount = progress.filter((record) => record.status === 'available').length;
+  const actNumbers = Array.from(new Set(mahabharataStorySeed.map((chapter) => chapter.act_number ?? 1)));
+
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '2rem' }}>
-      <h1 style={{ marginBottom: '0.5rem' }}>The Kurukshetra Campaign</h1>
-      
-      {activePlayer.calibration_status !== 'complete' && (
-        <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: 4, marginBottom: '2rem' }}>
-          <strong>Note:</strong> Complete calibration later to fully personalize story encounters.
+    <section className="story-campaign">
+      <header className="story-campaign__hero">
+        <div>
+          <p className="home-eyebrow">Story Campaign</p>
+          <h1>The Kurukshetra Campaign</h1>
+          <p>
+            A mission-based campaign shell for Mahabharata-inspired chess encounters. This is not
+            the Clue Chess training page; tactical support is optional inside missions.
+          </p>
         </div>
-      )}
-
-      {activeTheme !== 'mahabharata' && (
-        <div style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginBottom: '2rem' }}>
-          Best experienced in the Kurukshetra theme.
+        <div className="story-campaign__summary" aria-label="Story campaign progress">
+          <span>{completedCount} completed</span>
+          <span>{availableCount} available</span>
+          <span>{mahabharataStorySeed.length} total missions</span>
         </div>
-      )}
+      </header>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-        {Array.from(new Set(mahabharataStorySeed.map(c => c.act_number || 1))).map(actNum => {
-          const chaptersInAct = mahabharataStorySeed.filter(c => (c.act_number || 1) === actNum);
-          const actTitle = chaptersInAct[0]?.act_title || `Act ${actNum}`;
-          
+      {activePlayer.calibration_status !== 'complete' ? (
+        <p className="ui-warning">
+          Complete calibration later to personalize story encounters and future mission rewards.
+        </p>
+      ) : null}
+
+      {activeTheme !== 'mahabharata' ? (
+        <p className="play-note">
+          The current visual theme is a placeholder. Future milestones will build a more complete
+          Kurukshetra battlefield treatment.
+        </p>
+      ) : null}
+
+      <div className="story-campaign__acts">
+        {actNumbers.map((actNumber) => {
+          const chaptersInAct = mahabharataStorySeed.filter(
+            (chapter) => (chapter.act_number ?? 1) === actNumber
+          );
+          const actTitle = chaptersInAct[0]?.act_title ?? `Act ${actNumber}`;
+          const actStats = getActStats(chaptersInAct, progress);
           return (
-            <div key={actNum}>
-              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--ink-soft)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                {actTitle}
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {chaptersInAct.map(chapter => {
-                  const rec = progress.find(p => p.chapter_id === chapter.id);
-                  const status = rec?.status || 'locked';
-                  
+            <section className="story-act" key={actNumber}>
+              <header className="story-act__header">
+                <div>
+                  <span>Campaign path</span>
+                  <h2>{actTitle}</h2>
+                </div>
+                <p>
+                  {actStats.complete}/{actStats.total} missions complete
+                </p>
+              </header>
+
+              <div className="story-act__missions">
+                {chaptersInAct.map((chapter) => {
+                  const record = progress.find((entry) => entry.chapter_id === chapter.id);
+                  const status = record?.status ?? 'locked';
                   return (
-                    <div key={chapter.id} style={{ 
-                      padding: '1.5rem', 
-                      background: status === 'locked' ? 'var(--surface-sunken)' : 'var(--paper)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 8,
-                      opacity: status === 'locked' ? 0.6 : 1,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
+                    <article key={chapter.id} className={`story-mission story-mission--${status}`}>
                       <div>
-                        <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: '0.25rem' }}>
-                          Chapter {chapter.chapter_number}
-                        </div>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: status === 'locked' ? 'var(--ink-soft)' : 'inherit' }}>
-                          {chapter.title}
-                        </h3>
-                        <div style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
-                          <strong>{chapter.character}</strong> • {chapter.location}
-                        </div>
+                        <span className="ui-badge">Chapter {chapter.chapter_number}</span>
+                        <h3>{chapter.title}</h3>
+                        <p>
+                          {chapter.subtitle ? `${chapter.subtitle} - ` : ''}
+                          {chapter.character} at {chapter.location}
+                        </p>
+                        <p className="story-mission__objective">{chapter.encounter.objective}</p>
                       </div>
-                      
-                      <div>
-                        {status === 'complete' && <span style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Complete</span>}
-                        {status === 'locked' && <span style={{ color: 'var(--ink-soft)' }}>Locked</span>}
-                        {status === 'available' && (
-                          <button onClick={() => setActiveChapterId(chapter.id)} className="btn btn-primary">
-                            Begin
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                      <MissionStatus
+                        status={status}
+                        onStart={() => setActiveChapterId(chapter.id)}
+                      />
+                    </article>
                   );
                 })}
               </div>
-            </div>
+            </section>
           );
         })}
       </div>
-    </div>
+    </section>
   );
+}
+
+function MissionStatus({
+  status,
+  onStart,
+}: {
+  status: StoryChapterStatus;
+  onStart: () => void;
+}) {
+  if (status === 'complete') {
+    return <span className="ui-badge ui-badge--success">Completed</span>;
+  }
+  if (status === 'locked') {
+    return <span className="ui-badge ui-badge--muted">Locked</span>;
+  }
+  return (
+    <button onClick={onStart} className="btn btn-primary" type="button">
+      Start Mission
+    </button>
+  );
+}
+
+function getActStats(chapters: StoryChapter[], progress: StoryProgressRecord[]) {
+  const complete = chapters.filter((chapter) => {
+    const record = progress.find((entry) => entry.chapter_id === chapter.id);
+    return record?.status === 'complete';
+  }).length;
+  return { complete, total: chapters.length };
 }

@@ -6,11 +6,6 @@ import { BoardView } from './BoardView';
 
 type Promotion = 'q' | 'r' | 'b' | 'n';
 
-type PendingPromotion = {
-  from: string;
-  to: string;
-} | null;
-
 export function Board() {
   const activeTheme = useSettingsStore((s) => s.activeTheme);
   const position = useGameStore((s) => s.fen);
@@ -22,7 +17,6 @@ export function Board() {
     null
   );
   const [themeError, setThemeError] = useState<string | null>(null);
-  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,37 +49,9 @@ export function Board() {
     };
   }, [activeTheme]);
 
-  const handleDrop = (sourceSquare: string, targetSquare: string): boolean => {
+  const handleDrop = (sourceSquare: string, targetSquare: string, promotion?: Promotion): boolean => {
     if (status !== 'playing' || engineThinking) return false;
-    return makePlayerMove(sourceSquare, targetSquare);
-  };
-
-  const handlePromotionCheck = (
-    sourceSquare: string,
-    targetSquare: string,
-    piece: string
-  ): boolean => {
-    if (piece[1] !== 'P') return false;
-
-    const targetRank = targetSquare[1];
-    const isWhitePromotion = piece[0] === 'w' && targetRank === '8';
-    const isBlackPromotion = piece[0] === 'b' && targetRank === '1';
-    if (!isWhitePromotion && !isBlackPromotion) return false;
-
-    setPendingPromotion({ from: sourceSquare, to: targetSquare });
-    return true;
-  };
-
-  const handlePromotionPieceSelect = (piece?: string): boolean => {
-    if (!piece || !pendingPromotion) {
-      setPendingPromotion(null);
-      return false;
-    }
-
-    const promotion = piece[1].toLowerCase() as Promotion;
-    const ok = makePlayerMove(pendingPromotion.from, pendingPromotion.to, promotion);
-    setPendingPromotion(null);
-    return ok;
+    return makePlayerMove(sourceSquare, targetSquare, promotion);
   };
 
   return (
@@ -95,8 +61,8 @@ export function Board() {
       status={status}
       engineThinking={engineThinking}
       onPieceDrop={handleDrop}
-      onPromotionCheck={handlePromotionCheck}
-      onPromotionPieceSelect={handlePromotionPieceSelect}
+      onPromotionCheck={() => true}
+      onPromotionPieceSelect={() => false}
       themeManifest={themeManifest}
       themeError={themeError}
     />

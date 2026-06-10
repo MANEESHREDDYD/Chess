@@ -88,3 +88,9 @@ The accuracy number shown in reviews is MIRROR's internal estimate from local CP
 Currently, coaching feedback is rule-based and local. The Local Coach Preview uses deterministic summaries from local data; it does not call an LLM.
 
 **GenAI-Readiness**: The analytics and coach context models are designed to be compatible with future optional LLM-based coaching. The design docs define prompt contracts, context boundaries, and agentic workflows. A runtime GenAI coach is planned for a future milestone, but it is not implemented yet.
+
+## Product Quality Guardrails
+
+Personalized AI behavior must sit on correct chess rules. Promotion detection is now centralized in a chess.js-backed legality helper used by the shared board component before route-level handlers can open a promotion dialog. This prevents non-pawn pieces, wrong ranks, stale UI state, themed orientation, Clue Chess, or Story handlers from bypassing promotion legality.
+
+The current visual layer remains a Mahabharata/Kurukshetra-inspired 2D placeholder. MIRROR should not claim realistic 3D soldier or battlefield visuals until the planned 3D milestones implement and verify them.

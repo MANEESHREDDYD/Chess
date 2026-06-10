@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
+import { isLegalPromotionMove, normalizePromotionPiece } from '../../chess/promotion';
 import { getThemeAssetUrl, type ThemeManifest } from '../../lib/theme';
 
 type Color = 'white' | 'black';
@@ -22,6 +25,11 @@ type CustomPieceRendererProps = {
   squareWidth?: number;
 };
 
+type PendingPromotion = {
+  from: string;
+  to: string;
+} | null;
+
 export function BoardView({
   fen,
   playerColor,
@@ -29,13 +37,15 @@ export function BoardView({
   engineThinking,
   onPieceDrop,
   onPromotionCheck,
-  onPromotionPieceSelect,
   themeManifest,
   themeError,
 }: BoardViewProps) {
   const boardFrameRef = useRef<HTMLDivElement>(null);
   const [boardWidth, setBoardWidth] = useState(520);
   const [flashCapture, setFlashCapture] = useState(false);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [lastMoveSquares, setLastMoveSquares] = useState<string[]>([]);
+  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
   const prevFenRef = useRef(fen);
 
   useEffect(() => {
@@ -47,6 +57,8 @@ export function BoardView({
         setTimeout(() => setFlashCapture(false), 400);
       }
       prevFenRef.current = fen;
+      setPendingPromotion(null);
+      setSelectedSquare(null);
     }
   }, [fen]);
 
@@ -91,8 +103,8 @@ export function BoardView({
 
   const boardStyle: Record<string, string | number> = themeManifest
     ? {
-        borderRadius: '4px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        borderRadius: '10px',
+        boxShadow: '0 18px 44px rgba(37, 27, 14, 0.28)',
         ...(themeManifest.board.background ? {
           backgroundImage: `url(${getThemeAssetUrl(themeManifest.id, themeManifest.board.background)})`,
           backgroundSize: 'cover',
@@ -101,13 +113,128 @@ export function BoardView({
         } : {})
       }
     : {
-        borderRadius: '4px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        borderRadius: '10px',
+        boxShadow: '0 18px 44px rgba(37, 27, 14, 0.2)',
       };
 
   const handleDrop = (sourceSquare: string, targetSquare: string): boolean => {
+    setPendingPromotion(null);
+    setSelectedSquare(null);
     if (status !== 'playing' || engineThinking) return false;
-    return onPieceDrop(sourceSquare, targetSquare);
+    const accepted = onPieceDrop(sourceSquare, targetSquare);
+    if (accepted) setLastMoveSquares([sourceSquare, targetSquare]);
+    return accepted;
+  };
+
+  const handlePromotionCheck = (sourceSquare: string, targetSquare: string, piece: string): boolean => {
+    const isLegalPromotion = isLegalPromotionMove({
+      fen,
+      sourceSquare,
+      targetSquare,
+      piece,
+    });
+    if (status !== 'playing' || engineThinking || !isLegalPromotion) {
+      setPendingPromotion(null);
+      return false;
+    }
+
+    const routeAllowsPromotion = onPromotionCheck(sourceSquare, targetSquare, piece);
+    if (!routeAllowsPromotion) {
+      setPendingPromotion(null);
+      return false;
+    }
+
+    setPendingPromotion({ from: sourceSquare, to: targetSquare });
+    return true;
+  };
+
+  const handlePromotionPieceSelect = (piece?: string): boolean => {
+    const promotion = normalizePromotionPiece(piece);
+    if (!promotion || !pendingPromotion) {
+      setPendingPromotion(null);
+      return false;
+    }
+
+    const accepted = onPieceDrop(pendingPromotion.from, pendingPromotion.to, promotion);
+    if (accepted) {
+      setLastMoveSquares([pendingPromotion.from, pendingPromotion.to]);
+    }
+    setPendingPromotion(null);
+    return accepted;
+  };
+
+  const boardHelpers = useMemo(() => {
+    try {
+      const chess = new Chess(fen);
+      const selectedMoves = selectedSquare
+        ? chess.moves({ square: selectedSquare as never, verbose: true }).map((move) => move.to)
+        : [];
+      const kingSquare = findCheckedKingSquare(chess);
+      return { chess, selectedMoves, kingSquare };
+    } catch {
+      return { chess: null, selectedMoves: [], kingSquare: null };
+    }
+  }, [fen, selectedSquare]);
+
+  const customSquareStyles = useMemo(() => {
+    const styles: Record<string, CSSProperties> = {};
+    for (const square of lastMoveSquares) {
+      styles[square] = {
+        ...(styles[square] ?? {}),
+        background: 'linear-gradient(135deg, rgba(210, 166, 76, 0.42), rgba(210, 166, 76, 0.18))',
+      };
+    }
+    if (selectedSquare) {
+      styles[selectedSquare] = {
+        ...(styles[selectedSquare] ?? {}),
+        boxShadow: 'inset 0 0 0 3px rgba(255, 224, 138, 0.95)',
+      };
+    }
+    for (const square of boardHelpers.selectedMoves) {
+      const piece = boardHelpers.chess?.get(square as never);
+      styles[square] = {
+        ...(styles[square] ?? {}),
+        background: piece
+          ? 'radial-gradient(circle, rgba(139, 38, 53, 0.52) 34%, transparent 38%)'
+          : 'radial-gradient(circle, rgba(30, 58, 95, 0.38) 18%, transparent 22%)',
+      };
+    }
+    if (boardHelpers.kingSquare) {
+      styles[boardHelpers.kingSquare] = {
+        ...(styles[boardHelpers.kingSquare] ?? {}),
+        boxShadow: 'inset 0 0 0 4px rgba(139, 38, 53, 0.9)',
+      };
+    }
+    return styles;
+  }, [boardHelpers, lastMoveSquares, selectedSquare]);
+
+  const handleSquareClick = (square: string): void => {
+    if (status !== 'playing' || engineThinking || !boardHelpers.chess) return;
+
+    if (selectedSquare) {
+      const selectedMove = boardHelpers.chess
+        .moves({ square: selectedSquare as never, verbose: true })
+        .find((move) => move.to === square);
+      if (selectedMove) {
+        if (selectedMove.promotion) {
+          setPendingPromotion({ from: selectedSquare, to: square });
+          return;
+        }
+        const accepted = onPieceDrop(selectedSquare, square);
+        if (accepted) setLastMoveSquares([selectedSquare, square]);
+        setSelectedSquare(null);
+        return;
+      }
+    }
+
+    const piece = boardHelpers.chess.get(square as never);
+    const turnColor = boardHelpers.chess.turn();
+    if (piece && piece.color === turnColor) {
+      setSelectedSquare(square);
+      return;
+    }
+
+    setSelectedSquare(null);
   };
 
   const isMahabharata = themeManifest?.id === 'mahabharata';
@@ -124,15 +251,18 @@ export function BoardView({
         <Chessboard
           position={fen}
           onPieceDrop={handleDrop}
-          onPromotionCheck={onPromotionCheck}
-          onPromotionPieceSelect={onPromotionPieceSelect}
+          onPromotionCheck={handlePromotionCheck}
+          onPromotionPieceSelect={handlePromotionPieceSelect}
+          onSquareClick={handleSquareClick}
           boardOrientation={playerColor}
           boardWidth={boardWidth}
           customBoardStyle={boardStyle}
-          customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: '#5c3e2a' }}
-          customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: '#e8dcc4' }}
+          customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: '#6f4c33' }}
+          customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: '#eadfc8' }}
+          customSquareStyles={customSquareStyles}
           customPieces={customPieces}
           animationDuration={240}
+          promotionDialogVariant="modal"
           arePremovesAllowed={false}
         />
       </div>
@@ -143,4 +273,19 @@ export function BoardView({
       )}
     </div>
   );
+}
+
+function findCheckedKingSquare(chess: Chess): string | null {
+  if (!chess.inCheck()) return null;
+  const color = chess.turn();
+  const board = chess.board();
+  for (let rankIndex = 0; rankIndex < board.length; rankIndex += 1) {
+    for (let fileIndex = 0; fileIndex < board[rankIndex].length; fileIndex += 1) {
+      const piece = board[rankIndex][fileIndex];
+      if (piece?.type === 'k' && piece.color === color) {
+        return `${String.fromCharCode(97 + fileIndex)}${8 - rankIndex}`;
+      }
+    }
+  }
+  return null;
 }
