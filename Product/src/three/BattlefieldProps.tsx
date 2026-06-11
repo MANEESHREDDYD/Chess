@@ -1,78 +1,186 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-/* ----------------------------------------------------------------------------
-   Battlefield scenery — ALL procedural (see assetManifest.ts). Props live
-   outside the board so they never occlude squares or pieces.
-   ------------------------------------------------------------------------- */
+/*
+  Reference-guided battlefield scenery. All assets are procedural and live
+  outside the playable grid so raycasts and board readability stay clean.
+*/
+const mat = {
+  ground: new THREE.MeshStandardMaterial({ color: '#b8905f', roughness: 1 }),
+  groundDark: new THREE.MeshStandardMaterial({ color: '#8e6d49', roughness: 1 }),
+  rock: new THREE.MeshStandardMaterial({ color: '#7f7770', roughness: 0.95 }),
+  trunk: new THREE.MeshStandardMaterial({ color: '#5e4630', roughness: 0.95 }),
+  leaf: new THREE.MeshStandardMaterial({ color: '#536340', roughness: 0.96 }),
+  dryLeaf: new THREE.MeshStandardMaterial({ color: '#6f6a47', roughness: 0.98 }),
+  pole: new THREE.MeshStandardMaterial({ color: '#4f3e2d', roughness: 0.92 }),
+  blueCloth: new THREE.MeshStandardMaterial({ color: '#284f8f', roughness: 0.88, side: THREE.DoubleSide }),
+  redCloth: new THREE.MeshStandardMaterial({ color: '#6f2a26', roughness: 0.88, side: THREE.DoubleSide }),
+  saffronCloth: new THREE.MeshStandardMaterial({ color: '#bd7b34', roughness: 0.9, side: THREE.DoubleSide }),
+  tent: new THREE.MeshStandardMaterial({ color: '#776852', roughness: 1 }),
+  wall: new THREE.MeshStandardMaterial({ color: '#9a8161', roughness: 0.95 }),
+  leather: new THREE.MeshStandardMaterial({ color: '#5d4330', roughness: 0.84 }),
+  bronze: new THREE.MeshStandardMaterial({ color: '#9a6f3a', roughness: 0.48, metalness: 0.58 }),
+  steel: new THREE.MeshStandardMaterial({ color: '#bcb6aa', roughness: 0.42, metalness: 0.66 }),
+  elephant: new THREE.MeshStandardMaterial({ color: '#736d64', roughness: 0.92 }),
+  horse: new THREE.MeshStandardMaterial({ color: '#61412b', roughness: 0.86 }),
+  skin: new THREE.MeshStandardMaterial({ color: '#9d6c4d', roughness: 0.76 }),
+  hair: new THREE.MeshStandardMaterial({ color: '#14120f', roughness: 0.95 }),
+  ivory: new THREE.MeshStandardMaterial({ color: '#e5d9c5', roughness: 0.58 }),
+};
 
-const groundMat = new THREE.MeshStandardMaterial({ color: '#c2a06e', roughness: 1 });
-const rockMat = new THREE.MeshStandardMaterial({ color: '#8d8378', roughness: 0.95 });
-const trunkMat = new THREE.MeshStandardMaterial({ color: '#6e5236', roughness: 0.95 });
-const canopyMat = new THREE.MeshStandardMaterial({ color: '#5d6b3f', roughness: 0.95 });
-const poleMat = new THREE.MeshStandardMaterial({ color: '#5b4a38', roughness: 0.9 });
-const pandavaCloth = new THREE.MeshStandardMaterial({ color: '#3f7fd4', roughness: 0.85, side: THREE.DoubleSide });
-const kauravaCloth = new THREE.MeshStandardMaterial({ color: '#7e2d26', roughness: 0.85, side: THREE.DoubleSide });
-const tentMat = new THREE.MeshStandardMaterial({ color: '#7b6a52', roughness: 1 });
-const elephantMat = new THREE.MeshStandardMaterial({ color: '#7d7468', roughness: 0.9 });
+const geo = {
+  ground: new THREE.CylinderGeometry(17, 17, 0.2, 48),
+  patch: new THREE.CircleGeometry(5.2, 32),
+  rock: new THREE.IcosahedronGeometry(0.34, 0),
+  trunk: new THREE.CylinderGeometry(0.06, 0.12, 0.95, 8),
+  canopy: new THREE.ConeGeometry(0.54, 0.95, 8),
+  branch: new THREE.CylinderGeometry(0.025, 0.035, 0.72, 6),
+  pole: new THREE.CylinderGeometry(0.035, 0.04, 3.1, 8),
+  banner: new THREE.PlaneGeometry(0.72, 0.44),
+  smallBanner: new THREE.PlaneGeometry(0.44, 0.28),
+  tent: new THREE.ConeGeometry(0.78, 0.86, 6),
+  wallBlock: new THREE.BoxGeometry(1.1, 0.44, 0.36),
+  tower: new THREE.CylinderGeometry(0.36, 0.46, 0.9, 8),
+  parapet: new THREE.BoxGeometry(0.24, 0.18, 0.18),
+  soldierBody: new THREE.CapsuleGeometry(0.08, 0.22, 4, 8),
+  soldierHead: new THREE.SphereGeometry(0.055, 10, 8),
+  spear: new THREE.CylinderGeometry(0.011, 0.011, 0.72, 6),
+  spearHead: new THREE.ConeGeometry(0.032, 0.08, 7),
+  shield: new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16),
+  elephantBody: new THREE.CapsuleGeometry(0.52, 0.82, 5, 14),
+  elephantHead: new THREE.SphereGeometry(0.34, 14, 12),
+  elephantLeg: new THREE.CylinderGeometry(0.1, 0.13, 0.56, 10),
+  elephantEar: new THREE.PlaneGeometry(0.42, 0.36),
+  elephantTrunk: new THREE.CylinderGeometry(0.07, 0.11, 0.75, 10),
+  tusk: new THREE.ConeGeometry(0.04, 0.34, 8),
+  howdah: new THREE.BoxGeometry(0.58, 0.45, 0.54),
+  caparison: new THREE.BoxGeometry(0.78, 0.045, 0.96),
+  horseBody: new THREE.CapsuleGeometry(0.26, 0.72, 5, 12),
+  horseNeck: new THREE.CylinderGeometry(0.09, 0.15, 0.48, 10),
+  horseHead: new THREE.SphereGeometry(0.15, 12, 10),
+  horseLeg: new THREE.CylinderGeometry(0.035, 0.045, 0.55, 8),
+  saddle: new THREE.BoxGeometry(0.52, 0.07, 0.36),
+  wheel: new THREE.TorusGeometry(0.24, 0.035, 8, 18),
+  chariot: new THREE.BoxGeometry(0.86, 0.34, 0.62),
+  chariotPanel: new THREE.BoxGeometry(0.9, 0.42, 0.06),
+};
 
-const groundGeo = new THREE.CylinderGeometry(16, 16, 0.2, 36);
-const rockGeo = new THREE.IcosahedronGeometry(0.32, 0);
-const trunkGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.9, 8);
-const canopyGeo = new THREE.ConeGeometry(0.55, 1.0, 8);
-const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 3.4, 8);
-const bannerGeo = new THREE.PlaneGeometry(0.7, 0.45);
-const tentGeo = new THREE.ConeGeometry(0.9, 1.0, 6);
-const elephantBodyGeo = new THREE.CapsuleGeometry(0.5, 0.7, 4, 10);
-const elephantHeadGeo = new THREE.SphereGeometry(0.34, 10, 10);
-const trunkCurveGeo = new THREE.CylinderGeometry(0.07, 0.1, 0.7, 8);
-const horseBodyGeo = new THREE.CapsuleGeometry(0.28, 0.6, 4, 10);
-const horseNeckGeo = new THREE.ConeGeometry(0.16, 0.5, 8);
-
-function Tree({ position }: { position: [number, number, number] }) {
+function Tree({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
   return (
-    <group position={position}>
-      <mesh geometry={trunkGeo} material={trunkMat} position={[0, 0.45, 0]} castShadow />
-      <mesh geometry={canopyGeo} material={canopyMat} position={[0, 1.3, 0]} castShadow />
+    <group position={position} scale={scale}>
+      <mesh geometry={geo.trunk} material={mat.trunk} position={[0, 0.48, 0]} castShadow />
+      <mesh geometry={geo.branch} material={mat.trunk} rotation={[0.7, 0, -0.7]} position={[-0.22, 0.94, 0]} castShadow />
+      <mesh geometry={geo.branch} material={mat.trunk} rotation={[0.7, 0, 0.72]} position={[0.22, 0.9, 0]} castShadow />
+      <mesh geometry={geo.canopy} material={mat.leaf} position={[0, 1.34, 0]} castShadow />
+      <mesh geometry={geo.canopy} material={mat.dryLeaf} position={[0.22, 1.16, 0.06]} scale={[0.62, 0.62, 0.62]} castShadow />
     </group>
   );
 }
 
 function Banner({ position, side }: { position: [number, number, number]; side: 'pandava' | 'kaurava' }) {
+  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
   return (
     <group position={position}>
-      <mesh geometry={poleGeo} material={poleMat} position={[0, 1.7, 0]} castShadow />
-      <mesh
-        geometry={bannerGeo}
-        material={side === 'pandava' ? pandavaCloth : kauravaCloth}
-        position={[0.36, 3.0, 0]}
-        castShadow
-      />
+      <mesh geometry={geo.pole} material={mat.pole} position={[0, 1.55, 0]} castShadow />
+      <mesh geometry={geo.banner} material={cloth} position={[0.38, 2.72, 0]} castShadow />
+      <mesh geometry={geo.smallBanner} material={mat.saffronCloth} position={[0.22, 2.25, 0]} castShadow />
     </group>
   );
 }
 
-function WarElephant({ position, rotationY }: { position: [number, number, number]; rotationY: number }) {
+function BattleLineSoldier({
+  position,
+  side,
+  rotationY,
+}: {
+  position: [number, number, number];
+  side: 'pandava' | 'kaurava';
+  rotationY: number;
+}) {
+  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <mesh geometry={elephantBodyGeo} material={elephantMat} rotation={[0, 0, Math.PI / 2]} position={[0, 0.62, 0]} castShadow />
-      <mesh geometry={elephantHeadGeo} material={elephantMat} position={[0.72, 0.74, 0]} castShadow />
-      <mesh geometry={trunkCurveGeo} material={elephantMat} rotation={[0, 0, -0.7]} position={[1.02, 0.45, 0]} castShadow />
+      <mesh geometry={geo.soldierBody} material={mat.skin} position={[0, 0.36, 0]} castShadow />
+      <mesh geometry={geo.soldierHead} material={mat.skin} position={[0, 0.58, 0]} castShadow />
+      <mesh geometry={geo.soldierHead} material={mat.hair} position={[0, 0.61, -0.01]} scale={[1.05, 0.55, 1.05]} castShadow />
+      <mesh geometry={geo.smallBanner} material={cloth} position={[0, 0.28, 0.05]} scale={[0.36, 0.6, 0.36]} castShadow />
+      <mesh geometry={geo.spear} material={mat.pole} position={[0.13, 0.52, 0]} castShadow />
+      <mesh geometry={geo.spearHead} material={mat.steel} position={[0.13, 0.91, 0]} castShadow />
+      <mesh geometry={geo.shield} material={mat.bronze} rotation={[Math.PI / 2, 0, 0]} position={[-0.1, 0.42, 0.04]} castShadow />
     </group>
   );
 }
 
-function Horse({ position, rotationY }: { position: [number, number, number]; rotationY: number }) {
+function DistantFort() {
   return (
-    <group position={position} rotation={[0, rotationY, 0]}>
-      <mesh geometry={horseBodyGeo} material={elephantMat} rotation={[0, 0, Math.PI / 2]} position={[0, 0.42, 0]} castShadow />
-      <mesh geometry={horseNeckGeo} material={elephantMat} rotation={[0.6, 0, 0]} position={[0.42, 0.72, 0]} castShadow />
+    <group position={[0, 0, -12.5]}>
+      {[-4.4, -3.25, -2.1, -0.95, 0.2, 1.35, 2.5, 3.65, 4.8].map((x) => (
+        <mesh key={x} geometry={geo.wallBlock} material={mat.wall} position={[x, 0.34, 0]} castShadow />
+      ))}
+      {[-5.2, 5.55].map((x) => (
+        <group key={x} position={[x, 0.6, 0]}>
+          <mesh geometry={geo.tower} material={mat.wall} castShadow />
+          {[-0.24, 0, 0.24].map((dx) => (
+            <mesh key={dx} geometry={geo.parapet} material={mat.wall} position={[dx, 0.52, 0]} castShadow />
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function WarElephant({ position, rotationY, side }: { position: [number, number, number]; rotationY: number; side: 'pandava' | 'kaurava' }) {
+  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
+  return (
+    <group position={position} rotation={[0, rotationY, 0]} scale={0.95}>
+      <mesh geometry={geo.elephantBody} material={mat.elephant} rotation={[0, 0, Math.PI / 2]} position={[0, 0.62, 0]} castShadow />
+      <mesh geometry={geo.caparison} material={cloth} position={[0, 0.84, -0.02]} castShadow />
+      <mesh geometry={geo.elephantHead} material={mat.elephant} position={[0.74, 0.74, 0]} castShadow />
+      <mesh geometry={geo.elephantTrunk} material={mat.elephant} rotation={[0, 0, -0.72]} position={[1.04, 0.42, 0]} castShadow />
+      <mesh geometry={geo.tusk} material={mat.ivory} rotation={[0, 0, -1.18]} position={[1.02, 0.66, -0.12]} castShadow />
+      <mesh geometry={geo.tusk} material={mat.ivory} rotation={[0, 0, -1.18]} position={[1.02, 0.66, 0.12]} castShadow />
+      <mesh geometry={geo.elephantEar} material={cloth} rotation={[0, 1.2, 0]} position={[0.5, 0.78, -0.28]} castShadow />
+      <mesh geometry={geo.elephantEar} material={cloth} rotation={[0, -1.2, 0]} position={[0.5, 0.78, 0.28]} castShadow />
+      {[[-0.34, 0.26], [0.34, 0.26], [-0.34, -0.28], [0.34, -0.28]].map(([x, z], i) => (
+        <mesh key={i} geometry={geo.elephantLeg} material={mat.elephant} position={[x, 0.26, z]} castShadow />
+      ))}
+      <mesh geometry={geo.howdah} material={mat.bronze} position={[-0.04, 1.18, 0]} castShadow />
+      <BattleLineSoldier position={[-0.04, 1.16, 0]} side={side} rotationY={0} />
+    </group>
+  );
+}
+
+function HorseArcherProp({ position, rotationY, side }: { position: [number, number, number]; rotationY: number; side: 'pandava' | 'kaurava' }) {
+  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
+  return (
+    <group position={position} rotation={[0, rotationY, 0]} scale={0.95}>
+      <mesh geometry={geo.horseBody} material={mat.horse} rotation={[0, 0, Math.PI / 2]} position={[0, 0.42, 0]} castShadow />
+      <mesh geometry={geo.horseNeck} material={mat.horse} rotation={[0, 0, -0.75]} position={[0.44, 0.68, 0]} castShadow />
+      <mesh geometry={geo.horseHead} material={mat.horse} position={[0.66, 0.82, 0]} castShadow />
+      {[[-0.22, 0.2], [0.2, 0.2], [-0.22, -0.2], [0.2, -0.2]].map(([x, z], i) => (
+        <mesh key={i} geometry={geo.horseLeg} material={mat.horse} position={[x, 0.2, z]} castShadow />
+      ))}
+      <mesh geometry={geo.saddle} material={cloth} position={[0, 0.65, 0]} castShadow />
+      <BattleLineSoldier position={[0, 0.65, 0]} side={side} rotationY={0} />
+    </group>
+  );
+}
+
+function ChariotProp({ position, rotationY, side }: { position: [number, number, number]; rotationY: number; side: 'pandava' | 'kaurava' }) {
+  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
+  return (
+    <group position={position} rotation={[0, rotationY, 0]} scale={0.9}>
+      <mesh geometry={geo.chariot} material={mat.leather} position={[0, 0.42, 0]} castShadow />
+      <mesh geometry={geo.chariotPanel} material={cloth} position={[0, 0.63, 0.34]} castShadow />
+      {[-0.48, 0.48].map((x) => (
+        <mesh key={x} geometry={geo.wheel} material={mat.bronze} rotation={[0, Math.PI / 2, 0]} position={[x, 0.28, 0.36]} castShadow />
+      ))}
+      <BattleLineSoldier position={[0, 0.68, 0]} side={side} rotationY={0} />
     </group>
   );
 }
 
 export function BattlefieldProps() {
-  // Deterministic scatter (no Math.random — stable screenshots).
   const rocks = useMemo(
     () =>
       [
@@ -82,40 +190,68 @@ export function BattlefieldProps() {
         [5.6, 0, 4.9, 0.9],
         [-6.3, 0, 0.8, 0.7],
         [6.4, 0, -1.2, 1.0],
+        [-2.2, 0, 7.1, 0.6],
+        [2.6, 0, -7.2, 0.62],
+      ] as const,
+    []
+  );
+
+  const soldiers = useMemo(
+    () =>
+      [
+        [-6.4, 0, 5.4, 'pandava', -0.5],
+        [-5.75, 0, 5.9, 'pandava', -0.35],
+        [6.25, 0, 5.1, 'pandava', 0.45],
+        [5.55, 0, 5.7, 'pandava', 0.3],
+        [-6.2, 0, -5.35, 'kaurava', 2.7],
+        [-5.45, 0, -5.95, 'kaurava', 2.8],
+        [6.35, 0, -5.1, 'kaurava', -2.65],
+        [5.62, 0, -5.76, 'kaurava', -2.8],
       ] as const,
     []
   );
 
   return (
     <group name="battlefield-props">
-      {/* Sand ground disc with a soft fog horizon. */}
-      <mesh geometry={groundGeo} material={groundMat} position={[0, -0.21, 0]} receiveShadow />
+      <mesh geometry={geo.ground} material={mat.ground} position={[0, -0.21, 0]} receiveShadow />
+      <mesh geometry={geo.patch} material={mat.groundDark} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]} receiveShadow />
+
+      <DistantFort />
 
       {rocks.map(([x, y, z, s], i) => (
-        <mesh key={i} geometry={rockGeo} material={rockMat} position={[x, y + 0.16 * s, z]} scale={s} castShadow />
+        <mesh key={i} geometry={geo.rock} material={mat.rock} position={[x, y + 0.16 * s, z]} scale={s} castShadow />
       ))}
 
-      <Tree position={[-7.2, 0, -2.4]} />
-      <Tree position={[7.4, 0, 2.1]} />
-      <Tree position={[-6.6, 0, 6.4]} />
+      <Tree position={[-7.3, 0, -2.4]} scale={1.1} />
+      <Tree position={[7.4, 0, 2.1]} scale={0.96} />
+      <Tree position={[-6.8, 0, 6.55]} scale={0.82} />
+      <Tree position={[6.9, 0, -6.25]} scale={0.74} />
 
-      {/* Side banners: Pandava (white side, +z) and Kaurava (black side, -z). */}
       <Banner position={[-5.4, 0, 6.2]} side="pandava" />
       <Banner position={[5.4, 0, 6.2]} side="pandava" />
       <Banner position={[-5.4, 0, -6.2]} side="kaurava" />
       <Banner position={[5.4, 0, -6.2]} side="kaurava" />
 
-      {/* Distant camp silhouettes, softened by fog. */}
-      <mesh geometry={tentGeo} material={tentMat} position={[-9.5, 0.5, -9]} castShadow />
-      <mesh geometry={tentGeo} material={tentMat} position={[-7.8, 0.5, -10]} castShadow />
-      <mesh geometry={tentGeo} material={tentMat} position={[9.6, 0.5, 9.2]} castShadow />
-      <mesh geometry={tentGeo} material={tentMat} position={[8.0, 0.5, 10.1]} castShadow />
+      {soldiers.map(([x, y, z, side, rot], i) => (
+        <BattleLineSoldier
+          key={i}
+          position={[x, y, z]}
+          side={side}
+          rotationY={rot}
+        />
+      ))}
 
-      {/* Edge fauna props — never on the board. */}
-      <WarElephant position={[-8.6, 0, 3.6]} rotationY={0.6} />
-      <WarElephant position={[8.8, 0, -3.2]} rotationY={-2.4} />
-      <Horse position={[-8.2, 0, -4.6]} rotationY={1.2} />
-      <Horse position={[8.4, 0, 5.0]} rotationY={-1.8} />
+      <mesh geometry={geo.tent} material={mat.tent} position={[-9.5, 0.43, -9]} castShadow />
+      <mesh geometry={geo.tent} material={mat.tent} position={[-7.8, 0.43, -10]} castShadow />
+      <mesh geometry={geo.tent} material={mat.tent} position={[9.6, 0.43, 9.2]} castShadow />
+      <mesh geometry={geo.tent} material={mat.tent} position={[8.0, 0.43, 10.1]} castShadow />
+
+      <WarElephant position={[-8.7, 0, 3.55]} rotationY={0.56} side="pandava" />
+      <WarElephant position={[8.85, 0, -3.25]} rotationY={-2.42} side="kaurava" />
+      <HorseArcherProp position={[-8.2, 0, -4.55]} rotationY={1.15} side="kaurava" />
+      <HorseArcherProp position={[8.35, 0, 5.0]} rotationY={-1.86} side="pandava" />
+      <ChariotProp position={[-9.35, 0, 0.1]} rotationY={1.08} side="pandava" />
+      <ChariotProp position={[9.35, 0, -0.1]} rotationY={-2.05} side="kaurava" />
     </group>
   );
 }

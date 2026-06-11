@@ -1,10 +1,10 @@
 {
   "updated": "2026-06-11",
-  "policy": "Every asset must be declared here before use. See README.md.",
+  "policy": "Every 3D asset must be declared here before use. Current implementation uses only project-authored procedural geometry and materials.",
   "assets": [
     {
-      "name": "Procedural battlefield set (pieces, props, terrain, effects)",
-      "filename": "(none — generated in code: Product/src/three/*.tsx)",
+      "name": "Reference-guided procedural battlefield set",
+      "filename": "(none - generated in code: Product/src/three/*.tsx)",
       "source": "procedural",
       "author": "MIRROR project",
       "license": "AGPL-3.0-or-later (project code)",
@@ -13,7 +13,7 @@
       "modifications": "n/a (code-defined geometry/materials)",
       "attributionRequirement": "none",
       "aiGenerated": false,
-      "notes": "Foot soldiers, horse cavalry, advisors, war chariots, commanders, royal commanders, war elephants, horses, rocks, trees, banners, camp tents, dust particles. Documented low-poly placeholders — not realistic battlefield art."
+      "notes": "Foot archer pawns, horse archer knights, advisor bishops, war chariot rooks, war elephant commander queens, royal commander kings, terrain, board rails, fort/camp silhouettes, rocks, sparse trees, banners, off-board soldiers, horses, elephants, chariots, ambient dust, non-gory impact rings/sparks/dust. This is a reference-guided procedural prototype, not final realistic 3D art."
     }
   ]
 }

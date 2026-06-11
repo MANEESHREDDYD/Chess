@@ -8,12 +8,16 @@ import {
   type SquareName,
 } from './battlefieldTypes';
 
-/* Restrained sand/clay — warm tones live ONLY inside the battlefield scene. */
-const lightSquareMat = new THREE.MeshStandardMaterial({ color: '#d8c49b', roughness: 0.9 });
-const darkSquareMat = new THREE.MeshStandardMaterial({ color: '#9a6b50', roughness: 0.9 });
+/* Restrained sand/clay: warm tones live only inside the battlefield scene. */
+const lightSquareMat = new THREE.MeshStandardMaterial({ color: '#d3bd8f', roughness: 0.92 });
+const darkSquareMat = new THREE.MeshStandardMaterial({ color: '#8d654b', roughness: 0.94 });
 const squareGeo = new THREE.BoxGeometry(SQUARE_SIZE * 0.985, 0.1, SQUARE_SIZE * 0.985);
 const rimGeo = new THREE.BoxGeometry(SQUARE_SIZE * 8.5, 0.12, SQUARE_SIZE * 8.5);
-const rimMat = new THREE.MeshStandardMaterial({ color: '#7a5a42', roughness: 0.95 });
+const rimMat = new THREE.MeshStandardMaterial({ color: '#5f4734', roughness: 0.9, metalness: 0.08 });
+const railGeo = new THREE.BoxGeometry(SQUARE_SIZE * 8.62, 0.12, 0.08);
+const railSideGeo = new THREE.BoxGeometry(0.08, 0.12, SQUARE_SIZE * 8.62);
+const railMat = new THREE.MeshStandardMaterial({ color: '#9a6f3d', roughness: 0.5, metalness: 0.58 });
+const cornerGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.1, 10);
 
 const ringGeo = new THREE.RingGeometry(0.12, 0.2, 24);
 const captureRingGeo = new THREE.RingGeometry(0.34, 0.45, 28);
@@ -64,6 +68,14 @@ export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: B
   return (
     <group name="battlefield-board">
       <mesh geometry={rimGeo} material={rimMat} position={[0, -0.07, 0]} receiveShadow />
+      <mesh geometry={railGeo} material={railMat} position={[0, 0.03, 4.31]} castShadow />
+      <mesh geometry={railGeo} material={railMat} position={[0, 0.03, -4.31]} castShadow />
+      <mesh geometry={railSideGeo} material={railMat} position={[4.31, 0.03, 0]} castShadow />
+      <mesh geometry={railSideGeo} material={railMat} position={[-4.31, 0.03, 0]} castShadow />
+      {[[-4.31, 4.31], [4.31, 4.31], [-4.31, -4.31], [4.31, -4.31]].map(([x, z]) => (
+        <mesh key={`${x}-${z}`} geometry={cornerGeo} material={railMat} position={[x, 0.04, z]} castShadow />
+      ))}
+
       {squares.map(({ square, pos, dark }) => (
         <mesh
           key={square}
@@ -76,7 +88,6 @@ export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: B
         />
       ))}
 
-      {/* Highlight layer sits just above the squares. */}
       {highlights.lastMove.map((square) => {
         const pos = squareToPosition(square);
         return (

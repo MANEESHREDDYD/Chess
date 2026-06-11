@@ -1,51 +1,59 @@
-# Kurukshetra Battlefield Mode — Implementation Notes
+# Kurukshetra Battlefield Mode - Implementation Notes
 
-Milestone: M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1
+Milestone: M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1
+Status: Reference-guided procedural prototype.
 
 ## Architecture (`Product/src/three/`)
 
 | File | Role |
 | --- | --- |
-| `BattlefieldScene.tsx` | Canvas composition: sky/fog, lights, camera, board, pieces, props, dust; derives selection/legal/check display state from the FEN; exposes a dev test hook |
-| `BattlefieldBoard.tsx` | 8×8 embedded board (sand/clay squares), highlight layer (selected halo, legal rings, capture rings, last-move tint, pulsing check ring), square raycast clicks |
-| `BattlefieldPiece.tsx` | Procedural piece meshes (shared module-level geometries/materials), move glide + knight leap arc, capture dissolve + dust burst, piece-click → square click |
-| `BattlefieldProps.tsx` | Terrain disc, rocks, trees, Pandava/Kaurava banners, distant camp tents, war elephant + horse edge props (never on the board) |
-| `BattlefieldCamera.tsx` | Perspective camera + constrained OrbitControls; flips for the player's side |
-| `BattlefieldEffects.tsx` | Ambient drifting dust (single Points object, zero allocations per frame) |
-| `BattlefieldFallback.tsx` | 2D-board wrapper with quiet reason notice + `BattlefieldErrorBoundary` for lazy-chunk/WebGL crashes |
+| `BattlefieldScene.tsx` | Canvas composition: fog, lights, camera, board, pieces, props, dust; derives selection/legal/check state from FEN; exposes a browser test hook |
+| `BattlefieldBoard.tsx` | 8x8 embedded board, selected/legal/capture/last-move/check highlights, square raycast clicks |
+| `BattlefieldPiece.tsx` | Procedural unit meshes: archer pawns, horse knights, advisor bishops, chariot rooks, elephant queens, royal-command kings |
+| `BattlefieldProps.tsx` | Procedural terrain, fort boundary, tents, rocks, dry trees, banners, off-board soldiers, elephants, horses, and chariots |
+| `BattlefieldCamera.tsx` | Tilted strategy camera with constrained OrbitControls and player-side flip |
+| `BattlefieldEffects.tsx` | Ambient drifting dust as one Points object |
+| `BattlefieldFallback.tsx` | 2D-board wrapper and error boundary fallback |
 | `BattlefieldControls.tsx` | Keyboard-accessible 2D/3D segmented toggle |
-| `useBattlefieldSettings.ts` | Persisted mode + WebGL detection + reduced-motion gating (3D available on every device/viewport) |
-| `useBattlefieldAnimations.ts` | FEN-diff reconciler producing stable piece instances so meshes animate instead of remounting (covers castling/en-passant/promotion) |
-| `battlefieldTypes.ts` | Square↔world math, FEN placement parser, shared types |
-| `assetManifest.ts` | In-code registry mirroring `assets/3d/asset-manifest.json` |
+| `useBattlefieldSettings.ts` | Persisted mode, WebGL detection, and reduced-motion gating |
+| `useBattlefieldAnimations.ts` | FEN-diff reconciler with stable piece instances for move/capture animation |
+| `battlefieldTypes.ts` | Square/world math, FEN placement parser, shared types |
+| `assetManifest.ts` | In-code procedural asset registry mirroring `assets/3d/asset-manifest.json` |
 
-## Authority & integration
+## Authority and Integration
 
-- 3D owns **nothing** about chess. It renders the FEN from `gameStore`, raycasts clicks, and
-  calls `gameStore.makePlayerMove` — the same legal pipeline as the 2D `BoardView`
-  (chess.js stays the single source of truth).
-- Integrated on `/play`: the 2D/3D toggle lives in the context bar; the 3D canvas replaces
-  only the board card content. Lazy-loaded chunk — three.js never enters the main bundle.
-- Promotion auto-queens in 3D (documented limitation; the 2D board has the full picker).
+- 3D owns nothing about chess rules.
+- The scene renders FEN from `gameStore`, raycasts square clicks, and calls `gameStore.makePlayerMove`.
+- chess.js remains the single source of truth.
+- The 2D/3D toggle lives on `/play`; the 3D canvas replaces only the board content.
+- Promotion auto-queens in 3D for now; the full promotion picker remains in 2D.
 
-## Fallback ladder
+## Reference-Guided Improvements
 
-1. WebGL missing → 2D board + notice (verified with `--disable-webgl` browser).
-2. `prefers-reduced-motion` → 2D board + notice (verified via emulation).
-3. Lazy-chunk/initialization crash → `BattlefieldErrorBoundary` → 2D board + notice.
-4. Otherwise 3D renders at every viewport (incl. 390×844) with DPR capped at 1.75.
+- Pawns now read as human archers with bow, arrow, quiver, cloth, leather armor, and headband.
+- Knights now read as mounted horse archers.
+- Bishops now read as advisors/standard bearers with shield, spear, and banner.
+- Rooks now read as war chariots with wheels, panels, rider, and spear.
+- Queens now read as elephant commanders with caparison, tusks, howdah, rider, and mace.
+- Kings now read as royal commanders with crown, shield, sword, and standard.
+- The scene now includes a fort silhouette, off-board battle lines, tents, banners, rocks, trees, horses, elephants, chariots, and denser dust.
 
-## Performance practices
+## Fallback Ladder
 
-Shared geometries/materials at module scope; no scene remount per move (instance
-reconciliation); one Points object for dust; deterministic prop scatter (stable
-screenshots); shadows on a single 1024² directional light; `dpr=[1,1.75]`;
-`powerPreference: high-performance`. Verified by
-`scripts/run-3d-battlefield-performance-check.mjs` (load, moves, double route switch,
-mobile, both fallbacks, zero external requests).
+1. WebGL missing: 2D board plus notice.
+2. Reduced motion: 2D board plus notice.
+3. Lazy chunk or scene crash: error boundary plus 2D board.
+4. Otherwise 3D renders at desktop and mobile viewports with DPR capped at 1.75.
 
-## Honest status
+## Performance Practices
 
-Current art is **procedural low-poly placeholder** (see `3d-kurukshetra-visual-
-specification.md` for the user's target-quality reference bar and the licensed-asset path
-required to reach it). Do not describe the battlefield as realistic anywhere in UI copy.
+- Shared geometries and materials live at module scope.
+- No scene remount per move.
+- Dust uses one Points object.
+- Prop scatter is deterministic for stable screenshots.
+- Shadows use a single 1024px directional light map.
+- No external model, texture, font, or CDN requests are allowed.
+
+## Honest Status
+
+This is a stronger prototype, not final realistic 3D. Final quality requires approved, licensed or project-authored models, textures, rigs, and animations. Do not describe the current battlefield as final realism in UI copy, docs, tags, or release notes.

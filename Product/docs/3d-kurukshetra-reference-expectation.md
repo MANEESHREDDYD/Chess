@@ -1,11 +1,12 @@
 # 3D Kurukshetra Reference Expectation
 
 Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1
-Status: Reference analysis only. Final asset integration is not approved.
+Updated by: M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1
+Status: Initial user references reviewed. A procedural reference-guided implementation pass is allowed; final model/animation asset integration is still not approved.
 
 The user will provide references. Initial in-chat references were provided on 2026-06-11 and are analyzed here as direction only. The images are not stored in the repo unless the user confirms they may be stored.
 
-Do not start final soldiers, horses, elephants, chariots, weapons, rocks, trees, terrain, dust, or effects integration until the reference analysis is approved in the next milestone: M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1.
+Do not start final GLB/model/texture/rig/animation integration for soldiers, horses, elephants, chariots, weapons, rocks, trees, terrain, dust, or effects until production assets are approved and licensed. The current pass may only use project-authored procedural geometry and materials.
 
 ## Reference Analysis Template
 

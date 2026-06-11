@@ -14,18 +14,17 @@ type BattlefieldSceneProps = {
   playerColor: 'white' | 'black';
   status: 'idle' | 'playing' | 'game-over';
   engineThinking: boolean;
-  /** Same legal-move pipeline the 2D board uses (gameStore.makePlayerMove). */
   onMove: (from: string, to: string, promotion?: 'q' | 'r' | 'b' | 'n') => boolean;
   reducedMotion: boolean;
 };
 
 /**
- * Kurukshetra Battlefield Mode — procedural low-poly placeholder scene.
+ * Kurukshetra Battlefield Mode.
  *
- * Rendering only: chess.js (inside the game store) stays the rules authority.
- * This component derives selection/legal-move/check display state from the
- * FEN and forwards square clicks into the existing move pipeline.
- * Promotion auto-queens in 3D (documented limitation).
+ * Rendering only: chess.js inside the game store remains the rules authority.
+ * The current visuals are a reference-guided procedural prototype, not final
+ * realistic character art. Production realism still requires approved,
+ * licensed or project-authored models, rigs, and animations.
  */
 export function BattlefieldScene({
   fen,
@@ -94,9 +93,6 @@ export function BattlefieldScene({
     setSelected(null);
   };
 
-  // Test hook: lets browser QA scripts drive square clicks deterministically
-  // (screen-space raycast coordinates depend on camera state). Rendering-only;
-  // the move still flows through the same legal pipeline.
   useEffect(() => {
     const w = window as typeof window & {
       __BATTLEFIELD_TEST__?: { clickSquare: (square: string) => void; selected: () => string | null };
@@ -118,13 +114,13 @@ export function BattlefieldScene({
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         onPointerMissed={() => setSelected(null)}
       >
-        {/* Dusk sky matching the fog so the horizon never reads as a void. */}
-        <color attach="background" args={['#cbb497']} />
-        <fog attach="fog" args={['#cbb497', 18, 34]} />
-        <hemisphereLight args={['#f2e9d8', '#6b5b46', 0.75]} />
+        <color attach="background" args={['#8f887e']} />
+        <fog attach="fog" args={['#8f887e', 15, 32]} />
+        <ambientLight intensity={0.18} />
+        <hemisphereLight args={['#f4ead8', '#4f463d', 0.82]} />
         <directionalLight
-          position={[7, 11, 5]}
-          intensity={1.6}
+          position={[6.6, 11.5, 4.2]}
+          intensity={1.95}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
@@ -133,6 +129,7 @@ export function BattlefieldScene({
           shadow-camera-top={9}
           shadow-camera-bottom={-9}
         />
+        <directionalLight position={[-5, 5.5, -6]} intensity={0.42} color="#b8c4d6" />
         <BattlefieldCamera playerColor={playerColor} />
         <BattlefieldProps />
         <BattlefieldDust reducedMotion={reducedMotion} />

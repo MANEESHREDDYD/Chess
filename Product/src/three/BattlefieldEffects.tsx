@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const DUST_COUNT = 120;
+const DUST_COUNT = 180;
 
 /**
  * Ambient drifting dust motes. Cheap: one Points object, positions mutated in
@@ -31,10 +31,10 @@ export function BattlefieldDust({ reducedMotion }: { reducedMotion: boolean }) {
   const material = useMemo(
     () =>
       new THREE.PointsMaterial({
-        color: '#d8c19a',
-        size: 0.05,
+        color: '#d0b482',
+        size: 0.055,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.46,
         depthWrite: false,
       }),
     []

@@ -613,6 +613,16 @@ html[data-ui-theme='dark'] .analytics-dashboard__metric-card {
   border-color: var(--border-subtle);
 }
 
+.play-meta--chips dd {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.play-meta--chips dd {
+  font-size: clamp(13px, 1.2vw, 15px);
+}
+
 .play-move-list li {
   background: var(--bg-card);
   border-color: var(--border-subtle);
@@ -1059,7 +1069,7 @@ html[data-ui-theme='dark'] .analytics-dashboard__metric-card {
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   overflow: hidden;
-  background: #cbb497;
+  background: #8f887e;
 }
 
 .battlefield-stage canvas {
