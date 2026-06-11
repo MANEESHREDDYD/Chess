@@ -1,7 +1,7 @@
 /**
  * Reference-guided Kurukshetra 3D implementation check.
  *
- * Verifies that the reference-based procedural scene loads, renders nonblank
+ * Verifies that the reference-based realistic billboard scene loads, renders nonblank
  * pixels, moves through the shared chess pipeline, captures desktop/mobile
  * screenshots, preserves fallbacks, and makes no external asset requests.
  */
@@ -14,7 +14,7 @@ import { inflateSync } from 'node:zlib';
 const PORT = 5176;
 const HOST = '127.0.0.1';
 const BASE_URL = `http://${HOST}:${PORT}`;
-const ARTIFACT_DIR = path.resolve('artifacts/3d-reference-analysis-and-asset-brief');
+const ARTIFACT_DIR = path.resolve('artifacts/realistic-3d-kurukshetra-visuals');
 const failures = [];
 
 let server = null;
@@ -150,7 +150,18 @@ async function assertReferenceTerms() {
     readFile(path.resolve('assets/3d/asset-manifest.json'), 'utf8'),
   ]);
   const combined = `${pieces}\n${props}\n${manifest}`;
-  for (const term of ['FootArcher', 'HorseArcher', 'Chariot', 'ElephantCommander', 'RoyalCommander', 'WarElephant', 'DistantFort', 'procedural prototype']) {
+  for (const term of [
+    'kurukshetra-realism-v1',
+    'pawn-foot-archer.png',
+    'knight-horse-archer.png',
+    'bishop-advisor-standard.png',
+    'rook-war-chariot.png',
+    'queen-war-elephant.png',
+    'king-royal-commander.png',
+    'generated-image',
+    'WarElephant',
+    'DistantFort',
+  ]) {
     if (!combined.includes(term)) failures.push(`reference-guided implementation term missing: ${term}`);
   }
 }

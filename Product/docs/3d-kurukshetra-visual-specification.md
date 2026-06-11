@@ -1,12 +1,14 @@
 # Kurukshetra Battlefield Mode - 3D Visual Specification
 
-Milestone: M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1
-Status: Reference-guided procedural prototype. Not final realistic 3D.
+Milestone: M-REALISTIC-3D-ASSET-BACKED-KURUKSHETRA-VISUALS-1
+Status: Realistic asset-backed Three.js presentation. Not yet rigged GLB character modeling.
 
 ## Stack
 
 - `three` + `@react-three/fiber` + `@react-three/drei`
-- Current visuals: project-authored procedural geometry and materials only
+- Current visible unit visuals: generated realistic transparent PNG billboards rendered inside Three.js
+- Current board visual: generated realistic board texture rendered inside Three.js
+- Current environment/effects: project-authored procedural geometry and materials
 - Future visuals: local, licensed, or project-authored glTF/GLB assets declared in the asset manifest
 - Stable 2D board fallback for no-WebGL, reduced-motion, and scene errors
 - Lazy-loaded: three never enters the main bundle for 2D users
@@ -15,24 +17,23 @@ Status: Reference-guided procedural prototype. Not final realistic 3D.
 
 The user-provided references show stylized-realistic Mahabharata/Kurukshetra battlefield units: archers with leather armor and dhoti cloth, horse archers, war elephants with caparisons/howdahs, ornate chariots, bows, quivers, spears, shields, swords, mace/gada forms, dusty terrain, and cinematic lighting.
 
-The current milestone moves toward that direction with procedural silhouettes. It does not satisfy final realism. Final quality requires approved models, rigs, textures, and animations.
+The current milestone replaces the toy procedural silhouettes with realistic generated assets. It satisfies the immediate visual direction much more closely, while final fully modeled 3D still requires approved models, rigs, PBR textures, and animations.
 
 ## Honesty Rule
 
 The 3D battlefield may be described as:
 
 - reference-guided,
-- procedural,
-- prototype,
+- realistic asset-backed,
+- generated billboard-based,
 - battlefield-inspired,
 - playable 3D preview.
 
 It must not be described as:
 
-- final realistic 3D,
 - AAA-quality asset work,
 - licensed cinematic models,
-- completed soldier/horse/elephant/chariot art.
+- rigged GLB soldier/horse/elephant/chariot models.
 
 ## Environment
 
@@ -47,7 +48,8 @@ It must not be described as:
 ## Board
 
 - 8x8 grid embedded in the battlefield
-- Restrained sand/clay squares with a bronze in-scene rail
+- Realistic weathered board texture with carved wood/bronze border
+- Invisible hit planes preserve exact square clicks
 - Selected square: blue halo
 - Legal moves: blue ring
 - Capture moves: stronger blue ring
@@ -59,12 +61,12 @@ It must not be described as:
 
 | Chess role | Battlefield identity | Procedural implementation |
 | --- | --- | --- |
-| Pawn | Foot archer / soldier | Human warrior, dhoti cloth, leather armor, bow, arrow, quiver |
-| Knight | Horse archer | Horse body/head/legs, saddle, rider, bow/quiver |
-| Bishop | Advisor / standard bearer | Tall warrior, shield, spear, banner |
-| Rook | War chariot | Hull, side panels, wheels, rail, rider, spear |
-| Queen | War elephant commander | Elephant, trunk, tusks, caparison, howdah, rider, mace |
-| King | Royal commander | Tall warrior, crown, shield, sword, royal standard |
+| Pawn | Foot archer / soldier | Realistic transparent PNG billboard |
+| Knight | Horse archer | Realistic transparent PNG billboard |
+| Bishop | Advisor / standard bearer | Realistic transparent PNG billboard |
+| Rook | War chariot | Realistic transparent PNG billboard |
+| Queen | War elephant commander | Realistic transparent PNG billboard |
+| King | Royal commander | Realistic transparent PNG billboard |
 
 White/Pandava side uses blue cloth accents and brighter metals. Black/Kaurava side uses red cloth accents and darker metals. Warm materials stay inside the 3D scene only.
 

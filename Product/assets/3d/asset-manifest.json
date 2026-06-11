@@ -1,9 +1,30 @@
 {
   "updated": "2026-06-11",
-  "policy": "Every 3D asset must be declared here before use. Current implementation uses only project-authored procedural geometry and materials.",
+  "policy": "Every 3D asset must be declared here before use. Generated images are original project assets based on user-provided visual direction only; reference images are not copied or stored.",
   "assets": [
     {
-      "name": "Reference-guided procedural battlefield set",
+      "name": "Realistic Kurukshetra unit billboard set",
+      "filenames": [
+        "Product/public/assets/3d/kurukshetra-realism-v1/pawn-foot-archer.png",
+        "Product/public/assets/3d/kurukshetra-realism-v1/knight-horse-archer.png",
+        "Product/public/assets/3d/kurukshetra-realism-v1/bishop-advisor-standard.png",
+        "Product/public/assets/3d/kurukshetra-realism-v1/rook-war-chariot.png",
+        "Product/public/assets/3d/kurukshetra-realism-v1/queen-war-elephant.png",
+        "Product/public/assets/3d/kurukshetra-realism-v1/king-royal-commander.png",
+        "Product/public/assets/3d/kurukshetra-realism-v1/realistic-board-texture.png"
+      ],
+      "source": "generated-image",
+      "author": "MIRROR project using built-in image generation",
+      "license": "project-generated for MIRROR",
+      "dateAdded": "2026-06-11",
+      "allowedUse": "use within the MIRROR project",
+      "modifications": "chroma-key background removal, crop, trim, board texture placement, and Three.js sprite integration",
+      "attributionRequirement": "none",
+      "aiGenerated": true,
+      "notes": "Created from text prompts derived from the user's uploaded visual references. The references guided style, materials, camera, and unit identity only; no reference image is copied or stored in the repository."
+    },
+    {
+      "name": "Procedural battlefield environment and effects",
       "filename": "(none - generated in code: Product/src/three/*.tsx)",
       "source": "procedural",
       "author": "MIRROR project",
@@ -13,7 +34,7 @@
       "modifications": "n/a (code-defined geometry/materials)",
       "attributionRequirement": "none",
       "aiGenerated": false,
-      "notes": "Foot archer pawns, horse archer knights, advisor bishops, war chariot rooks, war elephant commander queens, royal commander kings, terrain, board rails, fort/camp silhouettes, rocks, sparse trees, banners, off-board soldiers, horses, elephants, chariots, ambient dust, non-gory impact rings/sparks/dust. This is a reference-guided procedural prototype, not final realistic 3D art."
+      "notes": "Board, terrain, fort/camp silhouettes, rocks, sparse trees, banners, off-board soldiers, horses, elephants, chariots, ambient dust, non-gory impact rings/sparks/dust."
     }
   ]
 }

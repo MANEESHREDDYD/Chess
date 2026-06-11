@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import { useFrame, type ThreeEvent } from '@react-three/fiber';
+import { useFrame, useLoader, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
   SQUARE_SIZE,
@@ -8,16 +8,17 @@ import {
   type SquareName,
 } from './battlefieldTypes';
 
-/* Restrained sand/clay: warm tones live only inside the battlefield scene. */
-const lightSquareMat = new THREE.MeshStandardMaterial({ color: '#d3bd8f', roughness: 0.92 });
-const darkSquareMat = new THREE.MeshStandardMaterial({ color: '#8d654b', roughness: 0.94 });
-const squareGeo = new THREE.BoxGeometry(SQUARE_SIZE * 0.985, 0.1, SQUARE_SIZE * 0.985);
-const rimGeo = new THREE.BoxGeometry(SQUARE_SIZE * 8.5, 0.12, SQUARE_SIZE * 8.5);
-const rimMat = new THREE.MeshStandardMaterial({ color: '#5f4734', roughness: 0.9, metalness: 0.08 });
-const railGeo = new THREE.BoxGeometry(SQUARE_SIZE * 8.62, 0.12, 0.08);
-const railSideGeo = new THREE.BoxGeometry(0.08, 0.12, SQUARE_SIZE * 8.62);
-const railMat = new THREE.MeshStandardMaterial({ color: '#9a6f3d', roughness: 0.5, metalness: 0.58 });
-const cornerGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.1, 10);
+const BOARD_TEXTURE_URL = '/assets/3d/kurukshetra-realism-v1/realistic-board-texture.png';
+
+const boardTextureGeo = new THREE.PlaneGeometry(SQUARE_SIZE * 9.12, SQUARE_SIZE * 9.12);
+const hitSquareGeo = new THREE.PlaneGeometry(SQUARE_SIZE, SQUARE_SIZE);
+const hitSquareMat = new THREE.MeshBasicMaterial({
+  color: '#ffffff',
+  transparent: true,
+  opacity: 0,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+});
 
 const ringGeo = new THREE.RingGeometry(0.12, 0.2, 24);
 const captureRingGeo = new THREE.RingGeometry(0.34, 0.45, 28);
@@ -40,14 +41,30 @@ type BattlefieldBoardProps = {
 
 export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: BattlefieldBoardProps) {
   const checkRef = useRef<THREE.Mesh>(null);
+  const boardTexture = useLoader(THREE.TextureLoader, BOARD_TEXTURE_URL);
+
+  useMemo(() => {
+    boardTexture.colorSpace = THREE.SRGBColorSpace;
+    boardTexture.anisotropy = 8;
+    boardTexture.needsUpdate = true;
+  }, [boardTexture]);
+
+  const boardMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        map: boardTexture,
+        roughness: 0.86,
+        metalness: 0.08,
+      }),
+    [boardTexture]
+  );
 
   const squares = useMemo(() => {
-    const list: Array<{ square: SquareName; pos: [number, number, number]; dark: boolean }> = [];
+    const list: Array<{ square: SquareName; pos: [number, number, number] }> = [];
     for (const file of FILES) {
       for (let rank = 1; rank <= 8; rank += 1) {
         const square = `${file}${rank}`;
-        const dark = (FILES.indexOf(file) + rank) % 2 === 0;
-        list.push({ square, pos: squareToPosition(square), dark });
+        list.push({ square, pos: squareToPosition(square) });
       }
     }
     return list;
@@ -67,23 +84,22 @@ export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: B
 
   return (
     <group name="battlefield-board">
-      <mesh geometry={rimGeo} material={rimMat} position={[0, -0.07, 0]} receiveShadow />
-      <mesh geometry={railGeo} material={railMat} position={[0, 0.03, 4.31]} castShadow />
-      <mesh geometry={railGeo} material={railMat} position={[0, 0.03, -4.31]} castShadow />
-      <mesh geometry={railSideGeo} material={railMat} position={[4.31, 0.03, 0]} castShadow />
-      <mesh geometry={railSideGeo} material={railMat} position={[-4.31, 0.03, 0]} castShadow />
-      {[[-4.31, 4.31], [4.31, 4.31], [-4.31, -4.31], [4.31, -4.31]].map(([x, z]) => (
-        <mesh key={`${x}-${z}`} geometry={cornerGeo} material={railMat} position={[x, 0.04, z]} castShadow />
-      ))}
+      <mesh
+        geometry={boardTextureGeo}
+        material={boardMat}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -0.006, 0]}
+        receiveShadow
+      />
 
-      {squares.map(({ square, pos, dark }) => (
+      {squares.map(({ square, pos }) => (
         <mesh
           key={square}
           name={`square-${square}`}
-          geometry={squareGeo}
-          material={dark ? darkSquareMat : lightSquareMat}
-          position={[pos[0], -0.05, pos[2]]}
-          receiveShadow
+          geometry={hitSquareGeo}
+          material={hitSquareMat}
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[pos[0], 0.006, pos[2]]}
           onClick={handleClick(square)}
         />
       ))}
