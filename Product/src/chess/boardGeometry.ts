@@ -4,12 +4,12 @@
  *
  * Single source of truth for mapping a pointer event to a board square.
  * Rules:
- * - Always derive geometry from the LIVE board grid DOMRect
- *   (getBoundingClientRect), never from an assumed/stale boardWidth and never
- *   from a visual wrapper that carries padding/border around the grid.
+ * - Always derive geometry from the live board grid DOMRect
+ *   (getBoundingClientRect), never from an assumed or stale boardWidth and
+ *   never from a visual wrapper that carries padding/border around the grid.
  * - clientX/clientY are viewport coordinates, exactly what
- *   getBoundingClientRect returns — scroll offsets cancel out by construction.
- * - Orientation flips BOTH axes: with white at the bottom a1 is bottom-left;
+ *   getBoundingClientRect returns; scroll offsets cancel out by construction.
+ * - Orientation flips both axes: with white at the bottom a1 is bottom-left;
  *   with black at the bottom a1 is top-right.
  */
 
@@ -43,11 +43,11 @@ export function getSquareFromPointer(input: BoardGeometryInput): BoardSquareHit 
   const y = clientY - top;
   if (x < 0 || y < 0 || x >= width || y >= height) return { inside: false };
 
-  // Column/row in SCREEN space (0,0 = top-left cell of the rendered grid).
+  // Column/row in screen space (0,0 = top-left cell of the rendered grid).
   const col = Math.min(7, Math.floor((x / width) * 8));
   const row = Math.min(7, Math.floor((y / height) * 8));
 
-  // Screen -> chess coordinates.
+  // Screen to chess coordinates.
   const file = orientation === 'white' ? col : 7 - col;
   const rank = orientation === 'white' ? 7 - row : row;
 
@@ -59,8 +59,8 @@ export function getSquareFromPointer(input: BoardGeometryInput): BoardSquareHit 
   };
 }
 
-/** Center of a square in viewport coordinates — the inverse mapping, used by
- *  tests and browser checks to aim synthetic pointer events. */
+/** Center of a square in viewport coordinates: the inverse mapping used by
+ * tests and browser checks to aim synthetic pointer events. */
 export function getSquareCenter(
   boardRect: BoardGeometryInput['boardRect'],
   square: string,

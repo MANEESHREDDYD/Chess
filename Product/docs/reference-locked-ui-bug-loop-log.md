@@ -1,40 +1,113 @@
-# Reference-Locked UI Bug Loop — Run Log
+# Reference-Locked UI Bug Loop Log
 
 Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1
-Script: `scripts/run-reference-locked-ui-bug-loop.mjs` → `artifacts/reference-locked-ui-bug-loop/`
+Script: `scripts/run-reference-locked-ui-bug-loop.mjs`
+Artifacts: `artifacts/reference-locked-ui-bug-loop/`
 
-## Run 1 — 2026-06-11 (FAILED, 6 findings)
+## Run 1 - 2026-06-11 - Failed
 
-| Bug | Screenshot | Root cause | Fix |
-| --- | --- | --- | --- |
-| Drop highlight stuck on SOURCE square in all 6 drag scenarios (classic/white, illegal snapback, kurukshetra/white, kurukshetra/black flipped, post-resize, post-navigation) | `play-light-during-drag.png` (run 1) | react-chessboard's drop ring tracks react-dnd hover state, which initializes on the source square and doesn't follow the pointer | Geometry-true tracking in `BoardView` + neutralized `customDropSquareStyle` |
+Bug found: drag/drop target highlight could appear on the source or lagging square while the pointer was over the intended target.
 
-## Run 2 — 2026-06-11 (FAILED, 6 findings)
+Root cause: `react-chessboard` visual drop-square state was not reliable during the HTML5 drag lifecycle. The drop itself could still be correct, so the visible ring and actual target diverged.
 
-| Bug | Root cause | Fix |
-| --- | --- | --- |
-| No drop-target highlight rendered during any drag | Three stacked causes found by instrumentation: (1) the library stops propagation on piece pointerdown → bubbling stage listener never fired → **capture phase**; (2) HTML5 drag silences pointer events after `pointercancel` → track via **`dragover`** too (don't stop on pointercancel); (3) react-chessboard ignores `customSquareStyles` updates while dragging → render the ring as our **own overlay** (`.board-drag-ring`, positioned from the same geometry, `pointer-events:none`) | All three applied in `BoardView.tsx` |
+Fix: added `src/chess/boardGeometry.ts`, rendered a BoardView-owned `.board-drag-ring`, cleared transient drag state on FEN/theme/orientation changes, and neutralized the library drop-square style.
 
-## Run 3 — 2026-06-11 (PASSED)
+Rerun result: continued hardening required because the first verifier did not catch every artifact issue.
 
-- Mid-drag, for every scenario: geometric pointer square == ring square == landing square.
-- Ring visually aligned with its square (rect tolerance < 4px).
-- Click-move lands on the clicked square (b1→c3); illegal drag snaps back with intact
-  board (no escaped/stray/duplicate pieces); no promotion dialog without final-rank pawn.
-- Matrix covered: Classic + Kurukshetra, White + Black orientation, after runtime theme
-  switch via header popover, after resize 1366→1024, after route navigation, dark theme.
-- Apple Mono shell sweep over /play /story /clue-chess /analytics /progress × light/dark ×
-  6 viewports: no warm shell tones, no raw links/buttons, no native header select, header
-  ≤76px, no overflow, board ≥540px at desktop widths, appearance switch never on the board.
-- Control states captured: More open, Board Theme open, appearance switch, mobile play,
-  before/during/after-move in both themes, Classic and Kurukshetra boards.
+## Run 2 - 2026-06-11 - Failed
 
-## Manual review answers (run 3)
+Bug found: the verification script overwrote Story/Clue/Analytics screenshots under `play-*` names, so the artifact contract was not trustworthy.
 
-Apple-style black/white/graphite: **yes** (both themes). Board large and premium: **yes —
-560px hero at 1366×768, fully above the fold**. Move target correct / highlight under
-pointer / piece lands where expected: **yes, asserted mid-drag**. Drag stable: **yes**.
-Light theme Apple-like / dark theme graphite premium: **yes / yes**. Blue main action:
-**yes**. Gold rare: **yes**. Anything beige/gold-heavy: **no**. Any page prototype-like:
-**no**. Would the user trust it: the loop + screenshots support yes; final judgement is
-the user's.
+Root cause: route name extraction removed the entire route after the leading slash.
+
+Fix: added explicit route screenshot naming and required route captures for Play, Story, Clue, Analytics, and Profile in light/dark desktop/mobile states.
+
+Rerun result: passed after script correction.
+
+## Run 3 - 2026-06-11 - Failed Human Review
+
+Bug found: the Apple mono shell still had a beige/warm cast in light mode and warm brown tone in dark Play cards.
+
+Root cause: legacy shell pseudo-element and warm battlefield surface tokens were still visible underneath the late mono layer.
+
+Fix: added the Apple Mono hard lock in `src/styles/mirrorAppleMono.css`: flat light/dark body backgrounds, no warm shell pseudo-element, neutral Play/Analytics/Clue/Profile cards, blue primary actions, and stricter browser checks for warm shell gradients/tokens.
+
+Rerun result: passed browser loop.
+
+## Run 4 - 2026-06-11 - Failed Human Review
+
+Bug found: Story no-profile state was a large empty page, not the required campaign map and mission-card screen.
+
+Root cause: the route returned a minimal empty CTA when no local profile existed.
+
+Fix: rebuilt the no-profile Story state as a campaign preview with RouteHero, mission cards, locked/current states, progress rail, and Create Profile action.
+
+Rerun result: passed browser loop.
+
+## Run 5 - 2026-06-11 - Passed
+
+Command: `node scripts/run-reference-locked-ui-bug-loop.mjs`
+
+Result: passed.
+
+Covered:
+
+- Board pointer mapping.
+- Drag target highlight.
+- Actual dropped square.
+- Click-move target.
+- Illegal move snapback.
+- Pawn legal move.
+- Knight legal move.
+- Promotion blocked unless legal final-rank pawn reaches promotion.
+- Classic theme.
+- Kurukshetra theme.
+- White orientation.
+- Black orientation.
+- After resize.
+- After theme switch.
+- After route navigation.
+- Apple mono light screenshots.
+- Apple mono dark screenshots.
+- More menu.
+- Board Theme menu.
+- Appearance toggle.
+- No native select in header.
+- No horizontal overflow.
+- No beige/gold/brown shell tokens in checked shell surfaces.
+
+Key screenshots:
+
+- `play-light-before-move.png`
+- `play-light-during-drag.png`
+- `play-light-after-legal-move.png`
+- `play-dark-before-move.png`
+- `play-dark-during-drag.png`
+- `play-dark-after-legal-move.png`
+- `wrong-target-regression-proof.png`
+- `play-classic-board.png`
+- `play-kurukshetra-board.png`
+- `menu-more-open.png`
+- `menu-board-theme-open.png`
+- `appearance-toggle.png`
+- `mobile-play.png`
+- `story-light-1366x768.png`
+- `clue-light-1366x768.png`
+- `analytics-light-1366x768.png`
+- `profile-light-1366x768.png`
+
+## Manual Review Answers
+
+- Does the frontend now look Apple-style black/white/graphite? Yes, except the documented tiny Story/Kurukshetra accent lane.
+- Is the board large and premium? Yes at 1366x768 and mobile.
+- Is the move target correct? Yes.
+- Does the highlighted square match pointer position? Yes.
+- Does the piece land exactly where expected? Yes.
+- Does the drag feel stable? Yes.
+- Is light theme truly Apple-like? Yes.
+- Is dark theme truly graphite premium? Yes.
+- Is blue the main action color? Yes.
+- Is gold rare? Yes.
+- Is anything still beige/gold-heavy? No in the product shell.
+- Does any page still feel like a prototype? Story no-profile was corrected; remaining 3D asset realism waits for references.
+- Would the user trust this app? The loop supports yes for UI and board interaction; final acceptance remains with the user.

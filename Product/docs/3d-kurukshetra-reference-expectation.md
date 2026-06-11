@@ -1,56 +1,94 @@
-# Kurukshetra 3D — Reference-Based Expectation
+# 3D Kurukshetra Reference Expectation
 
 Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1
-Status: **reference analysis in progress — final asset integration is NOT approved.**
-Companion: `3d-reference-lock-brief.md`, `design-references/README.md`.
+Status: Reference analysis only. Final asset integration is not approved.
 
-The user provides references; the agent analyzes them here. No final asset work starts
-until this analysis is approved by the user (next milestone:
-M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1).
+The user will provide references. Initial in-chat references were provided on 2026-06-11 and are analyzed here as direction only. The images are not stored in the repo unless the user confirms they may be stored.
 
-## Analysis of references provided so far (in-session imagery, 2026-06-11)
+Do not start final soldiers, horses, elephants, chariots, weapons, rocks, trees, terrain, dust, or effects integration until the reference analysis is approved in the next milestone: M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1.
 
-The user shared unit-board imagery: a hero archer (turnaround sheets + macro face/draw
-shots), horse archers, camel archers, war-elephant archers (howdah tower units), minister's
-chariot and king's war chariot (ornate gold, open-top, multi-horse team), and large
-variant grids of armored/caparisoned elephants, horses, and camels in a desert setting
-with fort-wall backdrops.
+## Reference Analysis Template
 
-1. **Overall visual fidelity:** stylized-REALISTIC, AAA-like presentation (PBR leather,
-   bronze, cloth; grounded studio/desert lighting). Clearly above mobile-game tier; below
-   photoreal cinema. This is the working fidelity target.
-2. **Camera:** unit renders are ground-level 3/4 views; for chess play this translates to
-   a tilted strategy camera (~35–50°) with constrained orbit (already prototyped), plus
-   close-in unit presentation angles for menus/intros.
-3. **Terrain:** warm sand/dust ground, hazy desert air, distant fort walls / camp
-   silhouettes as the horizon identity; rocks and sparse trees as accents — battlefield
-   boundary readable.
-4. **Pieces / units:** human warriors with leather cuirasses, dhoti, head wraps; mounts
-   (horse/camel/elephant) with layered caparisons and plate armor variants; howdah towers
-   on elephants; ornate ministerial/royal chariots; faction accents = deep blue vs maroon
-   cloth (maps to Pandava/Kaurava sides).
-5. **Weapons:** recurve longbows + back quivers (signature), spears, swords, maces/gada,
-   round shields, chariot wheels as identity for rooks.
-6. **Movement:** weighty, grounded — soldier march (pawn), horse leap (knight), heavy
-   chariot roll (rook), advisor/standard-bearer glide (bishop), commanding presence
-   (queen/king). Reference poses imply deliberate, readable animation, not arcade snap.
-7. **Capture effects:** impact language (shield hit, dust burst, brief spark) consistent
-   with the armored aesthetic; ALWAYS non-gory (project policy overrides any reference).
-8. **Check/checkmate:** king-square pulse + camera emphasis + battlefield light focus.
-9. **Sound:** optional, subtle (existing audio system), never intrusive.
-10. **Fallback:** stable 2D board for weak devices / reduced motion (already shipped).
+1. Overall visual fidelity:
+   - realistic
+   - stylized realistic
+   - cinematic
+   - mobile-game quality
+   - AAA-like target
 
-### Source caveat
+2. Camera:
+   - isometric
+   - tilted board
+   - orbit
+   - fixed strategy-camera
 
-The provided boards appear to be third-party/AI-assisted concept renders. They define the
-**direction and quality bar only**. Production assets must be licensed or commissioned
-rigged glTF/GLB models (manifest policy in `assets/3d/README.md`); the reference images are
-not stored in the repo until the user confirms they may be.
+3. Terrain:
+   - sand
+   - dust
+   - rocks
+   - trees
+   - battlefield boundary
 
-## Open questions for the user (before the asset brief)
+4. Pieces:
+   - soldiers
+   - horses
+   - elephants
+   - chariots
+   - commanders
+   - weapon-bearing units
 
-- Confirm the fidelity tier: stylized-realistic AAA-like (as analyzed) vs full cinematic?
-- Camera default: tilted strategy view vs closer cinematic angle during normal play?
-- May the reference images be committed under `design-references/`?
-- Asset path preference: commission, licensed marketplace (with explicit approval), or
-  in-house authored?
+5. Weapons:
+   - bow
+   - arrow
+   - spear
+   - sword
+   - gada/mace
+   - shield
+   - chariot wheels
+
+6. Movement:
+   - pawn soldier march
+   - knight horse leap
+   - rook chariot heavy movement
+   - bishop advisor/staff diagonal movement
+   - queen commander move
+   - king commander move
+
+7. Capture effects:
+   - dust burst
+   - shield impact
+   - spark flash
+   - fade/dissolve
+   - no blood
+   - no gore
+
+8. Check/checkmate:
+   - king pulse
+   - camera emphasis
+   - battlefield light focus
+
+9. Sound:
+   - optional
+   - subtle
+   - not annoying
+
+10. Fallback:
+   - 2D board for slow devices
+   - reduced motion
+
+## Initial In-Chat Reference Direction
+
+- Fidelity: stylized realistic and AAA-like, not low-poly. Materials should read as leather, bronze/metal, fabric, wood, animal tack, dust, and weathered battlefield surfaces.
+- Camera: unit sheets show ground-level three-quarter and profile presentation. Gameplay should translate that into a readable tilted strategy camera, with closer cinematic emphasis reserved for presentation/capture moments.
+- Terrain: dusty sand battlefield, distant fort/camp identity, rocks, sparse trees, haze, and clear board boundaries.
+- Soldiers: muscular archer/warrior silhouettes, dhoti-style cloth, leather armor, headbands/turbans, quivers, and faction-readable cloth accents.
+- Mounts: horse, camel, and elephant units with armor, caparisons, tack, howdahs, and readable silhouettes.
+- Chariots: minister/king chariots should be ornate, open-top, wheel-forward, and heavier than human units.
+- Weapons: recurve bows and quivers are a strong signature; also use spear, sword, mace/gada, shield, and chariot wheels.
+- Movement: grounded, weighty, and readable. No arcade snapping. Pawn march, knight horse leap, rook chariot roll, bishop advisor/staff diagonal, queen/king commander movement.
+- Capture: non-gory dust, shield, spark, and dissolve/retreat language only.
+- Color: warm battlefield colors belong inside the battlefield/board, not the global UI shell. The shell remains Apple mono.
+
+## Licensing Caveat
+
+The references define direction and quality bar only. Production assets must be licensed, commissioned, or authored with clear usage rights. No copyrighted or unlicensed models, textures, rigs, or animations may ship.

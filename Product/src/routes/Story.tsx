@@ -302,14 +302,65 @@ export default function Story() {
   };
 
   if (!activePlayer) {
+    const previewChapters = mahabharataStorySeed.slice(0, 6);
     return (
-      <section className="story-campaign story-campaign--empty">
-        <p className="home-eyebrow">Story Campaign</p>
-        <h1>Begin the Kurukshetra campaign.</h1>
-        <p>Create a local profile to unlock chapters, mission progress, and rewards.</p>
-        <Link to="/onboarding" className="btn btn-primary">
-          Create Profile
-        </Link>
+      <section className="story-campaign">
+        <header className="story-campaign__hero">
+          <RouteHero
+            actions={<ButtonLink to="/onboarding" variant="primary">Create Profile</ButtonLink>}
+            eyebrow="Story Campaign"
+            meta={
+              <>
+                <ContextChip tone="gold">Preview</ContextChip>
+                <ContextChip tone="blue">{mahabharataStorySeed.length} missions</ContextChip>
+                <ContextChip>Profile required</ContextChip>
+              </>
+            }
+            title="Kurukshetra Campaign"
+            variant="story"
+          >
+            Create a local profile to unlock chapters, mission progress, rewards, and the next mission state.
+          </RouteHero>
+        </header>
+
+        <div className="story-campaign__acts" id="campaign-path">
+          <section className="story-act">
+            <header className="story-act__header">
+              <div>
+                <span>Campaign map</span>
+                <h2>{previewChapters[0]?.act_title ?? 'Act I'}</h2>
+              </div>
+              <p>Preview path</p>
+              <ProgressBar value={0} max={previewChapters.length} label="Campaign preview progress" />
+            </header>
+
+            <div className="story-act__missions">
+              {previewChapters.map((chapter, index) => (
+                <article
+                  className={`story-mission story-mission--${index === 0 ? 'available' : 'locked'}`}
+                  key={chapter.id}
+                >
+                  <div>
+                    <span className="ui-badge">Chapter {chapter.chapter_number}</span>
+                    <h3>{chapter.title}</h3>
+                    <p>
+                      {chapter.subtitle ? `${chapter.subtitle} - ` : ''}
+                      {chapter.character} at {chapter.location}
+                    </p>
+                    <p className="story-mission__objective">{chapter.encounter.objective}</p>
+                  </div>
+                  {index === 0 ? (
+                    <Link to="/onboarding" className="btn btn-primary">
+                      Create Profile
+                    </Link>
+                  ) : (
+                    <span className="ui-badge ui-badge--muted">Locked</span>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
       </section>
     );
   }

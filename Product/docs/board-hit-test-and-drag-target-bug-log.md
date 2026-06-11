@@ -1,75 +1,64 @@
-# Board Hit-Test & Drag-Target Bug Log
+# Board Hit-Test and Drag-Target Bug Log
 
-Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1 · 2026-06-11
-Verifier: `scripts/run-reference-locked-ui-bug-loop.mjs` → `artifacts/reference-locked-ui-bug-loop/`
+Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1
+Verifier: `scripts/run-reference-locked-ui-bug-loop.mjs`
+Artifacts: `artifacts/reference-locked-ui-bug-loop/`
 
-## Reproduction of the reported defect
+## Reported Defect
 
-**Report:** "the move/drop highlight appears away from the intended placement area."
+The latest user screenshot showed the move/drop highlight away from the intended placement area. That indicates a mismatch between at least one of: pointer-to-square mapping, board scale, drag hit-test, board orientation, CSS transform, stale `boardWidth`, or the drag overlay coordinate space.
 
-**Reproduced in browser (run 1):** during every real mouse drag, the drop highlight stayed
-parked on the SOURCE square while the pointer hovered the target:
+## Reproduction Matrix
 
-| Route | Viewport | Theme | Orientation | From | Intended to | Highlighted | Dropped | Expected |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| /play | 1366x768 | Classic light | White | e2 | e4 | **e2** | e4 | e4 |
-| /play | 1366x768 | Classic light | White | f2 | f5 (illegal) | **f2** | snapback | snapback |
-| /play | 1366x768 | Kurukshetra | White | g1 | f3 | **g1** | f3 | f3 |
-| /play | 1366x768 | Kurukshetra | Black (flipped) | e7 | e5 | **e7** | e5 | e5 |
-| /play | 1024x768 (after resize) | Classic | White | d2 | d4 | **d2** | d4 | d4 |
-| /play | 1366x768 (after navigation) | Classic dark | White | c2 | c4 | **c2** | c4 | c4 |
+| Route | Viewport | Theme | Orientation | From | Intended to | Highlighted square before fix | Actual dropped square before fix | Expected square | After fix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| /play | 1366x768 | Classic light | White | e2 | e4 | source/lagging square | e4 | e4 | highlight e4, drop e4 |
+| /play | 1366x768 | Classic light | White | f2 | f5 illegal | source/lagging square | snapback | snapback | no promotion, snapback |
+| /play | 1366x768 | Kurukshetra | White | g1 | f3 | source/lagging square | f3 | f3 | highlight f3, drop f3 |
+| /play | 1366x768 | Kurukshetra | Black | e7 | e5 | source/lagging square | e5 | e5 | highlight e5, drop e5 |
+| /play | 1024x768 after resize | Classic | White | d2 | d4 | source/lagging square | d4 | d4 | highlight d4, drop d4 |
+| /play | 1366x768 after route navigation | Classic | White | c2 | c4 | source/lagging square | c4 | c4 | highlight c4, drop c4 |
 
-Screenshot before: `play-light-during-drag.png` from run 1 (ring on source).
-Screenshot after: same file from the passing run (ring on pointer square).
+Before screenshot: the user-provided milestone screenshot documents the visible mismatch. A prior failed local screenshot was overwritten by the passing run and is not being represented as a retained artifact.
 
-## Investigation answers (Phase 2 checklist)
+After screenshots:
 
-- **Highlighted square ≠ pointer square?** YES — in every drag, on all themes/orientations.
-- **boardWidth vs rendered width?** Not the cause anymore — the stable `.board-stage`
-  measurement (previous milestone) keeps them equal; verified by geometric mapping checks.
-- **CSS transform/zoom/scale/padding/border shifting coordinates?** No — mapping from the
-  live a1..h8 union rect matches pointer squares exactly at every size tested.
-- **Orientation reversed?** No — White and Black mappings both verified (corner + center
-  round-trips in `boardGeometry.test.ts`, live drags in the loop).
-- **Scroll offset error?** No — client coordinates vs getBoundingClientRect cancel by
-  construction (unit-tested with scrolled rects).
-- **Drag overlay coordinate space mismatch?** Not for position; the DROP lands correctly
-  because react-chessboard recomputes from release coordinates.
-- **Scaled container / stale boardWidth / custom pieces interfering?** No / no / no.
-- **Both themes? Both orientations? After theme switch? After resize?** The HIGHLIGHT bug:
-  yes everywhere (library-level). After fix: green everywhere.
+- `artifacts/reference-locked-ui-bug-loop/play-light-during-drag.png`
+- `artifacts/reference-locked-ui-bug-loop/wrong-target-regression-proof.png`
+- `artifacts/reference-locked-ui-bug-loop/play-kurukshetra-during-drag.png`
+- `artifacts/reference-locked-ui-bug-loop/play-dark-during-drag.png`
 
-## Root cause
+## Investigation Checklist
 
-`react-chessboard@4.7.3` renders its drop highlight from **react-dnd hover state**, which
-(a) initializes on the source square and (b) does not re-render squares from updated
-`customSquareStyles` while a drag is active. Under synthetic pointer input the hover state
-never advances at all; under real input it can lag or stick. Net effect: the visual target
-ring points away from the pointer even though the eventual drop (computed from release
-coordinates) is correct. Historical screenshots also stacked the previous board-sizing
-feedback loop on top (boardWidth ≠ rendered width skewed the *piece animation transforms*),
-which produced the "piece placed/animating outside the board" frames — that root cause was
-fixed in the previous milestone and is regression-guarded.
+- Highlighted square different from pointer square: yes before fix, no after fix.
+- `boardWidth` different from actual rendered width: not the active root cause after the previous sizing fix; current checks measure live square rects.
+- CSS transform, zoom, scale, padding, or border shifting coordinates: not after this fix. The helper uses live `getBoundingClientRect()` on the actual rendered square grid.
+- Orientation reversed incorrectly: no. White and Black orientation are unit-tested and browser-tested.
+- Scroll offset included incorrectly: no. `clientX/clientY` and `getBoundingClientRect()` use the same viewport coordinate space.
+- Drag overlay using viewport coordinates while board uses local coordinates: fixed. Viewport hit-test is converted to stage-relative overlay position from the same rect.
+- Board inside a scaled container: guarded by live rect measurement.
+- `react-chessboard` receiving stale `boardWidth`: guarded by the board-stage ResizeObserver and live rect tests.
+- Custom pieces or drag previews interfering with pointer events: not after fix; custom piece images are `pointer-events: none`.
+- Classic and Kurukshetra: tested.
+- White and Black orientation: tested.
+- After theme switch: tested.
+- After resizing: tested.
+- After route navigation: tested.
+
+## Root Cause
+
+`react-chessboard@4.7.3` can render a drag/drop highlight from its internal hover state while the pointer is moving through an HTML5 drag lifecycle. The hover state can initialize on the source square, lag behind the pointer, or fail to repaint custom square styles while dragging. The actual drop can still land correctly, which makes the visual bug especially confusing: the user sees a target ring in one place while the release coordinate maps to another square.
+
+The fix avoids trusting that internal visual highlight. The app now renders its own geometry-true drag ring from live board square rects.
 
 ## Fix
 
-1. **`src/chess/boardGeometry.ts`** — pure pointer→square mapping from the LIVE grid rect
-   (a1..h8 union), orientation-aware, scroll-immune, wrapper-padding-immune; 8 unit tests.
-2. **`BoardView.tsx`** — geometry-true drag tracking: capture-phase `pointerdown` on the
-   stage (the library stops propagation in bubble phase), then `pointermove` + `dragover`
-   listeners (HTML5 drag silences pointer events after a `pointercancel`, so `dragover`
-   carries the coordinates), feeding a **self-rendered overlay ring** (`.board-drag-ring`,
-   `data-qa="drag-ring"`) positioned from the same geometry — the library's
-   `customDropSquareStyle` is neutralized to `{}` so its stale source ring can never paint.
-3. **Lifecycle hardening** — FEN, theme, and orientation changes clear selection, pending
-   promotion, last-move tint, and the drag target; `pointerup`/`dragend`/`drop` always end
-   tracking; the ring is `pointer-events: none`.
+- `src/chess/boardGeometry.ts` maps `clientX/clientY` to a chess square using the actual board rect.
+- `src/chess/boardGeometry.test.ts` covers white/black corners, every square center, outside pointers, scaled boards, scroll offset, and padded wrapper cases.
+- `src/components/Board/BoardView.tsx` measures the union of all live `[data-square]` rects, not a wrapper and not a stale width.
+- `BoardView.tsx` listens in capture phase for piece pointerdown, tracks `pointermove` and `dragover`, renders `.board-drag-ring`, clears transient drag state on drop/cancel/FEN/theme/orientation changes, and neutralizes the library drop-square style.
+- The bug loop verifies pointer square, visible ring square, and actual dropped square match.
 
-## Verification (passing run)
+## Current Result
 
-`run-reference-locked-ui-bug-loop.mjs` asserts, mid-drag, that geometric pointer square ==
-ring square == eventual landing square for: Classic/White, illegal snapback, Kurukshetra/
-White (after runtime theme switch via the header popover), Kurukshetra/Black (flipped),
-after resize (1366→1024), after route navigation, and dark Classic — plus click-move
-accuracy (b1→c3), no promotion dialog without a final-rank pawn, and board integrity (no
-escaped/stray/duplicate pieces) after every interaction. All green.
+The latest passing proof was generated by `node scripts/run-reference-locked-ui-bug-loop.mjs` on 2026-06-11. Do not tag a future build if that script fails or if a manual screenshot shows the target ring away from the pointer square.

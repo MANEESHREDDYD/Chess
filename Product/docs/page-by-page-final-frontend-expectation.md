@@ -1,32 +1,81 @@
-# Page-by-Page FINAL Frontend Expectation
+# Page-by-Page Final Frontend Expectation
 
 Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1
-Supersedes ambiguity in earlier contracts; `page-by-page-frontend-contract.md` holds the
-detailed state/layout matrix. Shell baseline everywhere: Apple Mono black/white/graphite,
-blue-only primary actions, 64px command bar, single icon-only appearance switch
-bottom-right (board-aware dodge), no beige/parchment/brown/heavy-gold/maroon shell tones.
 
-- **PLAY** — the board is the hero: 560–640px on desktop (≥560 at 1366×768, full board
-  above the fold), centered, never cropped; the drop-target ring ALWAYS sits under the
-  pointer and the piece lands exactly there; engine status compact and actionable (Retry +
-  Diagnostics); match controls clean; history/review in side rails (≥1200px) or below;
-  no giant blank space.
-- **MIRROR** — board + personality selector, "why Mirror moved" explanation panel,
-  confidence/evidence chips; clean AI-lab feeling.
-- **STORY** — campaign map: Acts, mission cards, next mission highlighted,
-  locked/current/completed states; tiny bronze accent only; never reads like Clue.
-- **CLUE** — training studio: mode cards, clue-level rail, board when active, blue CTAs;
-  no beige cards.
-- **ANALYTICS** — top insights first, one recommended action, clean metric cards, no text
-  walls.
-- **PROFILE** — level, XP, streak, achievements, next action, backup card.
-- **REVIEW** — board replay, timeline, CP-loss, key moments, retry.
-- **IMPORT** — three-step paste → validate → save flow.
-- **COACH** — evidence cards with confidence and exports.
-- **DIAGNOSTICS** — clean technical console, contained output.
+Global shell contract: Apple-style black/white/graphite. Light mode is white, near-white, soft gray, crisp black text, clean glass cards, and minimal blue accent. Dark mode is black/graphite with silver text and restrained blue accent. Blue is the primary action and selected-state color. Green is success. Red is danger. Amber is warning. Bronze/gold is tiny and limited to Story/Kurukshetra accents. Beige, parchment, brown, heavy gold, maroon, and red-brown are not allowed in the product shell.
 
-Light mode must read as the Apple website (white, soft gray, crisp black text, glass
-cards, minimal blue). Dark mode must read as Apple/NVIDIA graphite (black, silver text,
-restrained blue). Enforced by `run-reference-locked-ui-bug-loop.mjs` +
-`run-complete-frontend-bug-loop.mjs`; warm tones may exist ONLY inside board squares and
-the 3D scene.
+## Play
+
+- Board is the hero.
+- Full board visible at 1366x768.
+- Desktop board target is 560-640px when viewport allows.
+- Mobile board width is min(92vw, 520px), with board first and controls below.
+- Drop target highlight matches the pointer square.
+- The moved piece lands exactly on the intended square.
+- Engine status is compact and actionable.
+- Match controls are clean.
+- History/review appear beside the board only when space allows; otherwise below.
+- No tiny board in huge empty space.
+- No crop, floating pieces, duplicate pieces, or wrong target rings.
+
+## Mirror
+
+- Board plus personality selector.
+- Explanation panel for why Mirror moved.
+- Evidence chips and confidence cues.
+- Clean AI-lab feeling, not fantasy parchment.
+
+## Story
+
+- Campaign map.
+- Mission cards.
+- Next mission is clear.
+- Locked, completed, and current states are distinct.
+- Tiny bronze/gold accent only.
+- Does not resemble the Clue training screen.
+
+## Clue
+
+- Training studio.
+- Mode cards.
+- Clue level is clear.
+- Board appears when active.
+- Blue CTA.
+- No beige cards.
+
+## Analytics
+
+- Top insights first.
+- Recommended action is obvious.
+- Clean cards.
+- No wall of text.
+
+## Profile
+
+- Player level.
+- XP.
+- Streak.
+- Achievements.
+- Next action.
+
+## Review
+
+- Board replay.
+- Timeline.
+- CP-loss.
+- Key moments.
+- Retry flow.
+
+## Import
+
+- Three-step paste, validate, save flow.
+
+## Coach
+
+- Evidence cards with confidence and export affordances.
+
+## Diagnostics
+
+- Clean technical console.
+- Contained output.
+- No raw browser default controls.

@@ -105,17 +105,16 @@ export function BoardView({
     if (!stage) return;
 
     const gridRect = () => {
-      const a1 = stage.querySelector('[data-square="a1"]')?.getBoundingClientRect();
-      const h8 = stage.querySelector('[data-square="h8"]')?.getBoundingClientRect();
-      if (!a1 || !h8) return null;
-      const left = Math.min(a1.left, h8.left);
-      const top = Math.min(a1.top, h8.top);
-      return {
-        left,
-        top,
-        width: Math.max(a1.right, h8.right) - left,
-        height: Math.max(a1.bottom, h8.bottom) - top,
-      };
+      const squareRects = [...stage.querySelectorAll('[data-square]')]
+        .map((square) => square.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      if (squareRects.length < 64) return null;
+
+      const left = Math.min(...squareRects.map((rect) => rect.left));
+      const top = Math.min(...squareRects.map((rect) => rect.top));
+      const right = Math.max(...squareRects.map((rect) => rect.right));
+      const bottom = Math.max(...squareRects.map((rect) => rect.bottom));
+      return { left, top, width: right - left, height: bottom - top };
     };
 
     let tracking = false;

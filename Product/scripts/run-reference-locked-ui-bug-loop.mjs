@@ -73,7 +73,10 @@ try {
   await preparePlay(page, { theme: 'standard', uiTheme: 'light' });
   await startGame(page, 'white');
   await page.screenshot({ path: shot('play-light-before-move.png') });
-  await verifiedDrag(page, 'e2', 'e4', 'white', 'classic/white drag', 'play-light-during-drag.png');
+  await verifiedDrag(page, 'e2', 'e4', 'white', 'classic/white drag', [
+    'play-light-during-drag.png',
+    'wrong-target-regression-proof.png',
+  ]);
   await sleep(1800);
   await assertHistoryStarts(page, 'e4', 'classic/white drag');
   await page.screenshot({ path: shot('play-light-after-legal-move.png') });
@@ -152,8 +155,12 @@ try {
     for (const vp of VIEWPORTS) {
       await page.setViewport({ width: vp.width, height: vp.height, deviceScaleFactor: 1 });
       for (const route of ['/play?stockfishBootCheck=1', '/story', '/clue-chess', '/analytics', '/progress']) {
-        const name = route === '/progress' ? 'profile' : route.replace(/[/?].*$|\//g, '') || 'play';
+        const name = routeScreenshotName(route);
         await page.goto(`${BASE_URL}${route}`, { waitUntil: 'networkidle0', timeout: 60000 });
+        if (route.startsWith('/play')) {
+          await page.waitForFunction(() => Boolean(window.__MIRROR_PLAY_TEST__), { timeout: 15000 });
+          await startGame(page, 'white');
+        }
         await sleep(700);
         if (vp.label === '1366x768' || vp.label === '390x844') {
           await page.screenshot({ path: shot(`${name}-${uiTheme}-${vp.label}.png`), fullPage: true });
@@ -191,6 +198,8 @@ try {
   else await page.screenshot({ path: shot('appearance-toggle.png') });
   await page.setViewport({ width: 390, height: 844 });
   await page.goto(`${BASE_URL}/play?stockfishBootCheck=1`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await page.waitForFunction(() => Boolean(window.__MIRROR_PLAY_TEST__), { timeout: 15000 });
+  await startGame(page, 'white');
   await sleep(900);
   await page.screenshot({ path: shot('mobile-play.png'), fullPage: true });
 
@@ -243,15 +252,17 @@ async function waitEngineSettled(page) {
 }
 
 async function boardGridRect(page) {
-  // The first [data-square] row parent spans the grid; use the union of a1..h8.
+  // Use the union of all live square rects. This ignores wrapper padding/border
+  // and stays correct if the board library changes DOM order or orientation.
   return page.evaluate(() => {
-    const a = document.querySelector('[data-square="a1"]')?.getBoundingClientRect();
-    const b = document.querySelector('[data-square="h8"]')?.getBoundingClientRect();
-    if (!a || !b) return null;
-    const left = Math.min(a.left, b.left);
-    const top = Math.min(a.top, b.top);
-    const right = Math.max(a.right, b.right);
-    const bottom = Math.max(a.bottom, b.bottom);
+    const rects = [...document.querySelectorAll('[data-square]')]
+      .map((square) => square.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0);
+    if (rects.length < 64) return null;
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
     return { left, top, width: right - left, height: bottom - top };
   });
 }
@@ -291,13 +302,15 @@ async function verifiedDrag(page, from, to, orientation, label, screenshotName =
     ({ geometry, px, py, orient }) => {
       // eslint-disable-next-line no-eval
       eval(geometry);
-      const a1 = document.querySelector('[data-square="a1"]')?.getBoundingClientRect();
-      const h8 = document.querySelector('[data-square="h8"]')?.getBoundingClientRect();
+      const rects = [...document.querySelectorAll('[data-square]')]
+        .map((square) => square.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0);
+      if (rects.length < 64) return { pointerSquare: null, highlightSquare: null, ringOnSquare: false };
       const rect = {
-        left: Math.min(a1.left, h8.left),
-        top: Math.min(a1.top, h8.top),
-        width: Math.max(a1.right, h8.right) - Math.min(a1.left, h8.left),
-        height: Math.max(a1.bottom, h8.bottom) - Math.min(a1.top, h8.top),
+        left: Math.min(...rects.map((r) => r.left)),
+        top: Math.min(...rects.map((r) => r.top)),
+        width: Math.max(...rects.map((r) => r.right)) - Math.min(...rects.map((r) => r.left)),
+        height: Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top)),
       };
       const pointerSquare = squareFromPointer(rect, px, py, orient);
       // The geometry-true overlay ring rendered by BoardView.
@@ -331,7 +344,10 @@ async function verifiedDrag(page, from, to, orientation, label, screenshotName =
     failures.push(`${label}: drop ring not visually aligned with ${mid.highlightSquare}`);
   }
 
-  if (screenshotName) await page.screenshot({ path: shot(screenshotName) });
+  if (screenshotName) {
+    const names = Array.isArray(screenshotName) ? screenshotName : [screenshotName];
+    for (const name of names) await page.screenshot({ path: shot(name) });
+  }
   await page.mouse.up();
 }
 
@@ -423,11 +439,42 @@ async function shellProbe(page, routeName, vp) {
         const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
         if (!m) return false;
         const [r, g, b] = [+m[1], +m[2], +m[3]];
-        return r > b + 16 && g > b - 6 && r > 120;
+        if (r > 245 && g > 245 && b > 245) return false;
+        return r > 120 && r >= g && g >= b && r - b > 18 && g - b > 8;
       };
-      for (const sel of ['body', '.nova-header', '.nova-nav', '.nova-main']) {
+      const hasWarmCssValue = (value) =>
+        /(beige|parchment|brown|maroon|gold|bronze|accent-gold|accent-gold-2|mirror-warm|154,\s*106,\s*31|199,\s*154,\s*67|48,\s*36,\s*22|49,\s*37,\s*25|255,\s*253,\s*248|255,\s*250,\s*240|fffaf0|f8f7f2)/i.test(
+          value ?? ''
+        );
+      for (const sel of [
+        'body',
+        '.nova-shell',
+        '.app-shell-v2',
+        '.nova-header',
+        '.nova-nav',
+        '.nova-main',
+        '.play-control-card',
+        '.play-board-card',
+        '.play-review-card',
+        '.play-move-card',
+        '.ui-route-hero',
+      ]) {
         const el = document.querySelector(sel);
-        if (el && isWarm(getComputedStyle(el).backgroundColor)) issues.push(`warm/beige shell on ${sel}`);
+        if (!el) continue;
+        const style = getComputedStyle(el);
+        const storyAccentException = name === 'story' && sel === '.ui-route-hero';
+        if (isWarm(style.backgroundColor) && !storyAccentException) issues.push(`warm/beige shell on ${sel}`);
+        if (hasWarmCssValue(style.backgroundImage) && !storyAccentException) issues.push(`warm shell gradient on ${sel}`);
+      }
+      const shell = document.querySelector('.app-shell-v2');
+      if (shell) {
+        const beforeBg = getComputedStyle(shell, '::before').backgroundImage;
+        if (hasWarmCssValue(beforeBg)) issues.push('warm shell pseudo-element');
+        const shellStyle = getComputedStyle(shell);
+        for (const varName of ['--surface-command', '--surface-battlefield', '--surface-analytics', '--surface-glass']) {
+          const value = shellStyle.getPropertyValue(varName);
+          if (hasWarmCssValue(value)) issues.push(`warm shell token ${varName}`);
+        }
       }
       for (const btn of document.querySelectorAll('.ui-button--primary, .nova-btn--primary')) {
         if (isWarm(getComputedStyle(btn).backgroundColor)) {
@@ -480,6 +527,14 @@ function startDevServer() {
   child.stdout.on('data', () => undefined);
   child.stderr.on('data', (c) => process.stderr.write(String(c)));
   return child;
+}
+
+function routeScreenshotName(route) {
+  const pathname = route.split('?')[0];
+  if (pathname === '/play') return 'play';
+  if (pathname === '/clue-chess') return 'clue';
+  if (pathname === '/progress') return 'profile';
+  return pathname.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-') || 'home';
 }
 
 async function waitForServer() {
