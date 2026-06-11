@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { isLegalPromotionMove, normalizePromotionPiece } from '../../chess/promotion';
+import { getSquareFromPointer } from '../../chess/boardGeometry';
 import { getThemeAssetUrl, type ThemeManifest } from '../../lib/theme';
 
 type Color = 'white' | 'black';
@@ -55,6 +56,19 @@ export function BoardView({
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [lastMoveSquares, setLastMoveSquares] = useState<string[]>([]);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion>(null);
+  /** Square currently under the pointer while dragging a piece (plus its
+   *  stage-relative rect for the overlay ring). Owned by US, computed from
+   *  the LIVE grid rect via boardGeometry: react-chessboard's own drop
+   *  highlight tracks react-dnd hover state, which sticks to the source
+   *  square, and the library also ignores customSquareStyles updates while a
+   *  drag is active — so the ring is rendered as our own overlay. */
+  const [dragTarget, setDragTarget] = useState<{
+    square: string;
+    left: number;
+    top: number;
+    size: number;
+  } | null>(null);
+  const dragTargetSquare = dragTarget?.square ?? null;
   const prevFenRef = useRef(fen);
 
   useEffect(() => {
@@ -68,8 +82,116 @@ export function BoardView({
       prevFenRef.current = fen;
       setPendingPromotion(null);
       setSelectedSquare(null);
+      setDragTarget(null);
     }
   }, [fen]);
+
+  // Theme or orientation changes invalidate every transient interaction state
+  // (selection, drop target, pending promotion, last-move tint) — a stale
+  // highlight from the previous orientation would point at the wrong square.
+  useEffect(() => {
+    setSelectedSquare(null);
+    setPendingPromotion(null);
+    setLastMoveSquares([]);
+    setDragTarget(null);
+  }, [playerColor, themeManifest]);
+
+  // Geometry-true drag-target tracking: on pointerdown over a piece, follow
+  // the pointer with the live grid rect (a1..h8 union) so the highlighted
+  // square is ALWAYS the square under the pointer — fresh rects every event,
+  // so scroll, resize, zoom, and theme switches can never skew it.
+  useEffect(() => {
+    const stage = boardStageRef.current;
+    if (!stage) return;
+
+    const gridRect = () => {
+      const a1 = stage.querySelector('[data-square="a1"]')?.getBoundingClientRect();
+      const h8 = stage.querySelector('[data-square="h8"]')?.getBoundingClientRect();
+      if (!a1 || !h8) return null;
+      const left = Math.min(a1.left, h8.left);
+      const top = Math.min(a1.top, h8.top);
+      return {
+        left,
+        top,
+        width: Math.max(a1.right, h8.right) - left,
+        height: Math.max(a1.bottom, h8.bottom) - top,
+      };
+    };
+
+    let tracking = false;
+
+    const update = (event: { clientX: number; clientY: number }) => {
+      if (!tracking) return;
+      const rect = gridRect();
+      if (!rect) return;
+      const hit = getSquareFromPointer({
+        boardRect: rect,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        orientation: playerColor,
+      });
+      if (!hit.inside || !hit.square) {
+        setDragTarget(null);
+        return;
+      }
+      // Stage-relative rect for the overlay ring (file/rank -> screen cell,
+      // then offset by the stage's own rect).
+      const stageRect = stage.getBoundingClientRect();
+      const col = playerColor === 'white' ? (hit.file as number) : 7 - (hit.file as number);
+      const row = playerColor === 'white' ? 7 - (hit.rank as number) : (hit.rank as number);
+      const size = rect.width / 8;
+      setDragTarget({
+        square: hit.square,
+        left: rect.left - stageRect.left + col * size,
+        top: rect.top - stageRect.top + row * size,
+        size,
+      });
+    };
+
+    const stopTracking = () => {
+      if (!tracking) return;
+      tracking = false;
+      setDragTarget(null);
+      window.removeEventListener('pointermove', update, true);
+      window.removeEventListener('dragover', update, true);
+      window.removeEventListener('pointerup', stopTracking, true);
+      window.removeEventListener('dragend', stopTracking, true);
+      window.removeEventListener('drop', stopTracking, true);
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest('[data-piece]')) return;
+      tracking = true;
+      // `pointermove` covers pointer-based drags; once an HTML5 drag starts
+      // the browser silences pointer events (after a pointercancel) and fires
+      // `dragover` instead — listen to both so tracking never goes blind.
+      // (`pointercancel` is deliberately NOT a stop signal for that reason.)
+      window.addEventListener('pointermove', update, true);
+      window.addEventListener('dragover', update, true);
+      window.addEventListener('pointerup', stopTracking, true);
+      window.addEventListener('dragend', stopTracking, true);
+      window.addEventListener('drop', stopTracking, true);
+      update(event);
+    };
+
+    // Capture phase: the board library stops propagation on piece pointerdown,
+    // which would silently disable bubbling listeners here.
+    stage.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      stage.removeEventListener('pointerdown', onPointerDown, true);
+      stopTracking();
+    };
+  }, [playerColor]);
+
+  // Announce board layout so shell-level placement logic (the appearance
+  // switch dodge) can react synchronously instead of waiting for a poll tick.
+  useEffect(() => {
+    window.dispatchEvent(new Event('mirror:board-layout'));
+    return () => {
+      window.dispatchEvent(new Event('mirror:board-layout'));
+    };
+  }, []);
 
   useEffect(() => {
     const stage = boardStageRef.current;
@@ -264,7 +386,26 @@ export function BoardView({
           {playerColor === 'white' ? 'Kaurava (Black)' : 'Pandava (White)'}
         </div>
       )}
-      <div className="board-stage" ref={boardStageRef} data-qa="board-stage">
+      <div
+        className="board-stage"
+        ref={boardStageRef}
+        data-qa="board-stage"
+        data-drag-target={dragTargetSquare ?? ''}
+      >
+        {dragTarget ? (
+          <div
+            className="board-drag-ring"
+            data-qa="drag-ring"
+            data-square={dragTarget.square}
+            style={{
+              left: `${dragTarget.left}px`,
+              top: `${dragTarget.top}px`,
+              width: `${dragTarget.size}px`,
+              height: `${dragTarget.size}px`,
+            }}
+            aria-hidden="true"
+          />
+        ) : null}
         <div className={`board-frame ${flashCapture ? 'capture-flash' : ''}`}>
           {themeError ? <p className="board-theme-error">Theme load failed: {themeError}</p> : null}
           <Chessboard
@@ -279,6 +420,10 @@ export function BoardView({
             customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: CLASSIC_DARK_SQUARE }}
             customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: CLASSIC_LIGHT_SQUARE }}
             customSquareStyles={customSquareStyles}
+            /* react-dnd hover state can stick to the SOURCE square, painting
+               the drop ring away from the pointer — our geometry-true
+               dragTargetSquare (customSquareStyles) replaces it. */
+            customDropSquareStyle={{}}
             customPieces={customPieces}
             animationDuration={180}
             promotionDialogVariant="modal"

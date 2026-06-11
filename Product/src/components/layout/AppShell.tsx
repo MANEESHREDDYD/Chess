@@ -50,22 +50,39 @@ export function AppShell({
     const update = () => {
       const toggle = document.querySelector('.nova-appearance');
       if (!toggle) return;
-      const boards = [...document.querySelectorAll('.board-frame, .battlefield-stage')];
-      const overlapsBoard = () => {
-        const r = toggle.getBoundingClientRect();
-        return boards.some((b) => {
-          const x = b.getBoundingClientRect();
-          if (x.width === 0) return false;
-          return !(r.right < x.left || r.left > x.right || r.bottom < x.top || r.top > x.bottom);
-        });
-      };
-      toggle.removeAttribute('data-dodge');
-      if (!overlapsBoard()) return;
-      toggle.setAttribute('data-dodge', 'left');
-      if (overlapsBoard()) toggle.setAttribute('data-dodge', 'raise');
+      const boardRects = [...document.querySelectorAll('.board-frame, .battlefield-stage')]
+        .map((b) => b.getBoundingClientRect())
+        .filter((r) => r.width > 0);
+
+      // Candidate placements computed geometrically (mirrors the CSS), so the
+      // toggle is never moved just to measure it — no transient default-
+      // position frame that screenshots/users could catch over the board.
+      const SIZE = 40;
+      const MARGIN = 16;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const bottomOffset = vw <= 900 ? 74 : MARGIN; // matches the ≤900px CSS rule
+      const headerH = document.querySelector('.nova-header')?.getBoundingClientRect().height ?? 64;
+      const candidates: Array<{ dodge: string | null; left: number; top: number }> = [
+        { dodge: null, left: vw - MARGIN - SIZE, top: vh - bottomOffset - SIZE },
+        { dodge: 'left', left: MARGIN, top: vh - bottomOffset - SIZE },
+        { dodge: 'raise', left: vw - MARGIN - SIZE, top: headerH + 12 },
+      ];
+      const clear = (c: { left: number; top: number }) =>
+        boardRects.every(
+          (b) => c.left + SIZE < b.left || c.left > b.right || c.top + SIZE < b.top || c.top > b.bottom
+        );
+      const pick = candidates.find(clear) ?? candidates[0];
+      if (pick.dodge === null) toggle.removeAttribute('data-dodge');
+      else if (toggle.getAttribute('data-dodge') !== pick.dodge) toggle.setAttribute('data-dodge', pick.dodge);
     };
     update();
     window.addEventListener('resize', update);
+    // Boards announce mount/unmount; re-evaluate after their layout settles.
+    const onBoardLayout = () => {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(update));
+    };
+    window.addEventListener('mirror:board-layout', onBoardLayout);
     // Boards can mount asynchronously (player/profile loads, route data), so
     // react to DOM changes immediately instead of waiting for the next tick.
     let raf = 0;
@@ -77,9 +94,10 @@ export function AppShell({
       });
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    const interval = window.setInterval(update, 800);
+    const interval = window.setInterval(update, 300);
     return () => {
       window.removeEventListener('resize', update);
+      window.removeEventListener('mirror:board-layout', onBoardLayout);
       observer.disconnect();
       if (raf) window.cancelAnimationFrame(raf);
       window.clearInterval(interval);

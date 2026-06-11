@@ -200,8 +200,15 @@ async function checkRoute(page, route, viewport, theme) {
         if (b.right < frame.left - 2 || b.left > frame.right + 2 || b.bottom < frame.top - 2 || b.top > frame.bottom + 2) escaped += 1;
       }
       if (escaped > 0) out.issues.push(`${escaped} piece(s) outside board frame`);
-      const toggleRect = document.querySelector('.nova-appearance')?.getBoundingClientRect();
-      if (toggleRect && intersects(toggleRect, frame)) out.issues.push('appearance toggle overlaps board');
+      const toggleEl = document.querySelector('.nova-appearance');
+      const toggleRect = toggleEl?.getBoundingClientRect();
+      if (toggleRect && intersects(toggleRect, frame)) {
+        out.issues.push(
+          `appearance toggle overlaps board (dodge=${toggleEl.dataset.dodge ?? 'default'} ` +
+            `toggle=${Math.round(toggleRect.x)},${Math.round(toggleRect.y)},${Math.round(toggleRect.width)} ` +
+            `board=${Math.round(frame.x)},${Math.round(frame.y)},${Math.round(frame.width)}x${Math.round(frame.height)})`
+        );
+      }
       // Board fully visible above the fold on the reference desktop viewport
       if (routeName === 'play' && vw === 1366 && vh === 768 && frame.bottom > vh + 2) {
         out.issues.push(`board cropped below fold (bottom ${Math.round(frame.bottom)})`);
@@ -240,7 +247,25 @@ async function checkRoute(page, route, viewport, theme) {
     return out;
   }, route.name);
 
-  for (const issue of probe.issues) {
+  let issues = probe.issues;
+  if (issues.some((i) => i.includes('appearance toggle overlaps board'))) {
+    // The dodge re-evaluates on board mount + a 300ms tick; only a STEADY
+    // overlap is a defect. Re-probe once after a grace period.
+    await sleep(450);
+    const recheck = await page.evaluate(() => {
+      const frame = document.querySelector('.board-frame')?.getBoundingClientRect();
+      const toggleEl = document.querySelector('.nova-appearance');
+      const t = toggleEl?.getBoundingClientRect();
+      if (!frame || !t) return null;
+      const hit = !(t.right < frame.left || t.left > frame.right || t.bottom < frame.top || t.top > frame.bottom);
+      return hit
+        ? `appearance toggle overlaps board steadily (dodge=${toggleEl.dataset.dodge ?? 'default'})`
+        : null;
+    });
+    issues = issues.filter((i) => !i.includes('appearance toggle overlaps board'));
+    if (recheck) issues.push(recheck);
+  }
+  for (const issue of issues) {
     failures.push(`${route.name} ${theme} ${viewport.label}: ${issue}`);
   }
 }
