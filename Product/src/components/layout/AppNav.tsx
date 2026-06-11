@@ -1,44 +1,44 @@
 import { NavLink } from 'react-router-dom';
+import { cx } from '../ui/classNames';
+import {
+  AnalyticsIcon,
+  ClueIcon,
+  MirrorIcon,
+  PlayIcon,
+  ProfileIcon,
+  StoryIcon,
+  type IconProps,
+} from '../ui/icons';
 
-const PRIMARY_NAV = [
-  { to: '/play', label: 'Play' },
-  { to: '/mirror', label: 'Mirror' },
-  { to: '/story', label: 'Story' },
-  { to: '/clue-chess', label: 'Clue' },
-  { to: '/analytics', label: 'Analytics' },
-  { to: '/progress', label: 'Profile' },
-];
+type NavItem = {
+  to: string;
+  label: string;
+  Icon: (props: IconProps) => JSX.Element;
+};
 
-const SECONDARY_NAV = [
-  { to: '/import-pgn', label: 'Import games' },
-  { to: '/coach-preview', label: 'Coach' },
-  { to: '/calibration', label: 'Calibration' },
-  { to: '/about', label: 'About' },
+const PRIMARY_NAV: NavItem[] = [
+  { to: '/play', label: 'Play', Icon: PlayIcon },
+  { to: '/mirror', label: 'Mirror', Icon: MirrorIcon },
+  { to: '/story', label: 'Story', Icon: StoryIcon },
+  { to: '/clue-chess', label: 'Clue', Icon: ClueIcon },
+  { to: '/analytics', label: 'Analytics', Icon: AnalyticsIcon },
+  { to: '/progress', label: 'Profile', Icon: ProfileIcon },
 ];
 
 export function AppNav() {
   return (
-    <nav className="app-nav-v2" aria-label="Primary navigation">
-      <div className="app-nav-v2__primary">
-        {PRIMARY_NAV.map((item) => (
-          <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
-            {item.label}
-          </NavLink>
-        ))}
-      </div>
-      <div className="app-nav-v2__secondary">
-        {SECONDARY_NAV.map((item) => (
-          <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
-            {item.label}
-          </NavLink>
-        ))}
+    <nav className="nova-nav" aria-label="Primary navigation">
+      {PRIMARY_NAV.map(({ to, label, Icon }) => (
         <NavLink
-          to="/stockfish-diagnostics"
-          className={({ isActive }) => `app-nav-v2__system${isActive ? ' is-active' : ''}`}
+          key={to}
+          to={to}
+          aria-label={label}
+          className={({ isActive }) => cx('nova-nav__link', isActive && 'is-active')}
         >
-          Engine diagnostics
+          <Icon size={18} />
+          <span>{label}</span>
         </NavLink>
-      </div>
+      ))}
     </nav>
   );
 }

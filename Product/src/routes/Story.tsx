@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BoardView } from '../components/Board/BoardView';
+import { ButtonLink } from '../components/ui/Button';
+import { ContextChip } from '../components/ui/ContextChip';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { RouteHero } from '../components/ui/RouteHero';
 import {
   completeStoryChapter,
   getStoryProgressForPlayer,
@@ -339,19 +343,21 @@ export default function Story() {
   return (
     <section className="story-campaign">
       <header className="story-campaign__hero">
-        <div>
-          <p className="home-eyebrow">Story Campaign</p>
-          <h1>The Kurukshetra Campaign</h1>
-          <p>
-            A mission-based campaign shell for Mahabharata-inspired chess encounters. This is not
-            the Clue Chess training page; tactical support is optional inside missions.
-          </p>
-        </div>
-        <div className="story-campaign__summary" aria-label="Story campaign progress">
-          <span>{completedCount} completed</span>
-          <span>{availableCount} available</span>
-          <span>{mahabharataStorySeed.length} total missions</span>
-        </div>
+        <RouteHero
+          actions={<ButtonLink to="#campaign-path" variant="primary">View campaign path</ButtonLink>}
+          eyebrow="Story Campaign"
+          meta={
+            <>
+              <ContextChip tone="gold">{completedCount} completed</ContextChip>
+              <ContextChip tone="blue">{availableCount} available</ContextChip>
+              <ContextChip>{mahabharataStorySeed.length} missions</ContextChip>
+            </>
+          }
+          title="Kurukshetra Campaign"
+          variant="story"
+        >
+          March through Acts I–III of the Kurukshetra campaign: mission briefings, battles, and rewards. Optional tactical support appears inside encounters when you need it.
+        </RouteHero>
       </header>
 
       {activePlayer.calibration_status !== 'complete' ? (
@@ -367,7 +373,7 @@ export default function Story() {
         </p>
       ) : null}
 
-      <div className="story-campaign__acts">
+      <div className="story-campaign__acts" id="campaign-path">
         {actNumbers.map((actNumber) => {
           const chaptersInAct = mahabharataStorySeed.filter(
             (chapter) => (chapter.act_number ?? 1) === actNumber
@@ -384,6 +390,7 @@ export default function Story() {
                 <p>
                   {actStats.complete}/{actStats.total} missions complete
                 </p>
+                <ProgressBar value={actStats.complete} max={actStats.total} label={`${actTitle} progress`} />
               </header>
 
               <div className="story-act__missions">

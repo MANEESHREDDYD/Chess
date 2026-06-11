@@ -12,6 +12,7 @@ import { getTacticalTaskPositions } from '../components/Calibration/taskData';
 import { generateSummary } from '../components/Mirror/styleSummary';
 import { logAnonymousEvent } from '../data/db';
 import { useCalibrationStore } from '../state/calibrationStore';
+import { usePlayerStore } from '../state/playerStore';
 
 export default function Calibration() {
   const run = useCalibrationStore((state) => state.run);
@@ -21,10 +22,16 @@ export default function Calibration() {
   const resumeRun = useCalibrationStore((state) => state.resumeRun);
   const submitTask = useCalibrationStore((state) => state.submitTask);
   const completeRun = useCalibrationStore((state) => state.completeRun);
+  const activePlayerId = usePlayerStore((state) => state.activePlayerId);
 
   useEffect(() => {
-    void resumeRun();
-  }, [resumeRun]);
+    // The active player loads asynchronously on a hard refresh; resuming
+    // before it resolves used to throw an unhandled "No active player for
+    // calibration" page error. Gate on the player and never let the promise
+    // escape unhandled.
+    if (!activePlayerId) return;
+    resumeRun().catch(() => undefined);
+  }, [activePlayerId, resumeRun]);
 
   const statusLabel = useMemo(() => {
     if (isLoading) return 'Loading calibration…';

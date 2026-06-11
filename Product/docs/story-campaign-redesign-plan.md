@@ -40,3 +40,12 @@ The current route uses improved 2D board styling. Future 3D milestones should ad
 ## Honesty Note
 
 Act II and Act III shells already exist. Future work should say Act II implementation and Act III implementation when deeper chapter mechanics are added, not "expand Chapters 8-14."
+
+## Frontend contract update (2026-06-11)
+
+The Story route now has a binding frontend contract (`page-by-page-frontend-contract.md`):
+campaign map identity (Acts I–III, next mission highlighted, briefing/objective/reward,
+locked/current/completed states), tiny bronze accents only, serif only inside mission
+titles, never parchment pages, never clue-first wording. The complete frontend bug loop
+fails any build where Story stops reading campaign-first. When the 3D battlefield gains
+licensed assets, Story missions may surface a battlefield preview per the 3D spec.

@@ -42,3 +42,16 @@ Future Kurukshetra visuals should include:
 - Current app copy should say "Kurukshetra-inspired theme" or "placeholder visual theme".
 - Do not say "realistic 3D battlefield" until the real implementation exists.
 - Do not imply copyrighted, paid, or externally licensed assets are bundled unless documented.
+
+## 2026-06-11 — M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1
+
+- The app shell is now Apple Mono black/white/graphite; the beige/gold shell, parchment
+  body wash, warm-ivory card tints, and gold primary buttons were removed and are guarded
+  by tests (`src/test/monoSignal.test.tsx`) and the browser bug loop.
+- A real 3D Kurukshetra Battlefield mode now exists (`src/three/`), and it is honestly a
+  **procedural low-poly placeholder**: stylized soldiers/cavalry/advisors/chariots/
+  commanders plus rocks/trees/banners/tents/elephant props generated in code. Zero binary
+  assets, zero external requests (enforced by the performance check).
+- The user's realistic target bar (AAA Mahabharata-era units) is documented in
+  `3d-kurukshetra-visual-specification.md` and requires licensed/commissioned GLB models —
+  UI copy must keep saying "stylized battlefield preview" until then.

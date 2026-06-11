@@ -95,3 +95,18 @@ This is not a full WCAG audit, but it moves MIRROR out of prototype territory.
 ## Visual Honesty
 
 The current Kurukshetra experience remains a 2D placeholder theme. The app and docs should not claim realistic 3D battlefield visuals until the future 3D milestones implement them.
+
+## MIRROR Apple Mono (M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1, 2026-06-11)
+
+The shell now runs the **MIRROR Apple Mono** black/white/graphite system —
+`src/styles/mirrorAppleMono.css`, loaded LAST, is the single palette authority. It defines
+the spec dark/light tokens (`--mono-*`) and re-points every older token generation
+(tokens.css parchment, designSystem `--mirror-*`/`--color-*`, mirrorNova `--nova-*`, and the
+shell-scoped Aura block) at them. Blue is the only primary action color; green = success,
+amber = warning, red = danger, bronze/gold = rare Story/Kurukshetra accent. Fonts are the
+system stack (no shipped Apple fonts, no Google-Fonts CDN); serif appears only in Story
+mission titles. Buttons: 44px / 12px radius / weight 650; primary is solid blue.
+Board sizing tokens are height-aware with a 480–500px floor; the board never crops, and
+warm sand/clay tones exist only inside board squares or the 3D battlefield scene.
+See `mirror-apple-mono-visual-system.md`, `interaction-design-contract.md`, and
+`page-by-page-frontend-contract.md` for the full contracts.

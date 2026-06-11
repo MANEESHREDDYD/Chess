@@ -55,7 +55,7 @@ describe('ClueChess route', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByRole('heading', { name: /The right clue at the right difficulty/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Train the pattern before the move/i })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByTestId('mock-board')).toBeInTheDocument();

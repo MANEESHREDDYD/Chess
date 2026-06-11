@@ -57,8 +57,11 @@ export const mahabharataManifest: ThemeManifest = {
   name: 'Kurukshetra',
   pieces,
   board: {
-    lightSquare: '#dcb881', // Dusty gold/sand
-    darkSquare: '#9c4a36',  // Earthy rust/red
+    // Mono Signal restraint: warm tones live ONLY in the board squares and are
+    // desaturated sand/clay, not rust red, so Kurukshetra never dominates the
+    // monochrome app shell around it.
+    lightSquare: '#dcc9a3', // Restrained sand
+    darkSquare: '#967052',  // Restrained clay
     background: '', // We can use a CSS class or data URI for the background, but for now we'll just leave it empty or use CSS directly
   },
   fx: {

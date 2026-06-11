@@ -1,10 +1,31 @@
 ﻿# Current Status
 
-> **Date**: June 10, 2026
-> **Latest Tag**: `v1.19.7-frontend-production-redesign-1`
-> **Latest Completed Milestone**: `M-FRONTEND-PRODUCTION-REDESIGN-1`
+> **Date**: June 11, 2026
+> **Latest Tag**: `v1.19.8-mirror-full-frontend-3d-battlefield-expectation-loop-1` (pending push)
+> **Latest Completed Milestone**: `M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1`
 > **Current / Next Milestone**: `M-STORY-CAMPAIGN-LOOP-1`
 > **Launch Status**: READY FOR NEXT MILESTONE (Iterative Releases)
+
+### Frontend / 3D snapshot (M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1)
+
+- User expectation is now explicitly captured (`user-expected-product-vision.md`); every
+  page has a frontend contract (`page-by-page-frontend-contract.md`).
+- App shell moved to the **MIRROR Apple Mono** black/white/graphite system
+  (`src/styles/mirrorAppleMono.css`): blue primary action, green success, amber warning,
+  red danger, bronze/gold only as a rare Story/Kurukshetra accent. Beige/gold shell,
+  parchment washes, serif UI chrome, and the external Google-Fonts CDN import are gone.
+- Board bugs are checked in a real browser on every run: crop, overflow, escaped/duplicate
+  pieces, toggle-over-board, drag/drop and click-to-move stability
+  (`scripts/run-board-interaction-stability-check.mjs`,
+  `scripts/run-complete-frontend-bug-loop.mjs`).
+- Kurukshetra Battlefield 3D mode shipped as a **documented procedural low-poly
+  placeholder** with full architecture (`src/three/`), 2D/3D toggle on /play, WebGL +
+  reduced-motion + error fallbacks to the stable 2D board, asset licensing manifest
+  (zero binary assets, no external CDN), and a performance check
+  (`scripts/run-3d-battlefield-performance-check.mjs`). It is honestly NOT realistic yet;
+  the realistic bar requires licensed/commissioned GLB models (documented).
+- Chess rules remain chess.js-backed; the 3D layer renders and forwards moves only.
+- No gameplay features were added; runtime GenAI remains not implemented.
 
 ---
 
@@ -46,6 +67,7 @@ The following features and milestones have been successfully completed and tagge
 *   **`v1.19.5-clue-chess-adaptive-2`**: Adaptive Clue Chess modes with clue levels 1-5, no-repeat clue memory, review mode, streak mode, boss puzzles, kids wording, deterministic scoring, Analytics deep links, Game Review motif links, backup support, and Python/SQL clue-effectiveness metrics.
 *   **`v1.19.6-product-quality-visual-story-reset-1`**: Product-quality reset with shared chess.js promotion legality guard, BoardView stale-promotion clearing, campaign-first Story landing, visual honesty audit, design-system polish, and product-quality browser visual check.
 *   **`v1.19.7-frontend-production-redesign-1`**: Frontend production redesign with shared app shell, grouped navigation, reusable UI components, rebuilt `/play` layout, rebuilt `/progress` profile page, stricter responsive styling, screenshot artifacts, and bounding-box visual QA.
+*   **`v1.19.8-mirror-full-frontend-3d-battlefield-expectation-loop-1`**: Captured the explicit user product expectation and page-by-page frontend contracts; moved the shell to the Apple Mono black/white/graphite system with blue primary actions; fixed board crop/overflow/feedback-loop sizing, tablet layout collapse, oversized pieces, and the appearance toggle (now a single icon-only bottom-right switch); shipped the Kurukshetra Battlefield 3D mode (procedural placeholder, 2D/3D toggle, WebGL/reduced-motion/error fallbacks, click-to-move through the chess.js pipeline, asset-licensing manifest, no external CDN); added board-interaction, complete-frontend-bug-loop, and 3D performance browser checks.
 
 ## Current Implemented Features
 

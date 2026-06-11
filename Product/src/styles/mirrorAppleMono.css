@@ -1,0 +1,1046 @@
+/* ============================================================================
+   MIRROR Mono Signal — Apple-style black/white/graphite design language.
+   M-APPLE-WHITE-BLACK-MINIMAL-UX-1.
+
+   Premium design is subtraction: 85% black/white/gray, 10% soft glass depth,
+   5% functional accent. Blue = primary action. Green = success. Amber =
+   warning. Red = danger. Gold = rare Story/Kurukshetra accent only.
+
+   This file is imported LAST (after tokens.css, global.css, designSystem.css,
+   mirrorNova.css) and is the single authority for the app shell palette. It
+   remaps every legacy token generation onto the Mono Signal system so no
+   beige/gold/parchment wash can leak from older CSS.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Phase 3 — Font system (system stack, no shipped Apple fonts)
+   ------------------------------------------------------------------------- */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'Segoe UI Variable', 'Segoe UI', Roboto, Inter, system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+    'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-story: 'New York', 'Iowan Old Style', Georgia, serif;
+  --font-mono: 'SFMono-Regular', 'Cascadia Code', Consolas, monospace;
+  /* Legacy generations resolved onto the system stack (kills serif body/UI). */
+  --font-body: var(--font-ui);
+
+  --nova-font-ui: var(--font-ui);
+  --nova-font-display: var(--font-display);
+  --nova-font-story: var(--font-story);
+  --nova-font-mono: var(--font-mono);
+
+  /* Header is a 64px command bar on desktop (Phase 5). */
+  --nova-header-h: 64px;
+  --nova-ls-brand: 0.16em;
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 2 — Mono Signal source tokens (`--mono-*`).
+   Defined at the html level per appearance theme. All downstream token
+   generations — including designSystem.css's high-specificity
+   `.app-shell-v2.ui-theme-*` Aura block — are remapped onto these below, so
+   there is exactly ONE palette source of truth.
+   ------------------------------------------------------------------------- */
+:root,
+html[data-ui-theme='dark'] {
+  color-scheme: dark;
+  --mono-bg-page: #000000;
+  --mono-bg-page-soft: #070708;
+  --mono-bg-shell: rgba(10, 10, 12, 0.86);
+  --mono-bg-surface: #111113;
+  --mono-bg-card: rgba(255, 255, 255, 0.055);
+  --mono-bg-card-hover: rgba(255, 255, 255, 0.085);
+  --mono-bg-elevated: rgba(255, 255, 255, 0.12);
+
+  --mono-text-primary: #f5f5f7;
+  --mono-text-secondary: #d2d2d7;
+  --mono-text-muted: #8e8e93;
+
+  --mono-border-subtle: rgba(255, 255, 255, 0.1);
+  --mono-border-strong: rgba(255, 255, 255, 0.22);
+
+  --mono-accent-primary: #0a84ff;
+  --mono-accent-primary-hover: #409cff;
+  --mono-accent-success: #30d158;
+  --mono-accent-warning: #ffd60a;
+  --mono-accent-danger: #ff453a;
+  --mono-accent-story: #b8872f;
+
+  --mono-focus-ring-color: rgba(10, 132, 255, 0.44);
+  --mono-accent-primary-soft: rgba(10, 132, 255, 0.16);
+  --mono-accent-success-soft: rgba(48, 209, 88, 0.14);
+  --mono-accent-danger-soft: rgba(255, 69, 58, 0.14);
+  --mono-accent-story-soft: rgba(184, 135, 47, 0.14);
+}
+
+html[data-ui-theme='light'] {
+  color-scheme: light;
+  --mono-bg-page: #f5f5f7;
+  --mono-bg-page-soft: #ffffff;
+  --mono-bg-shell: rgba(255, 255, 255, 0.9);
+  --mono-bg-surface: #ffffff;
+  --mono-bg-card: rgba(255, 255, 255, 0.9);
+  --mono-bg-card-hover: #ffffff;
+  --mono-bg-elevated: #ffffff;
+
+  --mono-text-primary: #1d1d1f;
+  --mono-text-secondary: #3a3a3c;
+  --mono-text-muted: #6e6e73;
+
+  --mono-border-subtle: rgba(0, 0, 0, 0.1);
+  --mono-border-strong: rgba(0, 0, 0, 0.18);
+
+  --mono-accent-primary: #0071e3;
+  --mono-accent-primary-hover: #0077ed;
+  --mono-accent-success: #248a3d;
+  --mono-accent-warning: #b56a00;
+  --mono-accent-danger: #d70015;
+  --mono-accent-story: #8a5a16;
+
+  --mono-focus-ring-color: rgba(0, 113, 227, 0.34);
+  --mono-accent-primary-soft: rgba(0, 113, 227, 0.1);
+  --mono-accent-success-soft: rgba(36, 138, 61, 0.12);
+  --mono-accent-danger-soft: rgba(215, 0, 21, 0.1);
+  --mono-accent-story-soft: rgba(138, 90, 22, 0.12);
+}
+
+/* ---------------------------------------------------------------------------
+   Token remap — every legacy generation resolves to Mono Signal.
+   The `.app-shell-v2.ui-theme-*` selectors are required: designSystem.css
+   defines the same custom properties on the shell element (a closer ancestor
+   than <html>), so they must be re-pointed here at equal specificity (this
+   file loads last) or the legacy Aura palette would win inside the shell.
+   ------------------------------------------------------------------------- */
+:root,
+html[data-ui-theme='dark'],
+html[data-ui-theme='light'],
+.app-shell-v2.ui-theme-dark,
+.app-shell-v2.ui-theme-light {
+  /* Spec token layer (Phase 2 names) */
+  --bg-page: var(--mono-bg-page);
+  --bg-page-soft: var(--mono-bg-page-soft);
+  --bg-shell: var(--mono-bg-shell);
+  --bg-surface: var(--mono-bg-surface);
+  --bg-card: var(--mono-bg-card);
+  --bg-card-hover: var(--mono-bg-card-hover);
+  --bg-elevated: var(--mono-bg-elevated);
+  --text-primary: var(--mono-text-primary);
+  --text-secondary: var(--mono-text-secondary);
+  --text-muted: var(--mono-text-muted);
+  --border-subtle: var(--mono-border-subtle);
+  --border-strong: var(--mono-border-strong);
+  --accent-primary: var(--mono-accent-primary);
+  --accent-primary-hover: var(--mono-accent-primary-hover);
+  --accent-success: var(--mono-accent-success);
+  --accent-warning: var(--mono-accent-warning);
+  --accent-danger: var(--mono-accent-danger);
+  --accent-story: var(--mono-accent-story);
+  --focus-ring-color: var(--mono-focus-ring-color);
+  --accent-primary-soft: var(--mono-accent-primary-soft);
+  --accent-success-soft: var(--mono-accent-success-soft);
+  --accent-danger-soft: var(--mono-accent-danger-soft);
+  --accent-story-soft: var(--mono-accent-story-soft);
+
+  /* Aura v2 generation (shell-scoped names) â†’ mono */
+  --bg-panel: var(--mono-bg-card);
+  --bg-card-strong: var(--mono-bg-elevated);
+  --border-soft: var(--mono-border-subtle);
+  --accent-blue: var(--mono-accent-primary);
+  --accent-green: var(--mono-accent-success);
+  --accent-red: var(--mono-accent-danger);
+  --accent-gold: var(--mono-accent-story);
+  --accent-gold-2: var(--mono-accent-story);
+  /* tokens.css generation (v1 parchment) â†’ mono */
+  --bg: var(--bg-page);
+  --bg-deep: var(--bg-page-soft);
+  --paper: var(--bg-surface);
+  --paper-warm: var(--bg-card);
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-secondary);
+  --ink-faded: var(--text-muted);
+  --rule: var(--border-strong);
+  --rule-soft: var(--border-subtle);
+  --pandava-deep: var(--accent-primary);
+  --pandava-indigo: var(--accent-primary-hover);
+  --pandava-gold: var(--accent-story);
+  --pandava-gold-light: var(--accent-story);
+  --kaurava-crimson: var(--accent-danger);
+  --good: var(--accent-success);
+  --warn: var(--accent-danger);
+
+  /* designSystem.css generation â†’ mono */
+  --mirror-bg-deep: var(--bg-page);
+  --mirror-bg-panel: var(--bg-surface);
+  --mirror-bg-elevated: var(--bg-elevated);
+  --mirror-glass-bg: var(--bg-shell);
+  --mirror-glass-border: var(--border-subtle);
+  --mirror-text-primary: var(--text-primary);
+  --mirror-text-secondary: var(--text-secondary);
+  --mirror-text-muted: var(--text-muted);
+  --mirror-primary: var(--accent-primary);
+  --mirror-primary-strong: var(--accent-primary-hover);
+  --mirror-primary-soft: var(--accent-primary-soft);
+  --mirror-success: var(--accent-success);
+  --mirror-success-soft: var(--accent-success-soft);
+  --mirror-danger: var(--accent-danger);
+  --mirror-warning: var(--accent-warning);
+  --mirror-gold: var(--accent-primary);
+  --mirror-gold-soft: var(--accent-primary-soft);
+  --mirror-warm: var(--accent-story);
+  --mirror-warm-soft: var(--accent-story-soft);
+  --color-bg: var(--bg-page);
+  --color-bg-soft: var(--bg-page-soft);
+  --color-surface: var(--bg-card);
+  --color-surface-elevated: var(--bg-surface);
+  --color-surface-glass: var(--bg-card);
+  --color-border: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--accent-primary);
+  --color-primary-hover: var(--accent-primary-hover);
+  --color-primary-soft: var(--accent-primary-soft);
+  --color-danger: var(--accent-danger);
+  --color-success: var(--accent-success);
+  --color-warning: var(--accent-warning);
+  --color-info: var(--accent-primary);
+  --focus-ring: 0 0 0 3px var(--focus-ring-color);
+  --mirror-focus: var(--focus-ring-color);
+  --shadow-focus: 0 0 0 4px var(--focus-ring-color);
+
+  /* Warm/parchment surface gradients â†’ quiet graphite/white glass. */
+  --surface-command: var(--bg-card);
+  --surface-glass: var(--bg-card);
+  --surface-battlefield: var(--bg-card);
+  --surface-analytics: var(--bg-card);
+  --surface-story:
+    radial-gradient(circle at 14% 0%, var(--accent-story-soft), transparent 42%),
+    var(--bg-card);
+
+  /* mirrorNova generation â†’ mono */
+  --nova-page-bg: var(--bg-page);
+  --nova-page-bg-2: var(--bg-page-soft);
+  --nova-shell-bg: var(--bg-shell);
+  --nova-surface-1: var(--bg-card);
+  --nova-surface-2: var(--bg-card-hover);
+  --nova-surface-3: var(--bg-elevated);
+  --nova-surface-solid: var(--bg-surface);
+  --nova-text-1: var(--text-primary);
+  --nova-text-2: var(--text-secondary);
+  --nova-text-3: var(--text-muted);
+  --nova-border-1: var(--border-subtle);
+  --nova-border-strong: var(--border-strong);
+  --nova-primary: var(--accent-primary);
+  --nova-primary-strong: var(--accent-primary-hover);
+  --nova-primary-from: var(--accent-primary);
+  --nova-primary-to: var(--accent-primary);
+  --nova-primary-soft: var(--accent-primary-soft);
+  --nova-blue-1: var(--accent-primary);
+  --nova-blue-2: var(--accent-primary);
+  --nova-green-1: var(--accent-success);
+  --nova-green-2: var(--accent-success);
+  --nova-red-1: var(--accent-danger);
+  --nova-red-2: var(--accent-danger);
+  --nova-warning-1: var(--accent-warning);
+  --nova-warm: var(--accent-story);
+  --nova-gold-1: var(--accent-story);
+  --nova-gold-2: var(--accent-story);
+  --nova-warm-soft: var(--accent-story-soft);
+  --nova-gold-soft: var(--accent-story-soft);
+  --nova-success-soft: var(--accent-success-soft);
+  --nova-danger-soft: var(--accent-danger-soft);
+  --nova-focus-ring: 0 0 0 3px var(--focus-ring-color);
+  --nova-page-gradient: var(--bg-page);
+
+  /* Board sizing tokens (Phase 4). Height-aware so the board fits above the
+     fold on normal screens, but with a hard FLOOR so short windows get a
+     decent board (and a little page scroll) instead of a tiny one. */
+  --board-cap-desktop: 680px;
+  --board-max-desktop: min(max(68vh, 500px), 680px);
+  --board-max-tablet: min(max(64vh, 480px), 620px);
+  --board-max-mobile: min(92vw, 520px);
+  --board-max-size: var(--board-max-desktop);
+}
+
+html[data-ui-theme='light'] {
+  --nova-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.07);
+  --nova-shadow-floating: 0 18px 50px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* ---------------------------------------------------------------------------
+   Page base — Apple-flat page. No beige split gradient, no parchment.
+   ------------------------------------------------------------------------- */
+html {
+  background: var(--bg-page);
+}
+
+body,
+html[data-ui-theme='dark'] body,
+html[data-ui-theme='light'] body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  line-height: 1.55;
+}
+
+/* Typography scale (Phase 3). */
+.nova-main h1 {
+  font-family: var(--font-display);
+  font-weight: 760;
+  letter-spacing: -0.015em;
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 5 — Header: minimal 64px command bar
+   ------------------------------------------------------------------------- */
+.nova-header__inner {
+  min-height: var(--nova-header-h);
+  max-height: none;
+}
+
+.nova-brand {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.nova-brand__word {
+  font-size: 20px;
+  font-weight: 760;
+  letter-spacing: var(--nova-ls-brand);
+}
+
+/* Quiet text-tab nav — no pill-rail chrome. */
+.nova-nav {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  gap: 4px;
+}
+
+.nova-nav__link {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 650;
+}
+
+.nova-nav__link.is-active {
+  color: var(--accent-primary);
+  background: var(--accent-primary-soft);
+  box-shadow: none;
+}
+
+.nova-nav__link.is-active svg {
+  color: var(--accent-primary);
+}
+
+/* The is-active shadow reset above must never swallow the keyboard focus
+   ring (same specificity, later source order would win otherwise). */
+.nova-nav__link:focus-visible,
+.nova-nav__link.is-active:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+/* Compact 36px command triggers, single text row. */
+.nova-trigger {
+  height: 36px;
+  border-radius: 10px;
+  padding: 0 10px;
+}
+
+.nova-trigger__eyebrow {
+  display: none;
+}
+
+.nova-commands {
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 6 — Button system. 44px, radius 12px, system UI 650, blue primary.
+   Gold is forbidden for primary actions; story accent is scoped below.
+   ------------------------------------------------------------------------- */
+.ui-button,
+.btn,
+.nova-btn {
+  min-height: 44px;
+  border-radius: 12px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.nova-btn {
+  height: auto;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.nova-btn--sm,
+.ui-button--compact {
+  min-height: 36px;
+  border-radius: 10px;
+}
+
+.ui-button--primary,
+.btn-primary,
+.nova-btn--primary {
+  background: var(--accent-primary);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.ui-button--primary:hover,
+.btn-primary:hover,
+.nova-btn--primary:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: none;
+}
+
+.ui-button--secondary,
+.btn-secondary,
+.nova-btn--secondary {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.ui-button--secondary:hover,
+.btn-secondary:hover,
+.nova-btn--secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.ui-button--ghost,
+.btn-ghost,
+.nova-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.ui-button--ghost:hover,
+.btn-ghost:hover,
+.nova-btn--ghost:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.ui-button--success {
+  background: var(--accent-success-soft);
+  border-color: var(--accent-success);
+  color: var(--accent-success);
+}
+
+.ui-button--danger,
+.btn-warn,
+.nova-btn--danger {
+  background: var(--accent-danger-soft);
+  border-color: transparent;
+  color: var(--accent-danger);
+}
+
+.ui-button--danger:hover,
+.btn-warn:hover,
+.nova-btn--danger:hover {
+  background: var(--accent-danger);
+  color: #ffffff;
+}
+
+/* Story — tiny gold, ONLY for Story/Kurukshetra/reward accents. */
+.ui-button--story {
+  background: var(--accent-story-soft);
+  border-color: var(--accent-story);
+  color: var(--accent-story);
+}
+
+.ui-button--selected,
+.nova-btn--selected {
+  background: var(--accent-primary-soft);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------------------
+   Surfaces — neutralize every warm ivory `rgba(255, 248-250, 232-240, â€¦)`
+   legacy surface to mono glass.
+   ------------------------------------------------------------------------- */
+.ui-card,
+.ui-panel-v2 {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+.ui-card--elevated,
+.ui-card--game-panel,
+.play-control-card,
+.play-review-card,
+.profile-action-card,
+.profile-backup-card {
+  background: var(--bg-card);
+}
+
+.ui-card--glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+}
+
+.ui-card--battlefield,
+.play-board-card,
+.profile-hero__main {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.ui-card--warning {
+  background: var(--bg-card);
+  border-color: var(--accent-warning);
+}
+
+.ui-context-chip,
+.ui-badge-v2,
+.ui-badge {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.ui-context-chip--gold {
+  color: var(--accent-story);
+  border-color: var(--accent-story-soft);
+}
+
+.ui-context-chip--blue {
+  color: var(--accent-primary);
+}
+
+.play-meta--chips div {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+}
+
+.play-move-list li {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.ui-table-card__scroller,
+.import-pgn__table-wrap {
+  background: transparent;
+}
+
+.clue-chess-page__modes .ui-mode-tile {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------------------
+   Route hero — compact, monochrome, quiet. The huge battlefield hero is gone.
+   ------------------------------------------------------------------------- */
+.ui-route-hero {
+  padding: clamp(18px, 2.4vw, 28px);
+  border-radius: 20px;
+  border-color: var(--border-subtle);
+  background: var(--bg-card);
+  box-shadow: none;
+  align-items: center;
+}
+
+.ui-route-hero::before,
+.ui-route-hero::after {
+  display: none;
+}
+
+.ui-route-hero--battlefield,
+.ui-route-hero--analytics,
+.ui-route-hero--command {
+  background: var(--bg-card);
+}
+
+/* Story keeps a faint warm radial only — never the page. */
+.ui-route-hero--story {
+  background:
+    radial-gradient(circle at 12% 0%, var(--accent-story-soft), transparent 46%),
+    var(--bg-card);
+}
+
+.ui-route-hero__eyebrow {
+  color: var(--accent-primary);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.ui-route-hero--story .ui-route-hero__eyebrow {
+  color: var(--accent-story);
+}
+
+.ui-route-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 760;
+  text-shadow: none;
+}
+
+.ui-route-hero__description {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* Story mission titles are the ONLY serif surface. */
+.story-mission h3 {
+  font-family: var(--font-story);
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 4 — Board stage: stable, height-aware, never cropped.
+   The chessboard width is measured from .board-stage, whose width is fully
+   CSS-determined (column width capped by viewport height) and NEVER depends
+   on the chessboard's own rendered size — this kills the self-inflating
+   resize loop that pushed the board to 680px inside a 480px column.
+   ------------------------------------------------------------------------- */
+.board-shell {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.board-stage {
+  width: min(100%, var(--board-max-size));
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.board-frame {
+  width: 100%;
+  max-width: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  padding: 8px;
+}
+
+.board-frame img {
+  filter: none;
+}
+
+/* Play route — board-first cockpit. */
+.play-page {
+  --board-max-size: var(--board-max-desktop);
+}
+
+/* Desktop only — below 1200px the designSystem.css breakpoints own the play
+   layout ('board board' + side history at ≤1199px, single column at ≤900px).
+   This file loads last in the cascade, so an unscoped rule here would silently
+   keep the 3-column grid alive at tablet widths and crush the board into a
+   ~330px column (the "small board + giant empty canvas" defect). */
+@media (min-width: 1200px) {
+  .play-layout {
+    grid-template-columns: minmax(232px, 280px) minmax(0, 1fr) minmax(248px, 320px);
+  }
+}
+
+/* The wrap is a single-cell grid; without an explicit minmax(0,1fr) track the
+   implicit auto track sizes to CONTENT, percentage widths inside turn cyclic,
+   and the 3D canvas locks at its 300px default ("tiny board in empty card"). */
+.play-board-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+}
+
+.play-board-card,
+.play-board-wrap .play-board-card {
+  position: static;
+  /* The card spans its grid column (always definite); the stage inside caps
+     itself at --board-max-size and centers. Sizing the CARD from the token
+     instead proved fragile: grid-item percentage max-width does not reliably
+     clamp here and the centered card then overflowed its column (or, with
+     min(%,...), collapsed to auto and locked the 3D canvas at its 300px
+     default). The descendant selector out-ranks designSystem's
+     `.play-board-wrap .play-board-card` overrides. */
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+  padding: clamp(10px, 1.2vw, 16px);
+  overflow: hidden;
+}
+
+.play-board-card .board-shell {
+  max-width: none;
+  filter: none;
+}
+
+/* Compact /play context bar replaces the giant hero. */
+.play-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--bg-card);
+}
+
+.play-context__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.play-context__title h1 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 760;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.play-context__title span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.play-status-strip {
+  margin: 0;
+  justify-content: flex-end;
+}
+
+.play-title,
+.play-review-card h2,
+.play-move-card h2,
+.profile-page h2 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* Laptop heights: compress board before anything else clips. */
+@media (max-height: 820px) {
+  .play-page {
+    --board-max-size: var(--board-max-tablet);
+  }
+}
+
+/* The 1199px/900px play-layout breakpoints from designSystem.css still apply
+   (board spans full width, then single column). Keep board sizing height-aware
+   there instead of the legacy 92vw width that ignored viewport height. */
+@media (max-width: 1199px) {
+  .play-page,
+  .play-board-card {
+    --board-max-size: min(max(64vh, 480px), 92vw, 620px);
+  }
+
+  .play-board-card .board-shell {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .play-page,
+  .play-board-card {
+    --board-max-size: var(--board-max-mobile);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 9 — Board interaction layer: functional color, not gold decoration.
+   Blue = selection/last move, red = check only.
+   ------------------------------------------------------------------------- */
+[title='Choose promotion piece'] {
+  border: 1px solid var(--border-strong) !important;
+  border-radius: 16px !important;
+  background: var(--bg-surface) !important;
+  box-shadow: var(--nova-shadow-floating) !important;
+}
+
+[title='Choose promotion piece']::before {
+  background: var(--accent-primary);
+  color: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 8 — Appearance toggle: compact, board-safe, below popovers.
+   ------------------------------------------------------------------------- */
+/* Single icon-only appearance switch pinned bottom-right at every viewport
+   (user requirement). It shows the appearance you can switch TO (moon in
+   light mode, sun in dark mode). Labels are aria-label/title only. */
+.nova-appearance {
+  position: fixed;
+  left: auto;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: none;
+  z-index: var(--nova-z-appearance);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  gap: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-shell);
+  color: var(--text-secondary);
+  box-shadow: var(--nova-shadow-floating);
+  backdrop-filter: blur(22px) saturate(1.16);
+  cursor: pointer;
+  transition: background 180ms var(--nova-ease), color 180ms var(--nova-ease),
+    border-color 180ms var(--nova-ease);
+}
+
+.nova-appearance:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.nova-appearance:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring-color), var(--nova-shadow-floating);
+}
+
+/* Board-aware dodge ladder (set from AppShell): never cover board squares. */
+.nova-appearance[data-dodge='left'] {
+  right: auto;
+  left: max(16px, env(safe-area-inset-left));
+}
+
+.nova-appearance[data-dodge='raise'] {
+  right: max(16px, env(safe-area-inset-right));
+  left: auto;
+  bottom: auto;
+  top: calc(var(--nova-header-h) + 12px);
+}
+
+/* Keep the corner clear of content at the end of the page. */
+.nova-main {
+  padding-bottom: 84px;
+}
+
+/* ---------------------------------------------------------------------------
+   Footer + misc shell
+   ------------------------------------------------------------------------- */
+.nova-footer a:hover {
+  color: var(--accent-primary);
+}
+
+.app-footer-v2 a:hover {
+  color: var(--accent-primary);
+}
+
+/* Progress/XP bars: green = progress (never gold). */
+.ui-progress-bar__fill,
+.analytics-dashboard__bar-track span {
+  background: var(--accent-primary);
+}
+
+.profile-xp__fill {
+  background: var(--accent-success);
+}
+
+/* StatRing: blue progress on neutral track. */
+.ui-stat-ring {
+  background: conic-gradient(var(--accent-primary) var(--stat-ring-progress), var(--bg-elevated) 0);
+}
+
+/* Analysis "thinking" and engine chips stay informational blue. */
+.nova-chip--gold {
+  color: var(--accent-story);
+  border-color: var(--accent-story-soft);
+}
+
+/* Data tables */
+.ui-data-table th {
+  color: var(--text-muted);
+}
+
+.ui-data-table td {
+  border-color: var(--border-subtle);
+}
+
+/* Diagnostics console */
+.diagnostic-json {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 12 — Microinteractions. Subtle, fast, no bounce.
+   ------------------------------------------------------------------------- */
+.ui-button,
+.btn,
+.nova-btn {
+  transition:
+    background 120ms var(--nova-ease),
+    border-color 120ms var(--nova-ease),
+    color 120ms var(--nova-ease),
+    box-shadow 120ms var(--nova-ease),
+    transform 120ms var(--nova-ease);
+}
+
+.ui-button:hover,
+.btn:hover {
+  transform: none;
+}
+
+.ui-card--interactive,
+.nova-card--interactive {
+  transition:
+    border-color 160ms var(--nova-ease),
+    background 160ms var(--nova-ease),
+    box-shadow 160ms var(--nova-ease);
+}
+
+.nova-popover__panel {
+  animation-duration: 140ms;
+}
+
+.nova-nav__link {
+  transition: background 160ms var(--nova-ease), color 160ms var(--nova-ease);
+}
+
+.nova-appearance__btn {
+  transition: background 180ms var(--nova-ease), color 180ms var(--nova-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-popover__panel {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive header / mobile
+   ------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   Kurukshetra Battlefield Mode (3D) — stage, toggle, fallback notice.
+   The 3D canvas replaces ONLY the board; the cockpit UI stays identical.
+   ------------------------------------------------------------------------- */
+.battlefield-stage {
+  /* Same stable sizing pattern as the 2D .board-stage: parent card is always
+     column-width, the stage caps itself and centers. */
+  width: min(100%, var(--board-max-size, var(--board-max-desktop)));
+  margin-inline: auto;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #cbb497;
+}
+
+.battlefield-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.battlefield-loading {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.battlefield-fallback {
+  display: grid;
+  gap: 8px;
+}
+
+.battlefield-fallback__notice {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.battlefield-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.battlefield-toggle__btn {
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms var(--nova-ease), color 120ms var(--nova-ease);
+}
+
+.battlefield-toggle__btn:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.battlefield-toggle__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+.battlefield-toggle__btn.is-active {
+  background: var(--accent-primary);
+  color: #ffffff;
+}
+
+.battlefield-toggle__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --nova-header-h: 56px;
+  }
+
+  /* Stay bottom-right, lifted above the fixed bottom nav. */
+  .nova-appearance {
+    left: auto;
+    right: max(12px, env(safe-area-inset-right));
+    transform: none;
+    bottom: max(74px, calc(env(safe-area-inset-bottom) + 62px));
+  }
+
+  .play-context__title h1 {
+    font-size: 18px;
+  }
+}

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageFrame } from '../components/layout/PageFrame';
-import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { MetricCard } from '../components/ui/MetricCard';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { RouteHero } from '../components/ui/RouteHero';
+import { StatRing } from '../components/ui/StatRing';
 import { getPlayerProgressSummary, scanAndGrantAchievements, type PlayerProgressSummary } from '../progression/progression';
 import { usePlayerStore } from '../state/playerStore';
 
@@ -60,13 +62,14 @@ export const Progress: React.FC = () => {
 
   return (
     <PageFrame className="profile-page">
-      <PageHeader
+      <RouteHero
         actions={<Badge variant="active">{summary.current_streak_days} day streak</Badge>}
         eyebrow="Profile and progression"
         title={activePlayer.display_name}
+        variant="command"
       >
         Your local MIRROR identity, training activity, and next improvement action.
-      </PageHeader>
+      </RouteHero>
 
       <section className="profile-hero">
         <Card className="profile-hero__main" variant="battlefield">
@@ -75,14 +78,13 @@ export const Progress: React.FC = () => {
             <h2>Level {summary.level}</h2>
             <p>{summary.next_action}</p>
           </div>
+          <StatRing label="XP" value={`${Math.round(progressPercent)}%`} progress={progressPercent} />
           <div className="profile-xp">
             <div>
               <span>{xpText}</span>
               <strong>{Math.round(progressPercent)}%</strong>
             </div>
-            <div className="profile-xp__track" aria-label={`XP progress ${xpText}`}>
-              <span style={{ width: `${progressPercent}%` }} />
-            </div>
+            <ProgressBar value={xpInCurrentLevel} max={xpRequiredForNext} label={`XP progress ${xpText}`} />
           </div>
         </Card>
         <Card className="profile-backup-card" variant="game-panel">

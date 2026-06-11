@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 import { AppNav } from './AppNav';
+import { BoardThemeMenu } from './BoardThemeMenu';
+import { AudioControl } from './AudioControl';
+import { MoreMenu } from './MoreMenu';
 
 type AppHeaderProps = {
   activeTheme: string;
@@ -19,45 +22,25 @@ export function AppHeader({
   setAudioVolume,
 }: AppHeaderProps) {
   return (
-    <header className="app-header-v2">
-      <div className="app-header-v2__top">
-        <Link to="/" className="brand-v2" aria-label="MIRROR home">
-          <span>MIRROR</span>
-          <small>AI chess training</small>
+    <header className="nova-header">
+      <div className="nova-header__inner">
+        <Link to="/" className="nova-brand" aria-label="MIRROR home">
+          <span className="nova-brand__word">MIRROR</span>
         </Link>
-        <div className="app-toolbar theme-toggle" aria-label="Theme and audio settings">
-          <label>
-            <span>Theme</span>
-            <select value={activeTheme} onChange={(event) => setActiveTheme(event.target.value)}>
-              <option value="standard">Classic</option>
-              <option value="mahabharata">Kurukshetra</option>
-            </select>
-          </label>
-          <button
-            aria-label={audioEnabled ? 'Mute audio' : 'Enable audio'}
-            aria-pressed={audioEnabled}
-            className="app-toolbar__icon"
-            onClick={() => setAudioEnabled(!audioEnabled)}
-            type="button"
-          >
-            {audioEnabled ? 'Audio on' : 'Audio off'}
-          </button>
-          {audioEnabled ? (
-            <label className="app-toolbar__volume">
-              <span>Volume</span>
-              <input
-                max="1"
-                min="0"
-                onChange={(event) => setAudioVolume(parseFloat(event.target.value))}
-                step="0.05"
-                type="range"
-                value={audioVolume}
-              />
-            </label>
-          ) : null}
+
+        <AppNav />
+
+        <div className="nova-commands">
+          <BoardThemeMenu activeTheme={activeTheme} setActiveTheme={setActiveTheme} />
+          <AudioControl
+            audioEnabled={audioEnabled}
+            audioVolume={audioVolume}
+            setAudioEnabled={setAudioEnabled}
+            setAudioVolume={setAudioVolume}
+          />
+          <MoreMenu />
         </div>
       </div>
-      <AppNav />
     </header>
   );
 }

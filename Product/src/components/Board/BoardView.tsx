@@ -31,6 +31,13 @@ type PendingPromotion = {
 } | null;
 
 const MAX_BOARD_WIDTH = 680;
+/* Board frame chrome (padding + border) that sits around the chessboard. */
+const FRAME_CHROME_PX = 18;
+
+/* Tournament-neutral Classic board (MIRROR Mono Signal). Warm colors are
+   allowed only inside themed (Kurukshetra) board squares, never the shell. */
+const CLASSIC_LIGHT_SQUARE = '#e8eaed';
+const CLASSIC_DARK_SQUARE = '#a8b4c0';
 
 export function BoardView({
   fen,
@@ -42,8 +49,8 @@ export function BoardView({
   themeManifest,
   themeError,
 }: BoardViewProps) {
-  const boardFrameRef = useRef<HTMLDivElement>(null);
-  const [boardWidth, setBoardWidth] = useState(520);
+  const boardStageRef = useRef<HTMLDivElement>(null);
+  const [boardWidth, setBoardWidth] = useState(480);
   const [flashCapture, setFlashCapture] = useState(false);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [lastMoveSquares, setLastMoveSquares] = useState<string[]>([]);
@@ -65,17 +72,21 @@ export function BoardView({
   }, [fen]);
 
   useEffect(() => {
-    const frame = boardFrameRef.current;
-    if (!frame) return;
+    const stage = boardStageRef.current;
+    if (!stage) return;
 
+    // Measure the board-stage, whose width is fully CSS-determined (grid
+    // column capped by viewport height) and never stretched by the rendered
+    // chessboard itself. Measuring a content-driven box here previously
+    // created a resize feedback loop that inflated the board past its column.
     const syncBoardWidth = () => {
-      const width = Math.floor(frame.clientWidth);
+      const width = Math.floor(stage.clientWidth) - FRAME_CHROME_PX;
       if (width > 0) setBoardWidth(Math.min(MAX_BOARD_WIDTH, width));
     };
 
     syncBoardWidth();
     const observer = new ResizeObserver(syncBoardWidth);
-    observer.observe(frame);
+    observer.observe(stage);
     return () => observer.disconnect();
   }, []);
 
@@ -91,8 +102,11 @@ export function BoardView({
             draggable={false}
             src={getThemeAssetUrl(themeManifest.id, assetPath)}
             style={{
-              width: squareWidth ? `${squareWidth}px` : '100%',
-              height: squareWidth ? `${squareWidth}px` : '100%',
+              // Pieces occupy ~82% of the square (Phase 9) so they never spill
+              // outside the board or read as oversized.
+              width: squareWidth ? `${Math.round(squareWidth * 0.82)}px` : '82%',
+              height: squareWidth ? `${Math.round(squareWidth * 0.82)}px` : '82%',
+              margin: squareWidth ? `${Math.round(squareWidth * 0.09)}px` : '9%',
               pointerEvents: 'none',
               userSelect: 'none',
               objectFit: 'contain',
@@ -106,7 +120,7 @@ export function BoardView({
   const boardStyle: Record<string, string | number> = themeManifest
     ? {
         borderRadius: '10px',
-        boxShadow: '0 18px 44px rgba(37, 27, 14, 0.28)',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.22)',
         ...(themeManifest.board.background ? {
           backgroundImage: `url(${getThemeAssetUrl(themeManifest.id, themeManifest.board.background)})`,
           backgroundSize: 'cover',
@@ -116,7 +130,7 @@ export function BoardView({
       }
     : {
         borderRadius: '10px',
-        boxShadow: '0 18px 44px rgba(37, 27, 14, 0.2)',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.18)',
       };
 
   const handleDrop = (sourceSquare: string, targetSquare: string): boolean => {
@@ -179,17 +193,19 @@ export function BoardView({
   }, [fen, selectedSquare]);
 
   const customSquareStyles = useMemo(() => {
+    // Functional interaction layer (Mono Signal): blue = selection/last move,
+    // red = check only. No gold decoration on the board.
     const styles: Record<string, CSSProperties> = {};
     for (const square of lastMoveSquares) {
       styles[square] = {
         ...(styles[square] ?? {}),
-        background: 'linear-gradient(135deg, rgba(210, 166, 76, 0.42), rgba(210, 166, 76, 0.18))',
+        background: 'rgba(10, 132, 255, 0.26)',
       };
     }
     if (selectedSquare) {
       styles[selectedSquare] = {
         ...(styles[selectedSquare] ?? {}),
-        boxShadow: 'inset 0 0 0 3px rgba(255, 224, 138, 0.95)',
+        boxShadow: 'inset 0 0 0 3px rgba(10, 132, 255, 0.9)',
       };
     }
     for (const square of boardHelpers.selectedMoves) {
@@ -197,14 +213,14 @@ export function BoardView({
       styles[square] = {
         ...(styles[square] ?? {}),
         background: piece
-          ? 'radial-gradient(circle, rgba(139, 38, 53, 0.52) 34%, transparent 38%)'
-          : 'radial-gradient(circle, rgba(30, 58, 95, 0.38) 18%, transparent 22%)',
+          ? 'radial-gradient(circle, rgba(10, 132, 255, 0.45) 34%, transparent 38%)'
+          : 'radial-gradient(circle, rgba(10, 132, 255, 0.34) 18%, transparent 22%)',
       };
     }
     if (boardHelpers.kingSquare) {
       styles[boardHelpers.kingSquare] = {
         ...(styles[boardHelpers.kingSquare] ?? {}),
-        boxShadow: 'inset 0 0 0 4px rgba(139, 38, 53, 0.9)',
+        boxShadow: 'inset 0 0 0 4px rgba(255, 69, 58, 0.9)',
       };
     }
     return styles;
@@ -244,32 +260,34 @@ export function BoardView({
   return (
     <div className="board-shell">
       {isMahabharata && (
-        <div style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: 600, textAlign: playerColor === 'white' ? 'left' : 'right', opacity: 0.8 }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600, textAlign: playerColor === 'white' ? 'left' : 'right', opacity: 0.8 }}>
           {playerColor === 'white' ? 'Kaurava (Black)' : 'Pandava (White)'}
         </div>
       )}
-      <div className={`board-frame ${flashCapture ? 'capture-flash' : ''}`} ref={boardFrameRef}>
-        {themeError ? <p className="board-theme-error">Theme load failed: {themeError}</p> : null}
-        <Chessboard
-          position={fen}
-          onPieceDrop={handleDrop}
-          onPromotionCheck={handlePromotionCheck}
-          onPromotionPieceSelect={handlePromotionPieceSelect}
-          onSquareClick={handleSquareClick}
-          boardOrientation={playerColor}
-          boardWidth={boardWidth}
-          customBoardStyle={boardStyle}
-          customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: '#6f4c33' }}
-          customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: '#eadfc8' }}
-          customSquareStyles={customSquareStyles}
-          customPieces={customPieces}
-          animationDuration={240}
-          promotionDialogVariant="modal"
-          arePremovesAllowed={false}
-        />
+      <div className="board-stage" ref={boardStageRef} data-qa="board-stage">
+        <div className={`board-frame ${flashCapture ? 'capture-flash' : ''}`}>
+          {themeError ? <p className="board-theme-error">Theme load failed: {themeError}</p> : null}
+          <Chessboard
+            position={fen}
+            onPieceDrop={handleDrop}
+            onPromotionCheck={handlePromotionCheck}
+            onPromotionPieceSelect={handlePromotionPieceSelect}
+            onSquareClick={handleSquareClick}
+            boardOrientation={playerColor}
+            boardWidth={boardWidth}
+            customBoardStyle={boardStyle}
+            customDarkSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.darkSquare } : { backgroundColor: CLASSIC_DARK_SQUARE }}
+            customLightSquareStyle={themeManifest ? { backgroundColor: themeManifest.board.lightSquare } : { backgroundColor: CLASSIC_LIGHT_SQUARE }}
+            customSquareStyles={customSquareStyles}
+            customPieces={customPieces}
+            animationDuration={180}
+            promotionDialogVariant="modal"
+            arePremovesAllowed={false}
+          />
+        </div>
       </div>
       {isMahabharata && (
-        <div style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: 600, textAlign: playerColor === 'white' ? 'right' : 'left', opacity: 0.8 }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600, textAlign: playerColor === 'white' ? 'right' : 'left', opacity: 0.8 }}>
           {playerColor === 'white' ? 'Pandava (White)' : 'Kaurava (Black)'}
         </div>
       )}

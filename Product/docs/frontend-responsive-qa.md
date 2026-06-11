@@ -94,3 +94,17 @@ Manual result:
 ## Policy
 
 Do not tag frontend layout milestones unless screenshots exist and bounding-box checks pass.
+
+## Complete frontend bug loop (M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1)
+
+`scripts/run-complete-frontend-bug-loop.mjs` now sweeps 12 routes × dark/light × 7
+viewports (1440x900 → 390x844) into `artifacts/complete-frontend-bug-loop/` and fails on:
+cropped/undersized boards, pieces outside the board frame, duplicate pieces, the appearance
+switch overlapping the board, horizontal overflow, header covering content, native header
+selects, raw default links/buttons, beige/gold shell colors, missing page identities
+(Story=campaign-first, Clue=training-first, Analytics=recommended action, Profile=XP,
+Review=timeline, Import=flow, Coach=cards, Diagnostics=contained), invisible nav focus
+rings, broken More/Board-Theme/Audio/Appearance/2D-3D controls, and reduced-motion 3D
+fallback. `scripts/run-board-interaction-stability-check.mjs` drives the real board
+(click-to-move, drag-and-drop, engine settle, 3D pipeline) and
+`scripts/run-3d-battlefield-performance-check.mjs` covers 3D load/fallbacks/CDN policy.

@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { AnalysisPanel } from '../components/Analysis/AnalysisPanel';
 import { BoardView } from '../components/Board/BoardView';
+import { BattlefieldControls } from '../three/BattlefieldControls';
+import { BattlefieldErrorBoundary, BattlefieldFallback } from '../three/BattlefieldFallback';
+import { useBattlefieldSettings } from '../three/useBattlefieldSettings';
+
+// three.js never enters the main bundle; 2D users pay zero cost.
+const BattlefieldScene = lazy(() => import('../three/BattlefieldScene'));
 import { PageFrame } from '../components/layout/PageFrame';
-import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
+import { Select } from '../components/ui/Select';
 import { TableCard } from '../components/ui/TableCard';
 import { getLocalMatchesForPlayer, type LocalMatchRecord } from '../data/db';
 import { getStockfishDiagnostics } from '../engine/stockfishBridge';
@@ -72,6 +78,7 @@ export default function Play() {
   const [themeError, setThemeError] = useState<string | null>(null);
   const [localMatches, setLocalMatches] = useState<LocalMatchRecord[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Club');
+  const battlefield = useBattlefieldSettings();
 
   useEffect(() => {
     if (!new URLSearchParams(window.location.search).has('stockfishBootCheck')) return;
@@ -204,20 +211,24 @@ export default function Play() {
 
   return (
     <PageFrame className="play-page">
-      <PageHeader
-        actions={
-          <div className="play-status-strip" data-qa="play-status-strip">
-            <Badge variant="neutral">You play {playerColor === 'white' ? 'White' : 'Black'}</Badge>
-            <Badge variant="info">Stockfish {currentDifficulty}</Badge>
-            <Badge variant="neutral">{activeThemeLabel}</Badge>
-            <Badge variant={statusVariant}>{statusLabel}</Badge>
-          </div>
-        }
-        eyebrow="Regular Chess"
-        title="Match"
-      >
-        Board-first Stockfish play with contained controls, review tools, and local match history.
-      </PageHeader>
+      {/* Compact context bar — the board is the hero on /play (Phase 4/10). */}
+      <header className="play-context" data-qa="play-context">
+        <div className="play-context__title">
+          <h1>Play</h1>
+          <span>Stockfish · Local</span>
+        </div>
+        <div className="play-status-strip" data-qa="play-status-strip">
+          <Badge variant="neutral">You play {playerColor === 'white' ? 'White' : 'Black'}</Badge>
+          <Badge variant="info">Stockfish {currentDifficulty}</Badge>
+          <Badge variant="neutral">{activeThemeLabel}</Badge>
+          <Badge variant={statusVariant}>{statusLabel}</Badge>
+          <BattlefieldControls
+            mode={battlefield.requestedMode}
+            setMode={battlefield.setRequestedMode}
+            webGlAvailable={battlefield.webGlAvailable}
+          />
+        </div>
+      </header>
 
       <div className="play play-layout" data-qa="play-layout">
         <aside className="play-sidebar" data-qa="play-controls">
@@ -243,7 +254,7 @@ export default function Play() {
             </dl>
 
             {engineError ? (
-              <section className="ui-alert ui-alert--danger">
+              <section className="ui-alert ui-alert--danger" data-qa="engine-error">
                 <strong>{engineError}</strong>
                 {import.meta.env.DEV && engineErrorDetails ? (
                   <details>
@@ -251,6 +262,15 @@ export default function Play() {
                     <pre>{engineErrorDetails}</pre>
                   </details>
                 ) : null}
+                {/* Engine failure must always be actionable (Play contract). */}
+                <div className="play-action-group play-action-group--inline">
+                  <Button onClick={() => startGame(playerColor, currentDifficulty)} variant="primary">
+                    Retry engine
+                  </Button>
+                  <ButtonLink to="/stockfish-diagnostics" variant="secondary">
+                    Open Diagnostics
+                  </ButtonLink>
+                </div>
               </section>
             ) : null}
 
@@ -261,22 +281,25 @@ export default function Play() {
               value={selectedDifficulty}
             />
 
-            <label className="ui-field">
-              <span>Board theme</span>
-              <select value={activeTheme} onChange={(event) => setActiveTheme(event.target.value)}>
-                <option value="standard">Classic</option>
-                <option value="mahabharata">Kurukshetra</option>
-              </select>
-            </label>
+            <Select
+              className="ui-field"
+              label="Board theme"
+              onChange={(event) => setActiveTheme(event.target.value)}
+              options={[
+                { value: 'standard', label: 'Classic' },
+                { value: 'mahabharata', label: 'Kurukshetra' },
+              ]}
+              value={activeTheme}
+            />
 
             <div className="play-action-group" aria-label="New game actions">
-              <Button onClick={() => startGame('white', selectedDifficulty)} variant="primary">
+              <Button fullWidth onClick={() => startGame('white', selectedDifficulty)} variant="primary">
                 New game - White
               </Button>
-              <Button onClick={() => startGame('black', selectedDifficulty)} variant="secondary">
+              <Button fullWidth onClick={() => startGame('black', selectedDifficulty)} variant="secondary">
                 New game - Black
               </Button>
-              <Button onClick={() => startGame('random', selectedDifficulty)} variant="ghost">
+              <Button fullWidth onClick={() => startGame('random', selectedDifficulty)} variant="ghost">
                 New game - Random
               </Button>
             </div>
@@ -292,7 +315,7 @@ export default function Play() {
               </div>
             ) : null}
 
-            <Button onClick={handleDownloadPgn} variant="ghost">
+            <Button fullWidth onClick={handleDownloadPgn} variant="ghost">
               Download PGN
             </Button>
           </Card>
@@ -300,17 +323,50 @@ export default function Play() {
 
         <section className="play-board-wrap" data-qa="play-board">
           <Card className="play-board-card" variant="battlefield">
-            <BoardView
-              engineThinking={engineThinking}
-              fen={fen}
-              onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
-              onPromotionCheck={handlePromotionCheck}
-              onPromotionPieceSelect={() => false}
-              playerColor={playerColor}
-              status={status}
-              themeError={themeError}
-              themeManifest={themeManifest}
-            />
+            {battlefield.effectiveMode === '3d' ? (
+              <BattlefieldErrorBoundary
+                fallback={
+                  <BattlefieldFallback reason="load-error">
+                    <BoardView
+                      engineThinking={engineThinking}
+                      fen={fen}
+                      onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
+                      onPromotionCheck={handlePromotionCheck}
+                      onPromotionPieceSelect={() => false}
+                      playerColor={playerColor}
+                      status={status}
+                      themeError={themeError}
+                      themeManifest={themeManifest}
+                    />
+                  </BattlefieldFallback>
+                }
+              >
+                <Suspense fallback={<div className="battlefield-loading" role="status">Preparing battlefield…</div>}>
+                  <BattlefieldScene
+                    engineThinking={engineThinking}
+                    fen={fen}
+                    onMove={(from, to, promotion) => makePlayerMove(from, to, promotion)}
+                    playerColor={playerColor}
+                    reducedMotion={battlefield.reducedMotion}
+                    status={status}
+                  />
+                </Suspense>
+              </BattlefieldErrorBoundary>
+            ) : (
+              <BattlefieldFallback reason={battlefield.fallbackReason}>
+                <BoardView
+                  engineThinking={engineThinking}
+                  fen={fen}
+                  onPieceDrop={(from, to, promotion) => makePlayerMove(from, to, promotion)}
+                  onPromotionCheck={handlePromotionCheck}
+                  onPromotionPieceSelect={() => false}
+                  playerColor={playerColor}
+                  status={status}
+                  themeError={themeError}
+                  themeManifest={themeManifest}
+                />
+              </BattlefieldFallback>
+            )}
           </Card>
         </section>
 

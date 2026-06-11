@@ -94,3 +94,11 @@ Currently, coaching feedback is rule-based and local. The Local Coach Preview us
 Personalized AI behavior must sit on correct chess rules. Promotion detection is now centralized in a chess.js-backed legality helper used by the shared board component before route-level handlers can open a promotion dialog. This prevents non-pawn pieces, wrong ranks, stale UI state, themed orientation, Clue Chess, or Story handlers from bypassing promotion legality.
 
 The current visual layer remains a Mahabharata/Kurukshetra-inspired 2D placeholder. MIRROR should not claim realistic 3D soldier or battlefield visuals until the planned 3D milestones implement and verify them.
+
+## Rendering/rules boundary (2026-06-11)
+
+The new Kurukshetra Battlefield 3D layer (`src/three/`) is rendering-only: it parses the
+FEN for display, reconciles piece instances for animation, and forwards square clicks into
+the existing `gameStore.makePlayerMove` pipeline. chess.js remains the single legality
+authority for 2D, 3D, Mirror personalities, Clue, and Story encounters alike. Runtime GenAI
+is still not implemented.

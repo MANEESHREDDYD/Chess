@@ -169,3 +169,10 @@ Product-quality guardrails:
 - Responsible AI / Evaluation: local safety checks for evidence, confidence, unsupported claims, export leakage, and future prompt contexts.
 - Forward Deployment: local-first operation, smoke-testable CLI, no cloud prerequisites, documented run path.
 - Software Engineering: tests, package metadata, modular Python design, CI workflow, integration with an existing React app without gameplay changes.
+
+## Frontend expectation loop (2026-06-11)
+
+The showcase build now ships the Apple Mono monochrome shell and the procedural Kurukshetra
+Battlefield preview with browser-verified QA loops (board interaction stability, complete
+frontend bug loop, 3D performance/fallback checks). No analytics features changed; the
+Python/SQL layer and its CLI are unaffected.

@@ -30,7 +30,25 @@ This repository demonstrates professional-grade engineering across multiple doma
 - **Product Quality**: shared promotion legality guard, product mode contracts, Story campaign reset, visual honesty audit, production app shell, reusable UI components, rebuilt Play/Profile layouts, screenshot artifacts, and bounding-box visual QA.
 - **Creativity**: Mahabharata/Kurukshetra-inspired placeholder theme, Story Acts I-III campaign shell, Pandava/Kaurava visual identity, custom audio FX.
 
+## Frontend & 3D Battlefield (M-MIRROR-FULL-FRONTEND-3D-BATTLEFIELD-EXPECTATION-LOOP-1)
+The product shell now runs the **MIRROR Apple Mono** design language: an Apple-style
+black/white/graphite interface (white/soft-gray light theme, graphite/black dark theme),
+one blue primary action color, system font stack, and a single icon-only appearance switch
+bottom-right with a board-aware dodge. User expectations are codified in
+[User-Expected Product Vision](docs/user-expected-product-vision.md) and the
+[Page-by-Page Frontend Contract](docs/page-by-page-frontend-contract.md), and enforced by
+browser QA loops (board interaction stability, complete frontend bug loop, 3D performance
+check). An optional **Kurukshetra Battlefield 3D mode** (three.js / react-three-fiber,
+2D/3D toggle on /play, available on every device) ships as an honestly documented
+**procedural low-poly placeholder** with WebGL/reduced-motion/error fallbacks to the stable
+2D board, zero binary assets, and no external CDN — chess.js remains the only rules
+authority. See the [3D Visual Specification](docs/3d-kurukshetra-visual-specification.md),
+[3D Implementation](docs/3d-battlefield-implementation.md),
+[3D Asset Licensing](docs/3d-asset-licensing.md), and the
+[Milestone Report](docs/m-mirror-full-frontend-3d-battlefield-expectation-loop-1-report.md).
+
 ## Technical Architecture
+- [System Architecture Overview](docs/system-architecture-overview.md)
 - [System Architecture](docs/architecture-overview.md)
 - [Data Architecture](docs/data-architecture.md)
 - [AI & ML Methodology](docs/ai-ml-methodology.md)

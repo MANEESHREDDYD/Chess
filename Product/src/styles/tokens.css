@@ -46,16 +46,10 @@
   --space-12: 48px;
 }
 
+/* Board theme = BOARD ONLY. Selecting Kurukshetra must NOT wash the whole app
+   in beige or warm the shell at all (M-APPLE-WHITE-BLACK-MINIMAL-UX-1). The
+   warm battlefield palette lives exclusively in the board squares via the JS
+   theme manifest; the app shell stays Mono Signal black/white/graphite. */
 .theme-mahabharata {
-  --bg: #ecd7b7; /* Sandy warm tone */
-  --bg-deep: #e1c7a1;
-  --paper: #f7eedb;
-  --paper-warm: #ebdcb9;
-
-  --ink: #2a1b12;
-  --ink-soft: #4a3627;
-  --ink-faded: #7d6551;
-
-  --rule: #c8a379;
-  --rule-soft: #dac4a8;
+  /* Intentionally empty: board theme must never restyle shell tokens. */
 }

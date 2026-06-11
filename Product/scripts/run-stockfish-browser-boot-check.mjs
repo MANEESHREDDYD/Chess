@@ -71,7 +71,13 @@ async function run() {
 async function ensureBuildExists() {
   if (existsSync('dist/index.html')) return;
   console.log('dist/index.html not found; running npm run build first...');
-  await runCommand(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'build']);
+  // Spawning npm.cmd with shell:false throws EINVAL on modern Node/Windows;
+  // route through cmd.exe like startPreviewServer does.
+  if (process.platform === 'win32') {
+    await runCommand(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'npm run build']);
+  } else {
+    await runCommand('npm', ['run', 'build']);
+  }
 }
 
 function startPreviewServer(port) {
@@ -111,7 +117,21 @@ async function waitForServer(baseUrl, server) {
 }
 
 async function selectKurukshetraTheme(page) {
-  await page.select('.theme-toggle select', 'mahabharata');
+  // The header theme control is a custom popover now; the match-controls
+  // sidebar still exposes a styled native select for the board theme.
+  const sidebarSelect = await page.$('.play-control-card select');
+  if (sidebarSelect) {
+    await page.select('.play-control-card select', 'mahabharata');
+  } else {
+    // Fallback: drive the settings store directly via localStorage + reload.
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'mirror-settings',
+        JSON.stringify({ state: { activeTheme: 'mahabharata', audioEnabled: false, audioVolume: 0.5 }, version: 0 })
+      );
+    });
+    await page.reload({ waitUntil: 'networkidle0', timeout: 60000 });
+  }
   await delay(250);
 }
 

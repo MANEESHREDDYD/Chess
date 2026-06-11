@@ -95,7 +95,7 @@ describe('Board', () => {
 
     expect(props.position).toBe(storeMock.state.fen);
     expect(props.boardOrientation).toBe('black');
-    expect(props.boardWidth).toBe(520);
+    expect(props.boardWidth).toBe(480);
     expect(props.arePremovesAllowed).toBe(false);
   });
 

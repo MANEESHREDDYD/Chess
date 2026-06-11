@@ -1,0 +1,774 @@
+/* ============================================================================
+   MIRROR Nova — premium AI chess operating system design language.
+   Single source of truth for the restarted frontend (M-APPLE-GRADE-FRONTEND-
+   RESTART-1). Imported AFTER designSystem.css/global.css so it wins on source
+   order; all tokens are --nova-* prefixed and all components use nova-* classes
+   so there is ZERO collision with the legacy CSS generations during migration.
+
+   Appearance theme is keyed off html[data-ui-theme="dark"|"light"].
+   ========================================================================== */
+
+/* ---------- Theme-independent tokens ---------- */
+:root {
+  --nova-font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI Variable", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
+  /* Display = clean sans for page titles/brand (NOT decorative serif). */
+  --nova-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  /* Story = the ONLY place a refined serif is allowed (mission titles). */
+  --nova-font-story: "New York", "Iowan Old Style", Georgia, serif;
+  --nova-font-mono: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+
+  /* Type scale */
+  --nova-text-xs: 12px;
+  --nova-text-sm: 14px;
+  --nova-text-md: 16px;
+  --nova-text-lg: 18px;
+  --nova-text-xl: 22px;
+  --nova-text-2xl: 28px;
+  --nova-text-3xl: 36px;
+  --nova-text-4xl: 52px;
+  --nova-text-5xl: 64px;
+
+  /* Weights */
+  --nova-w-regular: 400;
+  --nova-w-medium: 500;
+  --nova-w-semibold: 650;
+  --nova-w-bold: 760;
+
+  /* Line heights */
+  --nova-lh-ui: 1.1;
+  --nova-lh-body: 1.55;
+  --nova-lh-heading: 1.05;
+  --nova-lh-card: 1.35;
+
+  /* Letter spacing */
+  --nova-ls-brand: 0.26em;
+  --nova-ls-eyebrow: 0.14em;
+  --nova-ls-nav: -0.01em;
+
+  /* Radii */
+  --nova-radius-sm: 10px;
+  --nova-radius-md: 14px;
+  --nova-radius-lg: 20px;
+  --nova-radius-xl: 28px;
+  --nova-radius-2xl: 36px;
+  --nova-radius-pill: 999px;
+
+  /* Shadows (single set across themes) — neutral, no colored glow by default */
+  --nova-shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.18);
+  --nova-shadow-floating: 0 24px 70px rgba(0, 0, 0, 0.26);
+  --nova-shadow-board: 0 30px 90px rgba(0, 0, 0, 0.30);
+  /* Primary action shadow — subtle, not heavy (per Phase 5). Themed below. */
+  --nova-shadow-primary: 0 8px 22px rgba(10, 132, 255, 0.26);
+  /* Back-compat alias for older rules that still reference the gold shadow. */
+  --nova-shadow-gold: var(--nova-shadow-primary);
+
+  /* Motion */
+  --nova-motion-fast: 140ms;
+  --nova-motion: 160ms;
+  --nova-motion-slow: 180ms;
+  --nova-ease: cubic-bezier(0.2, 0, 0, 1);
+  --nova-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --nova-header-h: 84px;
+  --nova-page-max: 1240px;
+
+  /* Z layers */
+  --nova-z-header: 100;
+  --nova-z-appearance: 90;
+  --nova-z-popover: 220;
+  --nova-z-modal: 300;
+}
+
+/* ---------- Dark theme — Signal Dark ----------
+   Neutral graphite/blue. ONE blue primary accent, green for success/progress.
+   Gold (story) is a RARE warm accent for Story/Kurukshetra/reward only. */
+html[data-ui-theme="dark"] {
+  color-scheme: dark;
+  --nova-page-bg: #000000;
+  --nova-page-bg-2: #11141c;
+  --nova-shell-bg: rgba(12, 14, 20, 0.88);
+  --nova-surface-1: rgba(255, 255, 255, 0.055);
+  --nova-surface-2: rgba(255, 255, 255, 0.085);
+  --nova-surface-3: rgba(255, 255, 255, 0.105);
+  --nova-surface-solid: #11141c;
+  --nova-text-1: #f5f7fa;
+  --nova-text-2: #c9d1dc;
+  --nova-text-3: #8e98a8;
+  --nova-border-1: rgba(255, 255, 255, 0.10);
+  --nova-border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Primary accent — Signal blue (main action + selected focus) */
+  --nova-primary: #0a84ff;
+  --nova-primary-strong: #409cff;
+  --nova-blue-1: #8fb6ff;
+  --nova-blue-2: #0a84ff;
+
+  /* Story warm accent — Kurukshetra/story/reward ONLY */
+  --nova-warm: #c79a43;
+  --nova-gold-1: #dcb564;
+  --nova-gold-2: #c79a43;
+  --nova-gold-3: #8f6a2c;
+
+  /* Semantic — green = success/progress, amber = warning, red = rare danger */
+  --nova-green-1: #5fe0a4;
+  --nova-green-2: #32d583;
+  --nova-red-1: #f97066;
+  --nova-red-2: #f04438;
+  --nova-warning-1: #fdb022;
+
+  /* Board warm (2D Kurukshetra board squares) */
+  --nova-board-warm-light: #d9b673;
+  --nova-board-warm-dark: #8f4d36;
+
+  /* Derived — primary is a near-solid blue, white text */
+  --nova-primary-from: var(--nova-primary);
+  --nova-primary-to: #0a84ff;
+  --nova-on-primary: #ffffff;
+  --nova-primary-soft: rgba(10, 132, 255, 0.16);
+  --nova-accent-border: rgba(10, 132, 255, 0.45);
+  --nova-border-2: var(--nova-accent-border);
+  --nova-success-soft: rgba(50, 213, 131, 0.16);
+  --nova-warm-soft: rgba(199, 154, 67, 0.16);
+  --nova-warm-border: rgba(199, 154, 67, 0.42);
+  --nova-gold-soft: var(--nova-warm-soft);
+  --nova-danger-soft: rgba(249, 112, 102, 0.16);
+  --nova-shadow-primary: 0 8px 24px rgba(10, 132, 255, 0.30);
+  --nova-focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.45);
+  --nova-page-gradient:
+    radial-gradient(circle at 8% -6%, rgba(255, 255, 255, 0.035), transparent 32rem),
+    radial-gradient(circle at 98% 106%, rgba(10, 132, 255, 0.07), transparent 38rem),
+    var(--nova-page-bg);
+}
+
+/* ---------- Light theme — Signal Light ----------
+   Clean cool white workspace — not parchment, not beige. Blue primary. */
+html[data-ui-theme="light"] {
+  color-scheme: light;
+  --nova-page-bg: #f5f5f7;
+  --nova-page-bg-2: #ffffff;
+  --nova-shell-bg: rgba(255, 255, 255, 0.88);
+  --nova-surface-1: rgba(255, 255, 255, 0.92);
+  --nova-surface-2: #ffffff;
+  --nova-surface-3: #ffffff;
+  --nova-surface-solid: #ffffff;
+  --nova-text-1: #111827;
+  --nova-text-2: #344054;
+  --nova-text-3: #667085;
+  --nova-border-1: rgba(16, 24, 40, 0.10);
+  --nova-border-strong: rgba(16, 24, 40, 0.18);
+
+  /* Primary accent — Signal blue tuned for white text contrast */
+  --nova-primary: #0071e3;
+  --nova-primary-strong: #0077ed;
+  --nova-blue-1: #0071e3;
+  --nova-blue-2: #0071e3;
+
+  /* Story warm accent — Kurukshetra/story/reward ONLY */
+  --nova-warm: #9a6a1f;
+  --nova-gold-1: #9a6a1f;
+  --nova-gold-2: #b5832b;
+  --nova-gold-3: #d9b673;
+
+  /* Semantic */
+  --nova-green-1: #039855;
+  --nova-green-2: #039855;
+  --nova-red-1: #d92d20;
+  --nova-red-2: #d92d20;
+  --nova-warning-1: #dc6803;
+
+  /* Board warm */
+  --nova-board-warm-light: #e5c27e;
+  --nova-board-warm-dark: #a4523a;
+
+  /* Derived */
+  --nova-primary-from: var(--nova-primary);
+  --nova-primary-to: #0077ed;
+  --nova-on-primary: #ffffff;
+  --nova-primary-soft: rgba(0, 113, 227, 0.10);
+  --nova-accent-border: rgba(0, 113, 227, 0.40);
+  --nova-border-2: var(--nova-accent-border);
+  --nova-success-soft: rgba(3, 152, 85, 0.10);
+  --nova-warm-soft: rgba(154, 106, 31, 0.12);
+  --nova-warm-border: rgba(154, 106, 31, 0.38);
+  --nova-gold-soft: var(--nova-warm-soft);
+  --nova-danger-soft: rgba(217, 45, 32, 0.09);
+  --nova-shadow-primary: 0 8px 20px rgba(0, 113, 227, 0.18);
+  --nova-focus-ring: 0 0 0 3px rgba(0, 113, 227, 0.32);
+  --nova-page-gradient:
+    radial-gradient(circle at 8% -6%, rgba(16, 24, 40, 0.02), transparent 32rem),
+    radial-gradient(circle at 98% 106%, rgba(0, 113, 227, 0.05), transparent 38rem),
+    var(--nova-page-bg);
+}
+
+/* ---------- Page base (overrides legacy body bg on source order) ---------- */
+html[data-ui-theme="dark"] body,
+html[data-ui-theme="light"] body {
+  background: var(--nova-page-gradient);
+  background-attachment: fixed;
+  color: var(--nova-text-1);
+  font-family: var(--nova-font-ui);
+}
+
+/* ============================================================================
+   Surfaces & depth
+   ========================================================================== */
+.nova-surface {
+  background: var(--nova-surface-1);
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-lg);
+}
+
+.nova-card {
+  position: relative;
+  background: var(--nova-surface-1);
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-xl);
+  box-shadow: var(--nova-shadow-soft);
+  padding: 22px;
+  color: var(--nova-text-1);
+}
+
+.nova-card--strong { background: var(--nova-surface-2); }
+.nova-card--solid { background: var(--nova-surface-solid); }
+
+.nova-card--interactive {
+  cursor: pointer;
+  transition: transform var(--nova-motion) var(--nova-ease),
+    box-shadow var(--nova-motion) var(--nova-ease),
+    border-color var(--nova-motion) var(--nova-ease);
+}
+.nova-card--interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--nova-border-2);
+  box-shadow: var(--nova-shadow-floating);
+}
+.nova-card--interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--nova-focus-ring), var(--nova-shadow-floating);
+}
+
+.nova-card--selected {
+  border-color: var(--nova-accent-border);
+  background: var(--nova-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--nova-accent-border), var(--nova-shadow-soft);
+}
+
+/* ============================================================================
+   Buttons — NovaButton
+   ========================================================================== */
+.nova-btn {
+  --_h: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--_h);
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: var(--nova-radius-pill);
+  font-family: var(--nova-font-ui);
+  font-size: var(--nova-text-sm);
+  font-weight: var(--nova-w-semibold);
+  line-height: var(--nova-lh-ui);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--nova-motion) var(--nova-ease),
+    box-shadow var(--nova-motion) var(--nova-ease),
+    background var(--nova-motion) var(--nova-ease),
+    border-color var(--nova-motion) var(--nova-ease),
+    color var(--nova-motion) var(--nova-ease);
+}
+.nova-btn:focus-visible { outline: none; box-shadow: var(--nova-focus-ring); }
+.nova-btn:active { transform: scale(0.99); }
+
+.nova-btn--lg { --_h: 52px; padding: 0 24px; font-size: var(--nova-text-md); }
+.nova-btn--sm { --_h: 36px; padding: 0 14px; }
+.nova-btn--icon { width: var(--_h); padding: 0; }
+.nova-btn--full { width: 100%; }
+
+.nova-btn__icon { display: inline-flex; flex: 0 0 auto; }
+
+/* Primary */
+.nova-btn--primary {
+  background: linear-gradient(135deg, var(--nova-primary-from), var(--nova-primary-to));
+  color: var(--nova-on-primary);
+  border-color: transparent;
+  box-shadow: var(--nova-shadow-primary);
+  font-weight: var(--nova-w-semibold);
+}
+.nova-btn--primary:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--nova-primary-strong), var(--nova-primary-from));
+  box-shadow: var(--nova-shadow-floating);
+}
+.nova-btn--primary:active { transform: translateY(0) scale(0.99); }
+
+/* Secondary */
+.nova-btn--secondary {
+  background: var(--nova-surface-2);
+  color: var(--nova-text-1);
+  border-color: var(--nova-border-1);
+}
+.nova-btn--secondary:hover { background: var(--nova-surface-3); border-color: var(--nova-border-2); }
+
+/* Ghost */
+.nova-btn--ghost { background: transparent; color: var(--nova-text-2); }
+.nova-btn--ghost:hover { background: var(--nova-surface-1); color: var(--nova-text-1); }
+
+/* Danger */
+.nova-btn--danger {
+  background: var(--nova-danger-soft);
+  color: var(--nova-red-1);
+  border-color: var(--nova-red-2);
+}
+.nova-btn--danger:hover { background: var(--nova-red-2); color: #fff; }
+
+/* Selected */
+.nova-btn--selected {
+  background: var(--nova-primary-soft);
+  color: var(--nova-text-1);
+  border-color: var(--nova-accent-border);
+  box-shadow: inset 0 0 0 1px var(--nova-accent-border);
+}
+
+.nova-btn:disabled,
+.nova-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+}
+
+/* ============================================================================
+   Popover (shared by More + Board Theme menus)
+   ========================================================================== */
+.nova-popover { position: relative; display: inline-flex; }
+
+.nova-popover__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: var(--nova-z-popover);
+  min-width: 248px;
+  padding: 8px;
+  background: var(--nova-shell-bg);
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-lg);
+  box-shadow: var(--nova-shadow-floating);
+  backdrop-filter: blur(22px) saturate(1.2);
+  display: grid;
+  gap: 4px;
+  transform-origin: top right;
+  animation: nova-pop-in var(--nova-motion-fast) var(--nova-ease);
+}
+.nova-popover__panel--left { right: auto; left: 0; transform-origin: top left; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nova-popover__panel { background: var(--nova-surface-solid); }
+}
+
+@keyframes nova-pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.nova-menu-item {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--nova-radius-md);
+  background: transparent;
+  color: var(--nova-text-1);
+  font-family: var(--nova-font-ui);
+  font-size: var(--nova-text-sm);
+  font-weight: var(--nova-w-semibold);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--nova-motion-fast) var(--nova-ease);
+}
+.nova-menu-item:hover { background: var(--nova-surface-1); }
+.nova-menu-item:focus-visible { outline: none; box-shadow: var(--nova-focus-ring); }
+.nova-menu-item.is-active { background: var(--nova-primary-soft); }
+.nova-menu-item__icon { display: inline-flex; color: var(--nova-text-3); }
+.nova-menu-item.is-active .nova-menu-item__icon { color: var(--nova-blue-2); }
+.nova-menu-item__body { display: grid; gap: 1px; min-width: 0; }
+.nova-menu-item__title { line-height: var(--nova-lh-ui); }
+.nova-menu-item__desc {
+  font-size: var(--nova-text-xs);
+  font-weight: var(--nova-w-regular);
+  color: var(--nova-text-3);
+  line-height: var(--nova-lh-card);
+}
+.nova-menu-item__check { color: var(--nova-blue-2); display: inline-flex; min-width: 16px; }
+
+/* Audio popover */
+.nova-audio-panel { min-width: 220px; padding: 14px; }
+.nova-audio-panel__body { display: grid; gap: 12px; }
+.nova-audio-panel__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nova-audio-panel__label { font-size: var(--nova-text-sm); font-weight: var(--nova-w-semibold); color: var(--nova-text-2); }
+.nova-audio-panel__volume { display: grid; gap: 8px; }
+.nova-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--nova-radius-pill);
+  background: var(--nova-surface-3);
+  cursor: pointer;
+}
+.nova-range:disabled { opacity: 0.4; cursor: not-allowed; }
+.nova-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--nova-primary-from), var(--nova-primary-to));
+  box-shadow: var(--nova-shadow-gold);
+  border: 0;
+}
+.nova-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--nova-primary);
+}
+.nova-range:focus-visible { outline: none; box-shadow: var(--nova-focus-ring); }
+
+/* ============================================================================
+   App shell / header / nav
+   ========================================================================== */
+.nova-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.nova-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--nova-z-header);
+  overflow: visible;
+  background: var(--nova-shell-bg);
+  border-bottom: 1px solid var(--nova-border-1);
+  backdrop-filter: blur(24px) saturate(1.18);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nova-header { background: var(--nova-surface-solid); }
+}
+
+.nova-header__inner {
+  max-width: var(--nova-page-max);
+  min-height: var(--nova-header-h);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 2.4vw, 28px);
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+}
+
+.nova-brand {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+.nova-brand__word {
+  font-family: var(--nova-font-display);
+  font-size: var(--nova-text-xl);
+  font-weight: var(--nova-w-bold);
+  letter-spacing: var(--nova-ls-brand);
+  color: var(--nova-text-1);
+  line-height: 1;
+}
+.nova-brand__sub {
+  font-size: 10px;
+  font-weight: var(--nova-w-semibold);
+  letter-spacing: var(--nova-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--nova-text-3);
+}
+
+.nova-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 auto;
+  padding: 4px;
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-pill);
+  background: var(--nova-surface-1);
+}
+.nova-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--nova-radius-pill);
+  color: var(--nova-text-2);
+  font-size: var(--nova-text-sm);
+  font-weight: var(--nova-w-semibold);
+  letter-spacing: var(--nova-ls-nav);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--nova-motion) var(--nova-ease),
+    color var(--nova-motion) var(--nova-ease);
+}
+.nova-nav__link svg { opacity: 0.85; }
+.nova-nav__link:hover { color: var(--nova-text-1); background: var(--nova-surface-2); }
+.nova-nav__link:focus-visible { outline: none; box-shadow: var(--nova-focus-ring); }
+.nova-nav__link.is-active {
+  color: var(--nova-text-1);
+  background: var(--nova-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--nova-accent-border);
+}
+.nova-nav__link.is-active svg { opacity: 1; color: var(--nova-blue-2); }
+
+.nova-commands {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.nova-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--nova-radius-pill);
+  font-size: var(--nova-text-xs);
+  font-weight: var(--nova-w-semibold);
+  border: 1px solid var(--nova-border-1);
+  background: var(--nova-surface-1);
+  color: var(--nova-text-2);
+}
+.nova-chip--gold { color: var(--nova-gold-1); border-color: var(--nova-warm-border); }
+.nova-chip--success { color: var(--nova-green-1); }
+.nova-chip--info { color: var(--nova-blue-1); }
+.nova-chip__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Trigger button shared by command popovers */
+.nova-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-pill);
+  background: var(--nova-surface-1);
+  color: var(--nova-text-1);
+  font-family: var(--nova-font-ui);
+  font-size: var(--nova-text-sm);
+  font-weight: var(--nova-w-semibold);
+  cursor: pointer;
+  transition: background var(--nova-motion) var(--nova-ease),
+    border-color var(--nova-motion) var(--nova-ease);
+}
+.nova-trigger:hover { background: var(--nova-surface-2); border-color: var(--nova-border-2); }
+.nova-trigger:focus-visible { outline: none; box-shadow: var(--nova-focus-ring); }
+.nova-trigger[aria-expanded="true"] { border-color: var(--nova-border-2); background: var(--nova-surface-2); }
+.nova-trigger__icon { color: var(--nova-text-3); display: inline-flex; }
+.nova-trigger__chevron { color: var(--nova-text-3); display: inline-flex; transition: transform var(--nova-motion) var(--nova-ease); }
+.nova-trigger[aria-expanded="true"] .nova-trigger__chevron { transform: rotate(180deg); }
+.nova-trigger__label { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.05; }
+.nova-trigger__label-text { line-height: var(--nova-lh-ui); }
+.nova-trigger__eyebrow {
+  font-size: 9px;
+  font-weight: var(--nova-w-bold);
+  letter-spacing: var(--nova-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--nova-text-3);
+}
+.nova-trigger__value {
+  font-size: var(--nova-text-sm);
+  font-weight: var(--nova-w-semibold);
+  color: var(--nova-text-1);
+  line-height: 1.1;
+}
+.nova-trigger--icon { width: 40px; padding: 0; justify-content: center; }
+
+.nova-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--nova-page-max);
+  margin: 0 auto;
+  padding: clamp(20px, 2.6vw, 36px) clamp(16px, 2.4vw, 28px) 96px;
+}
+
+.nova-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 20px clamp(16px, 2.4vw, 28px);
+  border-top: 1px solid var(--nova-border-1);
+  color: var(--nova-text-3);
+  font-size: var(--nova-text-xs);
+}
+.nova-footer a { color: var(--nova-text-2); text-decoration: none; }
+.nova-footer a:hover { color: var(--nova-blue-2); }
+
+@media (max-width: 1180px) {
+  .nova-chip--collapse { display: none; }
+}
+
+/* ============================================================================
+   Appearance toggle (bottom-right)
+   ========================================================================== */
+.nova-appearance {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: var(--nova-z-appearance);
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-pill);
+  background: var(--nova-shell-bg);
+  box-shadow: var(--nova-shadow-floating);
+  backdrop-filter: blur(22px) saturate(1.16);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nova-appearance { background: var(--nova-surface-solid); }
+}
+.nova-appearance__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--nova-radius-pill);
+  background: transparent;
+  color: var(--nova-text-2);
+  font-family: var(--nova-font-ui);
+  font-size: var(--nova-text-sm);
+  font-weight: var(--nova-w-semibold);
+  cursor: pointer;
+  transition: background var(--nova-motion-slow) var(--nova-ease),
+    color var(--nova-motion-slow) var(--nova-ease);
+}
+.nova-appearance__btn:hover { color: var(--nova-text-1); }
+.nova-appearance__btn:focus-visible { outline: none; box-shadow: var(--nova-focus-ring); }
+.nova-appearance__btn.is-active {
+  background: linear-gradient(135deg, var(--nova-primary-from), var(--nova-primary-to));
+  color: var(--nova-on-primary);
+  box-shadow: var(--nova-shadow-gold);
+}
+
+/* ============================================================================
+   Hero
+   ========================================================================== */
+.nova-hero {
+  max-width: 960px;
+  margin: 0 auto 28px;
+  padding: clamp(28px, 3vw, 40px);
+  border: 1px solid var(--nova-border-1);
+  border-radius: var(--nova-radius-xl);
+  background:
+    radial-gradient(circle at 12% 0%, var(--nova-primary-soft), transparent 60%),
+    var(--nova-surface-1);
+  box-shadow: var(--nova-shadow-soft);
+}
+.nova-hero--compact { padding: clamp(18px, 2vw, 24px); margin-bottom: 18px; }
+/* Warm hero variant — Story / Kurukshetra emphasis only */
+.nova-hero--warm {
+  background:
+    radial-gradient(circle at 12% 0%, var(--nova-warm-soft), transparent 60%),
+    var(--nova-surface-1);
+}
+.nova-hero__eyebrow {
+  font-size: var(--nova-text-xs);
+  font-weight: var(--nova-w-bold);
+  letter-spacing: var(--nova-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--nova-blue-2);
+}
+.nova-hero--warm .nova-hero__eyebrow { color: var(--nova-gold-1); }
+.nova-hero__title {
+  margin: 10px 0 0;
+  font-family: var(--nova-font-display);
+  font-size: clamp(var(--nova-text-2xl), 4vw, var(--nova-text-4xl));
+  font-weight: var(--nova-w-bold);
+  line-height: var(--nova-lh-heading);
+  color: var(--nova-text-1);
+}
+.nova-hero__desc {
+  max-width: 720px;
+  margin: 12px 0 0;
+  font-size: var(--nova-text-lg);
+  line-height: 1.6;
+  color: var(--nova-text-2);
+}
+.nova-hero__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.nova-hero__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+/* ============================================================================
+   Responsive header / mobile nav
+   ========================================================================== */
+@media (max-width: 900px) {
+  :root { --nova-header-h: 64px; }
+  .nova-header__inner { gap: 10px; }
+  .nova-brand__sub { display: none; }
+  .nova-nav {
+    position: fixed;
+    left: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: var(--nova-z-header);
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0;
+    box-shadow: var(--nova-shadow-floating);
+    background: var(--nova-shell-bg);
+    backdrop-filter: blur(22px) saturate(1.16);
+  }
+  .nova-nav::-webkit-scrollbar { display: none; }
+  .nova-nav__link span { display: none; }
+  .nova-nav__link { padding: 0 11px; }
+  .nova-appearance { bottom: max(74px, calc(env(safe-area-inset-bottom) + 62px)); }
+  .nova-main { padding-bottom: 120px; }
+  .nova-trigger__label,
+  .nova-trigger__label-text,
+  .nova-trigger__chevron { display: none; }
+  .nova-trigger { width: 40px; padding: 0; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .nova-appearance__btn span { display: none; }
+  .nova-appearance__btn { padding: 0 10px; }
+}
+
+/* ============================================================================
+   Reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .nova-popover__panel { animation: none; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

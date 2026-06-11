@@ -210,8 +210,9 @@ function validateLegalMove(game, move, label) {
 }
 
 function startDevServer() {
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const server = spawn(npmCommand, ['run', 'dev', '--', '--host', HOST, '--port', String(PORT)], {
+  // Invoke Vite's JS entry via the current Node binary: spawning npm.cmd with
+  // shell:false throws EINVAL on modern Node/Windows.
+  const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', HOST, '--port', String(PORT)], {
     stdio: 'pipe',
     shell: false,
   });

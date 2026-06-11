@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BoardView } from '../components/Board/BoardView';
+import { Badge } from '../components/ui/Badge';
+import { ButtonLink } from '../components/ui/Button';
+import { ContextChip } from '../components/ui/ContextChip';
+import { MetricCard } from '../components/ui/MetricCard';
+import { ModeTile } from '../components/ui/ModeTile';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { RouteHero } from '../components/ui/RouteHero';
+import { Surface } from '../components/ui/Surface';
 import {
   buildAdaptiveClue,
   buildAdaptiveClueContext,
@@ -397,15 +405,26 @@ export default function ClueChess() {
   return (
     <section className="clue-chess-page">
       <header className="clue-chess-page__header">
-        <div>
-          <p className="home-eyebrow">Adaptive Clue Chess</p>
-          <h1>The right clue at the right difficulty</h1>
-          <p>
-            Local-only adaptive training from StyleVector, Game Review motifs, puzzle history,
-            spaced repetition, and Analytics recommendations. Runtime GenAI and cloud upload are not used.
-          </p>
-        </div>
-        <Link className="btn btn-secondary" to="/analytics">Open Analytics</Link>
+        <RouteHero
+          actions={
+            <>
+              <ButtonLink to="/clue-chess?mode=adaptive" variant="primary">Start adaptive training</ButtonLink>
+              <ButtonLink to="/analytics" variant="secondary">Open Analytics</ButtonLink>
+            </>
+          }
+          eyebrow="Adaptive Clue Chess"
+          meta={
+            <>
+              <ContextChip tone="gold">StyleVector</ContextChip>
+              <ContextChip tone="blue">Review motifs</ContextChip>
+              <ContextChip tone="success">Local-only</ContextChip>
+            </>
+          }
+          title="Train the pattern before the move"
+          variant="battlefield"
+        >
+          The right clue at the right difficulty: personalized clue levels from puzzle history, spaced repetition, Game Review motifs, and Analytics recommendations. Runtime GenAI and cloud upload are not used.
+        </RouteHero>
       </header>
 
       {!activePlayer ? (
@@ -416,24 +435,24 @@ export default function ClueChess() {
 
       <section className="clue-chess-page__modes" aria-label="Clue Chess modes">
         {MODE_OPTIONS.map((option) => (
-          <button
+          <ModeTile
             key={option.id}
-            type="button"
-            className={option.id === activeMode ? 'is-selected' : ''}
+            badge={<Badge variant={option.id === activeMode ? 'active' : 'neutral'}>{option.id === activeMode ? 'Active' : 'Mode'}</Badge>}
+            description={option.description}
+            eyebrow={option.id === 'kids' ? 'Gentle' : option.id === 'boss' ? 'Challenge' : 'Training'}
             onClick={() => setMode(option.id)}
-          >
-            <strong>{option.label}</strong>
-            <span>{option.description}</span>
-          </button>
+            selected={option.id === activeMode}
+            title={option.label}
+          />
         ))}
       </section>
 
       <section className="clue-chess-page__stats">
-        <Metric label="Attempts" value={stats?.attempt_count ?? 0} />
-        <Metric label="Solved rate" value={`${Math.round((stats?.solved_rate ?? 0) * 100)}%`} />
-        <Metric label="Clue level" value={`Level ${highestClueLevelUsed ?? selection.start_level}`} />
-        <Metric label="Streak" value={streakState.count} />
-        <Metric label="Score" value={scoreResult?.training_score ?? '-'} />
+        <MetricCard label="Attempts" value={stats?.attempt_count ?? 0} action="Local clue attempts" />
+        <MetricCard label="Solved rate" value={`${Math.round((stats?.solved_rate ?? 0) * 100)}%`} action="Improves with clean solves" />
+        <MetricCard label="Clue level" value={`Level ${highestClueLevelUsed ?? selection.start_level}`} action="Adaptive start point" />
+        <MetricCard label="Streak" value={streakState.count} action="Short-session momentum" />
+        <MetricCard label="Score" value={scoreResult?.training_score ?? '-'} action="Deterministic training score" />
       </section>
 
       <div className="clue-chess-page__layout">
@@ -473,11 +492,11 @@ export default function ClueChess() {
           </section>
 
           {bossSequence ? (
-            <section className="mirror-panel">
+            <Surface className="mirror-panel" tone="battlefield">
               <h3>Boss progress</h3>
-              <progress value={bossIndex + (solved ? 1 : 0)} max={Math.max(1, bossTotal)} />
+              <ProgressBar value={bossIndex + (solved ? 1 : 0)} max={Math.max(1, bossTotal)} label="Boss progress" />
               <p>{bossIndex + 1} of {bossTotal} puzzles for {formatMotif(bossSequence.motif)}.</p>
-            </section>
+            </Surface>
           ) : null}
 
           <section className="mirror-panel">
@@ -547,15 +566,6 @@ export default function ClueChess() {
         </aside>
       </div>
     </section>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string | number }) {
-  return (
-    <article>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
   );
 }
 
