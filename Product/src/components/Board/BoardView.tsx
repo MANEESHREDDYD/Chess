@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { isLegalPromotionMove, normalizePromotionPiece } from '../../chess/promotion';
@@ -70,14 +71,25 @@ export function BoardView({
   } | null>(null);
   const dragTargetSquare = dragTarget?.square ?? null;
   const prevFenRef = useRef(fen);
+  /** Animation duration for the next board render. Dropped to 0 when a single
+   *  FEN update contains moves by BOTH colors (e.g. the player's move and the
+   *  engine reply batched into one render): the board library pairs moved
+   *  pieces positionally in that case and animates a piece diagonally toward
+   *  the WRONG square — the "floating pawn between squares" defect. */
+  const [animationMs, setAnimationMs] = useState(180);
 
   useEffect(() => {
     if (fen !== prevFenRef.current) {
+      const prevFen = prevFenRef.current;
       // Check if piece count decreased
       const countPieces = (f: string) => f.split(' ')[0].replace(/[^a-zA-Z]/g, '').length;
-      if (countPieces(fen) < countPieces(prevFenRef.current)) {
+      if (countPieces(fen) < countPieces(prevFen)) {
         setFlashCapture(true);
         setTimeout(() => setFlashCapture(false), 400);
+      }
+      if (bothColorsMoved(prevFen, fen)) {
+        setAnimationMs(0);
+        window.setTimeout(() => setAnimationMs(180), 60);
       }
       prevFenRef.current = fen;
       setPendingPromotion(null);
@@ -121,6 +133,18 @@ export function BoardView({
 
     const update = (event: { clientX: number; clientY: number }) => {
       if (!tracking) return;
+      // A missed pointerup (release outside the window) must never leave the
+      // ring stuck: a plain pointermove with no button held ends tracking.
+      // (dragover events report buttons=0 during HTML5 drags — exempt.)
+      if (
+        typeof PointerEvent !== 'undefined' &&
+        event instanceof PointerEvent &&
+        event.type === 'pointermove' &&
+        event.buttons === 0
+      ) {
+        stopTracking();
+        return;
+      }
       const rect = gridRect();
       if (!rect) return;
       const hit = getSquareFromPointer({
@@ -156,6 +180,8 @@ export function BoardView({
       window.removeEventListener('pointerup', stopTracking, true);
       window.removeEventListener('dragend', stopTracking, true);
       window.removeEventListener('drop', stopTracking, true);
+      window.removeEventListener('blur', stopTracking);
+      document.removeEventListener('visibilitychange', stopTracking);
     };
 
     const onPointerDown = (event: PointerEvent) => {
@@ -171,6 +197,8 @@ export function BoardView({
       window.addEventListener('pointerup', stopTracking, true);
       window.addEventListener('dragend', stopTracking, true);
       window.addEventListener('drop', stopTracking, true);
+      window.addEventListener('blur', stopTracking);
+      document.addEventListener('visibilitychange', stopTracking);
       update(event);
     };
 
@@ -377,14 +405,29 @@ export function BoardView({
   };
 
   const isMahabharata = themeManifest?.id === 'mahabharata';
+  const topColor: Color = playerColor === 'white' ? 'black' : 'white';
+  const captured = useMemo(() => computeCapturedPieces(fen), [fen]);
+
+  const sideName = (color: Color, isPlayer: boolean) => {
+    const base = isMahabharata
+      ? color === 'white'
+        ? 'Pandava (White)'
+        : 'Kaurava (Black)'
+      : color === 'white'
+        ? 'White'
+        : 'Black';
+    return isPlayer ? `${base} · You` : base;
+  };
 
   return (
     <div className="board-shell">
-      {isMahabharata && (
-        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600, textAlign: playerColor === 'white' ? 'left' : 'right', opacity: 0.8 }}>
-          {playerColor === 'white' ? 'Kaurava (Black)' : 'Pandava (White)'}
-        </div>
-      )}
+      {/* Opponent bar: their name + the coins THEY captured (your pieces). */}
+      <PlayerBar
+        align="top"
+        name={sideName(topColor, false)}
+        capturedPieces={captured[topColor === 'white' ? 'byWhite' : 'byBlack']}
+        capturedColor={playerColor}
+      />
       <div
         className="board-stage"
         ref={boardStageRef}
@@ -424,19 +467,126 @@ export function BoardView({
                dragTargetSquare (customSquareStyles) replaces it. */
             customDropSquareStyle={{}}
             customPieces={customPieces}
-            animationDuration={180}
+            animationDuration={animationMs}
             promotionDialogVariant="modal"
             arePremovesAllowed={false}
           />
         </div>
       </div>
-      {isMahabharata && (
-        <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600, textAlign: playerColor === 'white' ? 'right' : 'left', opacity: 0.8 }}>
-          {playerColor === 'white' ? 'Pandava (White)' : 'Kaurava (Black)'}
-        </div>
-      )}
+      {/* Player bar: your name + the coins YOU captured (their pieces). */}
+      <PlayerBar
+        align="bottom"
+        name={sideName(playerColor, true)}
+        capturedPieces={captured[playerColor === 'white' ? 'byWhite' : 'byBlack']}
+        capturedColor={topColor}
+      />
     </div>
   );
+}
+
+/* ----------------------------------------------------------------------------
+   Player bars + captured-piece trays. Captured coins sit beside the player
+   who captured them and pop in with a spring (framer-motion).
+   ------------------------------------------------------------------------- */
+
+const PIECE_GLYPHS: Record<Color, Record<string, string>> = {
+  white: { p: '♙', n: '♘', b: '♗', r: '♖', q: '♕', k: '♔' },
+  black: { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' },
+};
+
+const PIECE_ORDER = ['q', 'r', 'b', 'n', 'p'];
+
+type PlayerBarProps = {
+  align: 'top' | 'bottom';
+  name: string;
+  /** Piece types this player has captured (sorted by value). */
+  capturedPieces: string[];
+  /** Color of the captured pieces (the OPPONENT's color). */
+  capturedColor: Color;
+};
+
+function PlayerBar({ align, name, capturedPieces, capturedColor }: PlayerBarProps) {
+  return (
+    <div className={`board-player-bar board-player-bar--${align}`} data-qa={`player-bar-${align}`}>
+      <span className="board-player-bar__name">{name}</span>
+      <div className="board-player-bar__tray" data-qa="captured-tray" aria-label={`Pieces captured by ${name}`}>
+        <AnimatePresence initial={false}>
+          {capturedPieces.map((type, index) => (
+            <motion.span
+              key={`${type}-${index}`}
+              className="board-player-bar__coin"
+              initial={{ scale: 0, y: align === 'top' ? -8 : 8, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 480, damping: 28, mass: 0.6 }}
+            >
+              {PIECE_GLYPHS[capturedColor][type]}
+            </motion.span>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+/** Pieces missing from each color relative to the initial set = pieces the
+ *  OTHER color has captured. Sorted by value so trays read cleanly. */
+function computeCapturedPieces(fen: string): { byWhite: string[]; byBlack: string[] } {
+  const initial: Record<string, number> = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+  const counts: Record<Color, Record<string, number>> = {
+    white: { p: 0, n: 0, b: 0, r: 0, q: 0 },
+    black: { p: 0, n: 0, b: 0, r: 0, q: 0 },
+  };
+  const placement = fen.split(' ')[0] ?? '';
+  for (const ch of placement) {
+    const lower = ch.toLowerCase();
+    if (!(lower in initial)) continue;
+    counts[ch === lower ? 'black' : 'white'][lower] += 1;
+  }
+  const missing = (color: Color) =>
+    PIECE_ORDER.flatMap((type) =>
+      Array.from({ length: Math.max(0, initial[type] - counts[color][type]) }, () => type)
+    );
+  // Promotions can make a color's count EXCEED initial (extra queen); the
+  // Math.max guard keeps trays sane in that case.
+  return { byWhite: missing('black'), byBlack: missing('white') };
+}
+
+/** True when one FEN update relocated pieces of BOTH colors (two half-moves
+ *  batched into a single render). Castling (two same-color movers) and en
+ *  passant (one mover, opponent piece only REMOVED) stay animated. */
+function bothColorsMoved(prevFen: string, nextFen: string): boolean {
+  const parse = (f: string) => {
+    const map = new Map<string, string>();
+    let rank = 8;
+    for (const row of (f.split(' ')[0] ?? '').split('/')) {
+      let file = 0;
+      for (const ch of row) {
+        if (ch >= '1' && ch <= '8') file += Number(ch);
+        else {
+          map.set(`${String.fromCharCode(97 + file)}${rank}`, ch);
+          file += 1;
+        }
+      }
+      rank -= 1;
+    }
+    return map;
+  };
+  const prev = parse(prevFen);
+  const next = parse(nextFen);
+  const movedColors = new Set<'w' | 'b'>();
+  for (const [square, piece] of next) {
+    if (prev.get(square) !== piece) {
+      // A piece ARRIVED here; pair it with a vacated origin of the same piece.
+      for (const [from, fromPiece] of prev) {
+        if (fromPiece === piece && next.get(from) !== piece) {
+          movedColors.add(piece === piece.toLowerCase() ? 'b' : 'w');
+          break;
+        }
+      }
+    }
+  }
+  return movedColors.size > 1;
 }
 
 function findCheckedKingSquare(chess: Chess): string | null {

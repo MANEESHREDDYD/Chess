@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AppShell } from './components/layout/AppShell';
 import { usePlayerStore } from './state/playerStore';
 import { useSettingsStore } from './state/settingsStore';
@@ -24,6 +25,8 @@ import StockfishDiagnostics from './routes/StockfishDiagnostics';
 import Story from './routes/Story';
 
 export default function App() {
+  const location = useLocation();
+  const reducedMotion = useReducedMotion();
   const loadActivePlayer = usePlayerStore((s) => s.loadActivePlayer);
   const {
     activeTheme,
@@ -47,7 +50,17 @@ export default function App() {
       setAudioEnabled={setAudioEnabled}
       setAudioVolume={setAudioVolume}
     >
-      <Routes>
+      {/* Smooth Apple-style page transitions (framer-motion); collapses to an
+          instant swap under prefers-reduced-motion. */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={location.pathname}
+          initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reducedMotion ? undefined : { opacity: 0, y: -6 }}
+          transition={{ duration: reducedMotion ? 0 : 0.16, ease: [0.2, 0, 0, 1] }}
+        >
+          <Routes location={location}>
         <Route path="/" element={<Home />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/calibration" element={<Calibration />} />
@@ -71,7 +84,9 @@ export default function App() {
             <Route path="/dev/inspector" element={<DevInspector />} />
           </>
         ) : null}
-      </Routes>
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
     </AppShell>
   );
 }
