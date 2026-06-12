@@ -1,9 +1,9 @@
 /**
  * Reference-guided Kurukshetra 3D implementation check.
  *
- * Verifies that the reference-based realistic billboard scene loads, renders nonblank
- * pixels, moves through the shared chess pipeline, captures desktop/mobile
- * screenshots, preserves fallbacks, and makes no external asset requests.
+ * Verifies that the reference-based grounded 3D scene loads, renders nonblank
+ * pixels, moves and captures through the shared chess pipeline, captures
+ * desktop/mobile screenshots, preserves fallbacks, and makes no external asset requests.
  */
 import puppeteer from 'puppeteer';
 import { spawn } from 'node:child_process';
@@ -81,6 +81,20 @@ try {
   await assertStage(page, 'desktop after move');
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'reference-3d-desktop-after-e4.png'), fullPage: true });
 
+  await page.waitForFunction(() => !window.__MIRROR_PLAY_TEST__.getState().engineThinking, { timeout: 25000 });
+  const capture = await page.evaluate(async () => {
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const moved = window.__MIRROR_PLAY_TEST__.makePlayerMove('e4', 'd5');
+    await sleep(260);
+    const state = window.__MIRROR_PLAY_TEST__.getState();
+    return { moved, history: state.history, fen: state.fen };
+  });
+  if (!capture.moved || !capture.history.some((m) => /xd5/.test(m))) {
+    failures.push(`3D capture move e4xd5 failed (${JSON.stringify(capture)})`);
+  }
+  await assertStage(page, 'desktop capture impact');
+  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'reference-3d-capture-impact.png'), fullPage: true });
+
   await page.setViewport({ width: 390, height: 844 });
   await sleep(1300);
   await assertStage(page, 'mobile');
@@ -150,6 +164,9 @@ async function assertReferenceTerms() {
     readFile(path.resolve('assets/3d/asset-manifest.json'), 'utf8'),
   ]);
   const combined = `${pieces}\n${props}\n${manifest}`;
+  for (const forbidden of ['<sprite', 'spriteMaterial', 'ringMaterials', 'baseGeo']) {
+    if (pieces.includes(forbidden)) failures.push(`camera-facing/base-marker implementation still present: ${forbidden}`);
+  }
   for (const term of [
     'kurukshetra-realism-v1',
     'pawn-foot-archer.png',
@@ -159,6 +176,8 @@ async function assertReferenceTerms() {
     'queen-war-elephant.png',
     'king-royal-commander.png',
     'generated-image',
+    'Volumetric board units',
+    'not sprites or',
     'WarElephant',
     'DistantFort',
   ]) {

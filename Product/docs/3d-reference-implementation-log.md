@@ -1,21 +1,24 @@
 # 3D Reference Implementation Log
 
-Milestone: M-REALISTIC-3D-ASSET-BACKED-KURUKSHETRA-VISUALS-1
-Date: 2026-06-11
+Milestone: M-VOLUMETRIC-3D-KURUKSHETRA-MESH-PIECES-1
+Date: 2026-06-12
 
 ## Summary
 
-The user rejected the procedural primitive 3D pass as not realistic. This milestone replaces the visible chess units with realistic generated battlefield unit assets rendered as Three.js billboards and replaces the flat board with a realistic generated board texture.
+The user rejected the generated image-card/billboard pass because the pieces still looked like flat images, stared at the user, floated visually, and did not move/capture like a physical chess army. This milestone replaces the playable unit renderer with actual volumetric Three.js mesh units while keeping the realistic board texture.
 
 ## Implemented
 
-- Realistic foot archer pawn.
-- Realistic horse archer knight.
-- Realistic advisor/standard bearer bishop.
-- Realistic ornate chariot rook.
-- Realistic war elephant commander queen.
-- Realistic royal commander king.
+- Mesh foot archer pawn with body, armor, dhoti cloth, bow, arrow, and quiver.
+- Mesh horse archer knight with horse body/legs/head, saddle, and mounted archer.
+- Mesh advisor/standard bearer bishop with staff, spear head, and banner.
+- Mesh ornate chariot rook with cabin, wheels, yoke, horses, and rider.
+- Mesh war elephant commander queen with elephant body/head/trunk/tusks, caparison, howdah, and rider.
+- Mesh royal commander king with crown, armor, shield, sword, and cloth.
 - Realistic weathered Kurukshetra board texture.
+- Opposing armies face each other by board orientation instead of facing the camera.
+- Colored token bases removed; units sit on contact shadows.
+- Attacker lunge plus non-gory impact/fall/dust capture reaction.
 - Invisible hit planes for exact square clicks.
 - Existing legal move, animation, capture, fallback, and board interaction pipeline preserved.
 
@@ -29,6 +32,7 @@ Captured:
 
 - `reference-3d-desktop-initial.png`
 - `reference-3d-desktop-after-e4.png`
+- `reference-3d-capture-impact.png`
 - `reference-3d-mobile.png`
 - `reference-3d-reduced-motion-fallback.png`
 - `reference-3d-webgl-fallback.png`
@@ -39,4 +43,4 @@ Captured:
 
 ## Remaining Caveat
 
-This is a realistic visual pass inside the Three.js scene using generated billboard assets. Full rigged 3D models, PBR textures, skeletal animations, and model-level camera closeups remain a future production-art milestone.
+This is now true 3D mesh presentation for the playable units, but it is still procedural prototype art. Full Harry-Potter-chess/PUBG/GTA-like realism requires licensed or project-authored rigged GLB models, PBR textures, skeletal animation clips, hit reactions, and animation blending.

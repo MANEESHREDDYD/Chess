@@ -3,7 +3,7 @@
   "policy": "Every 3D asset must be declared here before use. Generated images are original project assets based on user-provided visual direction only; reference images are not copied or stored.",
   "assets": [
     {
-      "name": "Realistic Kurukshetra unit billboard set",
+      "name": "Generated Kurukshetra unit reference image set",
       "filenames": [
         "Product/public/assets/3d/kurukshetra-realism-v1/pawn-foot-archer.png",
         "Product/public/assets/3d/kurukshetra-realism-v1/knight-horse-archer.png",
@@ -18,10 +18,23 @@
       "license": "project-generated for MIRROR",
       "dateAdded": "2026-06-11",
       "allowedUse": "use within the MIRROR project",
-      "modifications": "chroma-key background removal, crop, trim, board texture placement, and Three.js sprite integration",
+      "modifications": "chroma-key background removal, crop, trim, board texture placement, and archived visual reference. Playable units are now procedural Three.js meshes rather than sprite/image-card pieces.",
       "attributionRequirement": "none",
       "aiGenerated": true,
-      "notes": "Created from text prompts derived from the user's uploaded visual references. The references guided style, materials, camera, and unit identity only; no reference image is copied or stored in the repository."
+      "notes": "Created from text prompts derived from the user's uploaded visual references. The references guided style, materials, camera, and unit identity only; no reference image is copied or stored in the repository. These PNGs are not used for the current playable unit bodies."
+    },
+    {
+      "name": "Playable volumetric Kurukshetra mesh army",
+      "filename": "(none - generated in code: Product/src/three/BattlefieldPiece.tsx)",
+      "source": "procedural",
+      "author": "MIRROR project",
+      "license": "AGPL-3.0-or-later (project code)",
+      "dateAdded": "2026-06-12",
+      "allowedUse": "unrestricted within the project",
+      "modifications": "n/a (code-defined geometry/materials)",
+      "attributionRequirement": "none",
+      "aiGenerated": false,
+      "notes": "Actual runtime playable units: mesh soldiers, horse archers, advisor/standard bearers, chariots, war elephants, royal commanders, weapons, contact shadows, attacker lunge, and non-gory capture impact/fall/dust."
     },
     {
       "name": "Procedural battlefield environment and effects",

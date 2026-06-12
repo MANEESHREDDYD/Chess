@@ -1,13 +1,13 @@
 # Realistic 3D Asset-Backed Kurukshetra Visuals
 
-Milestone: M-REALISTIC-3D-ASSET-BACKED-KURUKSHETRA-VISUALS-1
-Date: 2026-06-11
+Milestone: M-VOLUMETRIC-3D-KURUKSHETRA-MESH-PIECES-1
+Date: 2026-06-12
 
 ## Why This Milestone Exists
 
-The previous 3D scene still looked toy-like because it used procedural primitive meshes. The user explicitly rejected that result and asked for realistic visuals based on the uploaded references.
+The previous 3D scene still looked wrong because the playable units were flat generated image cards in a Three.js scene. The user explicitly called out that they looked like images, did not face each other, and did not move/capture like physical 3D chess units.
 
-This milestone replaces the visible board pieces with realistic generated image assets rendered inside the Three.js scene as camera-facing billboards. This is a practical realism pass without importing unlicensed models.
+This milestone replaces the playable board pieces with actual procedural Three.js mesh units. It keeps licensing clean and removes the camera-facing billboard behavior, while still acknowledging that final realistic game-character quality requires authored rigged GLB assets.
 
 ## Reference Use
 
@@ -29,7 +29,7 @@ Folder:
 
 `Product/public/assets/3d/kurukshetra-realism-v1/`
 
-Project assets:
+Archived/generated reference assets:
 
 - `pawn-foot-archer.png`
 - `knight-horse-archer.png`
@@ -50,14 +50,17 @@ Traceability assets:
 
 - Three.js still owns the interactive 3D board/camera/canvas.
 - chess.js and `gameStore` still own all chess rules.
-- Pieces are realistic transparent PNG billboards on small 3D bases.
+- Playable pieces are volumetric mesh units, not sprites or camera-facing image planes.
+- Colored token bases were removed; each unit uses a grounded contact shadow.
+- White/Pandava and Black/Kaurava armies face each other by board orientation.
+- Movement includes march/step/roll body motion, knight leap, attacker lunge, and non-gory impact/fall/dust capture reaction.
 - The board surface uses a realistic generated texture.
 - Invisible square hit planes preserve exact square clicking.
-- Existing move, knight leap, capture dissolve, reduced-motion fallback, and WebGL fallback remain.
+- Reduced-motion fallback and WebGL fallback remain.
 
 ## Honesty Boundary
 
-This is now realistic 3D visual presentation inside a Three.js scene, but it is not yet rigged GLB character modeling. Full production 3D would still require licensed or project-authored 3D models, PBR textures, rigs, and animations.
+This is now true 3D mesh presentation inside a Three.js scene, but it is not final realistic/AAA character art. Full production 3D still requires licensed or project-authored 3D models, PBR textures, rigs, skeletal animations, hit reactions, and animation blending.
 
 ## Verification
 
@@ -69,6 +72,7 @@ Required screenshots:
 
 - `reference-3d-desktop-initial.png`
 - `reference-3d-desktop-after-e4.png`
+- `reference-3d-capture-impact.png`
 - `reference-3d-mobile.png`
 - `reference-3d-reduced-motion-fallback.png`
 - `reference-3d-webgl-fallback.png`

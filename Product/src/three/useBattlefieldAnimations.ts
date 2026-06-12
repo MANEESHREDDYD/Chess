@@ -5,7 +5,8 @@ import {
   type SquareName,
 } from './battlefieldTypes';
 
-export const CAPTURE_EFFECT_MS = 420;
+export const CAPTURE_EFFECT_MS = 720;
+export const ATTACK_LUNGE_MS = 620;
 
 let instanceCounter = 0;
 
@@ -28,6 +29,8 @@ export function useBattlefieldPieces(fen: string): BattlefieldPieceInstance[] {
         square: p.square,
         fromSquare: null,
         capturedAt: null,
+        attackStartedAt: null,
+        capturedFromSquare: null,
       })),
     };
   } else if (stateRef.current.fen !== fen) {
@@ -63,7 +66,12 @@ function reconcile(
     const existing = bySquare.get(target.square);
     if (existing && existing.type === target.type && existing.color === target.color) {
       claimed.add(existing);
-      result.push({ ...existing, fromSquare: null });
+      result.push({
+        ...existing,
+        fromSquare: null,
+        attackStartedAt: null,
+        capturedFromSquare: null,
+      });
     } else {
       unmatched.push(target);
     }
@@ -71,6 +79,7 @@ function reconcile(
 
   // Pass 2: match moved pieces by type+color, preferring the nearest origin.
   const free = alive.filter((p) => !claimed.has(p));
+  const now = Date.now();
   for (const target of unmatched) {
     let best: BattlefieldPieceInstance | null = null;
     let bestDist = Infinity;
@@ -84,8 +93,19 @@ function reconcile(
       }
     }
     if (best) {
+      const targetOccupant = bySquare.get(target.square);
+      const didCapture =
+        Boolean(targetOccupant) &&
+        targetOccupant !== best &&
+        targetOccupant?.color !== target.color;
       claimed.add(best);
-      result.push({ ...best, fromSquare: best.square, square: target.square });
+      result.push({
+        ...best,
+        fromSquare: best.square,
+        square: target.square,
+        attackStartedAt: didCapture ? now : null,
+        capturedFromSquare: null,
+      });
     } else {
       // Promotion (pawn became queen) or a brand-new piece: spawn in place.
       result.push({
@@ -95,15 +115,24 @@ function reconcile(
         square: target.square,
         fromSquare: null,
         capturedAt: null,
+        attackStartedAt: null,
+        capturedFromSquare: null,
       });
     }
   }
 
   // Anything alive but unclaimed was captured (or promoted away) — dissolve it.
-  const now = Date.now();
   for (const piece of alive) {
     if (!claimed.has(piece)) {
-      result.push({ ...piece, capturedAt: now });
+      const attacker = result.find(
+        (p) => p.capturedAt === null && p.color !== piece.color && p.square === piece.square
+      );
+      result.push({
+        ...piece,
+        capturedAt: now,
+        attackStartedAt: null,
+        capturedFromSquare: attacker?.fromSquare ?? null,
+      });
     }
   }
 

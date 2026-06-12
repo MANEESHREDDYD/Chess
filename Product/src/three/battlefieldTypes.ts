@@ -21,6 +21,10 @@ export type BattlefieldPieceInstance = {
   fromSquare: SquareName | null;
   /** Timestamp (ms) when the piece was captured; drives the dissolve effect. */
   capturedAt: number | null;
+  /** Timestamp (ms) when this unit started a capture attack lunge. */
+  attackStartedAt: number | null;
+  /** Origin square of the capturing unit, used to make captured units fall away. */
+  capturedFromSquare: SquareName | null;
 };
 
 export type BattlefieldHighlights = {

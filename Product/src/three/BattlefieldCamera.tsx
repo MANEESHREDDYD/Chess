@@ -13,14 +13,14 @@ export function BattlefieldCamera({ playerColor }: BattlefieldCameraProps) {
   const zSign = playerColor === 'white' ? 1 : -1;
   return (
     <>
-      <PerspectiveCamera makeDefault fov={45} position={[0, 8.2, 10.6 * zSign]} />
+      <PerspectiveCamera makeDefault fov={38} position={[0, 6.6, 8.8 * zSign]} />
       <OrbitControls
         enablePan={false}
-        minDistance={6}
-        maxDistance={14}
-        minPolarAngle={0.38}
-        maxPolarAngle={1.16}
-        target={[0, 0.12, 0]}
+        minDistance={5.2}
+        maxDistance={11.5}
+        minPolarAngle={0.5}
+        maxPolarAngle={1.08}
+        target={[0, 0.3, 0]}
         makeDefault
       />
     </>
