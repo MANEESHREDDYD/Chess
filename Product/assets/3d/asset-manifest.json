@@ -60,7 +60,7 @@
       "modifications": "Generated with Product/scripts/generate-kurukshetra-production-glbs.py in Blender 5.1 with named idle/move/attack/hit/check clips; future approved PBR/rigged replacements must preserve these slot filenames and clip names.",
       "attributionRequirement": "none",
       "aiGenerated": false,
-      "notes": "Original project-authored Blender geometry for Pandava/Kaurava foot archers, horse archers, advisor standard bearers, war chariots, war elephant commanders, and royal commanders. The runtime now plays embedded whole-model animation clips, but this is still not a final AAA scanned/rigged realism pack."
+      "notes": "Original project-authored Blender geometry for Pandava/Kaurava foot archers, horse archers, advisor standard bearers, war chariots, war elephant commanders, and royal commanders. The runtime now plays embedded whole-model animation clips plus role-specific combat cues, but this is still not a final AAA scanned/rigged realism pack."
     },
     {
       "name": "Procedural battlefield environment and effects",

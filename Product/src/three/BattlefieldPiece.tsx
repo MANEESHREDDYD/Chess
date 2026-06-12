@@ -61,6 +61,10 @@ const geo = {
   impact: new THREE.TorusGeometry(0.3, 0.018, 8, 32),
   shock: new THREE.RingGeometry(0.16, 0.34, 32),
   spark: new THREE.ConeGeometry(0.025, 0.12, 6),
+  arrowFlight: new THREE.CylinderGeometry(0.006, 0.006, 0.72, 6),
+  slashArc: new THREE.TorusGeometry(0.26, 0.012, 6, 34, Math.PI * 0.72),
+  stompRing: new THREE.RingGeometry(0.22, 0.62, 36),
+  wheelSpark: new THREE.ConeGeometry(0.022, 0.16, 6),
 };
 
 const mat = {
@@ -81,6 +85,7 @@ const mat = {
   spark: new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.78, depthWrite: false }),
   impact: new THREE.MeshBasicMaterial({ color: '#fff2c7', transparent: true, opacity: 0.62, depthWrite: false }),
   shock: new THREE.MeshBasicMaterial({ color: '#f2d38e', transparent: true, opacity: 0.42, depthWrite: false, side: THREE.DoubleSide }),
+  arrowTrail: new THREE.MeshBasicMaterial({ color: '#fff5d6', transparent: true, opacity: 0.7, depthWrite: false }),
 };
 
 const sideMat: Record<PieceColor, { cloth: THREE.MeshStandardMaterial; accent: THREE.MeshStandardMaterial }> = {
@@ -232,6 +237,63 @@ function ProceduralFallbackUnit({ type, color }: { type: PieceType; color: Piece
   return <Humanoid color={color} variant="commander" scale={0.98} />;
 }
 
+function BattlefieldAttackCue({ type }: { type: PieceType }) {
+  if (type === 'p' || type === 'n') {
+    return (
+      <group name="archer-arrow-volley">
+        <mesh geometry={geo.arrowFlight} material={mat.wood} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.42, 0.42]} />
+        <mesh geometry={geo.arrowFlight} material={mat.arrowTrail} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.42, 0.12]} scale={[1, 1, 0.65]} />
+        <mesh geometry={geo.spearHead} material={mat.steel} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.42, 0.8]} />
+      </group>
+    );
+  }
+
+  if (type === 'b') {
+    return (
+      <group name="advisor-spear-thrust">
+        <mesh geometry={geo.staff} material={mat.wood} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.38, 0.34]} scale={[0.72, 0.72, 0.72]} />
+        <mesh geometry={geo.spearHead} material={mat.steel} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.38, 0.74]} />
+        <mesh geometry={geo.shock} material={mat.shock} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.09, 0.74]} scale={[0.75, 0.75, 0.75]} />
+      </group>
+    );
+  }
+
+  if (type === 'r') {
+    return (
+      <group name="chariot-crash-shock">
+        <mesh geometry={geo.shock} material={mat.shock} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.08, 0.34]} scale={[1.25, 1.25, 1.25]} />
+        {[-0.2, 0.2].map((x) => (
+          <mesh key={x} geometry={geo.wheelSpark} material={mat.spark} rotation={[0.7, 0, x > 0 ? -0.5 : 0.5]} position={[x, 0.16, 0.48]} />
+        ))}
+      </group>
+    );
+  }
+
+  if (type === 'q') {
+    return (
+      <group name="elephant-stomp-impact">
+        <mesh geometry={geo.stompRing} material={mat.shock} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.07, 0.28]} />
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <mesh
+            key={i}
+            geometry={geo.dust}
+            material={mat.dust}
+            position={[Math.cos(i * 1.05) * 0.22, 0.16 + i * 0.015, 0.28 + Math.sin(i * 1.05) * 0.18]}
+          />
+        ))}
+      </group>
+    );
+  }
+
+  return (
+    <group name="commander-sword-arc">
+      <mesh geometry={geo.slashArc} material={mat.impact} rotation={[0.38, 0, -0.7]} position={[0.08, 0.45, 0.42]} />
+      <mesh geometry={geo.spark} material={mat.spark} rotation={[0.75, 0.8, 0.1]} position={[0.2, 0.35, 0.56]} />
+      <mesh geometry={geo.spark} material={mat.spark} rotation={[0.58, -0.9, -0.3]} position={[-0.12, 0.31, 0.5]} />
+    </group>
+  );
+}
+
 function RealisticUnit({
   type,
   color,
@@ -371,20 +433,21 @@ export function BattlefieldPiece({
       setAnimationRoleIfChanged(reducedMotion ? 'idle' : 'move');
       const total = Math.max(Math.hypot(target[0] - from[0], target[2] - from[2]), 0.001);
       const progress = Math.min(1, Math.max(0, 1 - dist / total));
-      const speed = piece.type === 'r' || piece.type === 'q' ? MOVE_SPEED * 0.82 : MOVE_SPEED;
+      const speed = moveSpeedFor(piece.type);
       const step = Math.min(dist, speed * delta);
       group.position.x += (dx / dist) * step;
       group.position.z += (dz / dist) * step;
       group.rotation.y = yawFromTo([group.position.x, 0, group.position.z], target);
-      group.position.y = piece.type === 'n' ? Math.sin(Math.PI * progress) * 0.24 : 0;
+      group.position.y = moveLiftFor(piece.type, progress);
 
       if (figure) {
         const heavy = piece.type === 'q' || piece.type === 'r';
         const stride = Math.sin(clock.elapsedTime * (heavy ? 9 : 13));
-        figure.position.y = Math.abs(stride) * (heavy ? 0.012 : 0.024);
-        figure.position.z = Math.max(0, Math.sin(Math.PI * progress)) * (heavy ? 0.04 : 0.065);
-        figure.rotation.x = heavy ? -0.05 : -0.09;
-        figure.rotation.z = stride * (heavy ? 0.018 : 0.035);
+        const movePulse = Math.sin(Math.PI * progress);
+        figure.position.y = Math.abs(stride) * (heavy ? 0.01 : 0.022);
+        figure.position.z = Math.max(0, movePulse) * figureDriveFor(piece.type);
+        figure.rotation.x = figurePitchFor(piece.type, movePulse);
+        figure.rotation.z = stride * figureSwayFor(piece.type);
       }
     } else {
       const settledRole = attackActive ? 'attack' : checked && piece.type === 'k' ? 'check' : 'idle';
@@ -403,9 +466,11 @@ export function BattlefieldPiece({
 
     if (attack) {
       const attackT = attackActive ? Math.min(1, attackAge / ATTACK_LUNGE_MS) : 1;
+      const cue = attackProfileFor(piece.type, attackT);
       attack.visible = attackActive;
-      attack.scale.setScalar(0.7 + attackT * 1.4);
-      attack.rotation.y += delta * 3.6;
+      attack.position.set(0, 0, cue.forward);
+      attack.scale.setScalar(cue.scale);
+      attack.rotation.y += delta * cue.spin;
     }
   });
 
@@ -428,9 +493,7 @@ export function BattlefieldPiece({
         reducedMotion={reducedMotion}
       />
       <group ref={attackRef} visible={false}>
-        <mesh geometry={geo.shock} material={mat.shock} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.08, 0.18]} />
-        <mesh geometry={geo.spark} material={mat.spark} rotation={[0.9, 0.1, -0.35]} position={[0.13, 0.28, 0.18]} />
-        <mesh geometry={geo.spark} material={mat.spark} rotation={[0.7, 2.2, 0.42]} position={[-0.12, 0.24, 0.16]} />
+        <BattlefieldAttackCue type={piece.type} />
       </group>
       {piece.capturedAt !== null ? (
         <group ref={dustRef}>
@@ -464,6 +527,59 @@ function yawFromTo(from: [number, number, number], to: [number, number, number])
 
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
+}
+
+function moveSpeedFor(type: PieceType): number {
+  if (type === 'q') return MOVE_SPEED * 0.68;
+  if (type === 'r') return MOVE_SPEED * 0.78;
+  if (type === 'n') return MOVE_SPEED * 1.08;
+  return MOVE_SPEED;
+}
+
+function moveLiftFor(type: PieceType, progress: number): number {
+  const arc = Math.sin(Math.PI * progress);
+  if (type === 'n') return arc * 0.34;
+  if (type === 'q') return Math.max(0, arc) * 0.035;
+  if (type === 'r') return Math.max(0, arc) * 0.018;
+  return 0;
+}
+
+function figureDriveFor(type: PieceType): number {
+  if (type === 'q') return 0.025;
+  if (type === 'r') return 0.04;
+  if (type === 'n') return 0.08;
+  return 0.06;
+}
+
+function figurePitchFor(type: PieceType, movePulse: number): number {
+  if (type === 'q') return -0.025 - movePulse * 0.025;
+  if (type === 'r') return -0.04 - movePulse * 0.035;
+  if (type === 'n') return -0.12 - movePulse * 0.1;
+  return -0.08;
+}
+
+function figureSwayFor(type: PieceType): number {
+  if (type === 'q') return 0.012;
+  if (type === 'r') return 0.018;
+  if (type === 'n') return 0.045;
+  return 0.032;
+}
+
+function attackProfileFor(type: PieceType, t: number): { forward: number; scale: number; spin: number } {
+  const pulse = Math.sin(Math.PI * t);
+  if (type === 'p' || type === 'n') {
+    return { forward: 0.12 + t * 0.82, scale: 0.88 + pulse * 0.36, spin: 0.2 };
+  }
+  if (type === 'r') {
+    return { forward: 0.18 + pulse * 0.3, scale: 0.9 + t * 1.65, spin: 4.6 };
+  }
+  if (type === 'q') {
+    return { forward: 0.16 + pulse * 0.18, scale: 1.05 + t * 1.9, spin: 1.2 };
+  }
+  if (type === 'b') {
+    return { forward: 0.18 + pulse * 0.46, scale: 0.88 + pulse * 0.44, spin: 1.8 };
+  }
+  return { forward: 0.18 + pulse * 0.3, scale: 0.86 + pulse * 0.72, spin: 3.2 };
 }
 
 function resetFigure(figure: THREE.Group): void {

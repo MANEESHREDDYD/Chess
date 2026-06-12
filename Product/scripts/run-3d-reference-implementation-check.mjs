@@ -213,6 +213,14 @@ async function assertReferenceTerms() {
     'Blender-generated',
     'WarElephant',
     'DistantFort',
+    'BattlefieldAttackCue',
+    'archer-arrow-volley',
+    'advisor-spear-thrust',
+    'chariot-crash-shock',
+    'elephant-stomp-impact',
+    'commander-sword-arc',
+    'moveLiftFor',
+    'attackProfileFor',
   ]) {
     if (!combined.includes(term)) failures.push(`reference-guided implementation term missing: ${term}`);
   }

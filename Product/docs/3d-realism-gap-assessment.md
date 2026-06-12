@@ -18,6 +18,8 @@ The current battlefield is real 3D and now loads a project-authored Blender GLB 
 - Production GLBs now include named `idle`, `move`, `attack`, `hit`, and `check`
   animation clips, and the runtime plays those clips with a Three.js
   `AnimationMixer`.
+- Runtime combat cues now differ by role: arrow volley, spear thrust, chariot
+  crash, elephant stomp, and commander sword arc.
 - Missing production models no longer crash the scene; an incomplete pack triggers fallback.
 
 ## Why It Still Fails The Reference
@@ -27,7 +29,8 @@ The current battlefield is real 3D and now loads a project-authored Blender GLB 
 - Materials use Blender procedural colors and roughness, not full PBR texture sets.
 - Movement now uses authored whole-model GLB clips plus runtime movement, but
   it is not skeletal/per-limb animation.
-- Capture has impact effects but not cinematic combat choreography.
+- Capture has stronger role-specific impact effects, but not cinematic
+  skeletal combat choreography.
 - It does not yet match the visual fidelity of the provided archer, horse, elephant, chariot, PUBG/GTA, or Harry-Potter chess references.
 
 ## Required Fix
