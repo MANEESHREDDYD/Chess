@@ -137,6 +137,19 @@ try {
   await sleep(1600);
   await assertHistoryStarts(page, 'c4', 'post-navigation drag');
 
+  // A6b. SCROLLED page + Kurukshetra custom pieces: the user-reported
+  // "coin far from cursor" case (fixed-position preview inside a transformed
+  // ancestor offsets by the scroll distance). Small viewport forces scroll.
+  await page.setViewport({ width: 1280, height: 620 });
+  await preparePlay(page, { theme: 'mahabharata', uiTheme: 'light' });
+  await startGame(page, 'white');
+  await page.evaluate(() => window.scrollTo(0, 160));
+  await sleep(400);
+  await verifiedDrag(page, 'g2', 'g4', 'white', 'scrolled kurukshetra drag (preview must track cursor)', 'play-scrolled-during-drag.png');
+  await sleep(1500);
+  await assertHistoryStarts(page, 'g4', 'scrolled kurukshetra drag');
+  await page.setViewport({ width: 1366, height: 768 });
+
   // A7. Dark theme drag states (Classic).
   await preparePlay(page, { theme: 'standard', uiTheme: 'dark' });
   await startGame(page, 'white');
@@ -326,7 +339,21 @@ async function verifiedDrag(page, from, to, orientation, label, screenshotName =
             Math.abs(r.left - s.left) < 4 && Math.abs(r.top - s.top) < 4 && Math.abs(r.width - s.width) < 4;
         }
       }
-      return { pointerSquare, highlightSquare, ringOnSquare };
+      // Dragged-piece preview must track the cursor. A transformed ancestor
+      // (e.g. a route-transition wrapper animating transform) turns the
+      // preview's position:fixed into ancestor-relative and the coin renders
+      // far from the pointer — the exact user-reported defect.
+      let previewDistance = null;
+      for (const p of document.querySelectorAll('[data-piece]')) {
+        if (p.closest('[data-square]')) continue;
+        const b = p.getBoundingClientRect();
+        if (b.width === 0) continue;
+        const cx = b.x + b.width / 2;
+        const cy = b.y + b.height / 2;
+        const d = Math.hypot(cx - px, cy - py);
+        previewDistance = previewDistance === null ? d : Math.min(previewDistance, d);
+      }
+      return { pointerSquare, highlightSquare, ringOnSquare, previewDistance };
     },
     { geometry: GEOMETRY_SNIPPET, px: b.x, py: b.y, orient: orientation }
   );
@@ -342,6 +369,9 @@ async function verifiedDrag(page, from, to, orientation, label, screenshotName =
   }
   if (mid.highlightSquare && !mid.ringOnSquare) {
     failures.push(`${label}: drop ring not visually aligned with ${mid.highlightSquare}`);
+  }
+  if (mid.previewDistance !== null && mid.previewDistance > 90) {
+    failures.push(`${label}: dragged piece preview is ${Math.round(mid.previewDistance)}px from the cursor`);
   }
 
   if (screenshotName) {

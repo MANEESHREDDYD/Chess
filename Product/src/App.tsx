@@ -51,13 +51,17 @@ export default function App() {
       setAudioVolume={setAudioVolume}
     >
       {/* Smooth Apple-style page transitions (framer-motion); collapses to an
-          instant swap under prefers-reduced-motion. */}
+          instant swap under prefers-reduced-motion.
+          OPACITY ONLY — animating transform here leaves a transformed
+          route-level ancestor, which becomes the containing block for
+          position:fixed descendants and offsets the board's dragged-piece
+          preview far away from the cursor. */}
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={location.pathname}
-          initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reducedMotion ? undefined : { opacity: 0, y: -6 }}
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={reducedMotion ? undefined : { opacity: 0 }}
           transition={{ duration: reducedMotion ? 0 : 0.16, ease: [0.2, 0, 0, 1] }}
         >
           <Routes location={location}>

@@ -96,6 +96,23 @@ Key screenshots:
 - `analytics-light-1366x768.png`
 - `profile-light-1366x768.png`
 
+## Run 6 - 2026-06-12 - Failed user report, then Passed
+
+Bug found (user screenshot): while dragging, the coin's visual rendered far from the
+cursor (ring on the correct pointer square, piece preview squares away).
+
+Root cause: the framer-motion route transition animated `transform`, making the route
+wrapper a containing block for the board's `position: fixed` drag preview — with page
+scroll, the preview offsets by the scroll distance.
+
+Fix: opacity-only route transitions in `src/App.tsx`.
+
+New guards: every drag scenario now asserts the dragged preview stays within 90px of the
+cursor, plus a dedicated scrolled Kurukshetra drag scenario (1280x620, scrollTo 160,
+g2-g4) with screenshot `play-scrolled-during-drag.png`.
+
+Rerun result: passed (`node scripts/run-reference-locked-ui-bug-loop.mjs`, 2026-06-12).
+
 ## Manual Review Answers
 
 - Does the frontend now look Apple-style black/white/graphite? Yes, except the documented tiny Story/Kurukshetra accent lane.
