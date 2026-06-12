@@ -47,6 +47,8 @@ MATS: dict[str, bpy.types.Material] = {}
 def reset_scene() -> None:
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete()
+    for action in list(bpy.data.actions):
+        bpy.data.actions.remove(action)
     bpy.context.scene.render.engine = "CYCLES"
     bpy.context.scene.cycles.samples = 64
     bpy.context.scene.view_settings.view_transform = "Filmic"
@@ -379,6 +381,100 @@ def add_chariot(side: str) -> None:
     add_human(side, "standard", 0.55, (0, 0.12, 0.68))
 
 
+def add_animation_clip(
+    root: bpy.types.Object,
+    name: str,
+    keyframes: Iterable[tuple[int, tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]],
+) -> None:
+    frames = list(keyframes)
+    action = bpy.data.actions.new(name)
+    root.animation_data_create()
+    root.animation_data.action = action
+
+    for frame, location, rotation, scale in frames:
+        root.location = location
+        root.rotation_euler = rotation
+        root.scale = scale
+        root.keyframe_insert(data_path="location", frame=frame)
+        root.keyframe_insert(data_path="rotation_euler", frame=frame)
+        root.keyframe_insert(data_path="scale", frame=frame)
+
+    track = root.animation_data.nla_tracks.new()
+    track.name = name
+    strip = track.strips.new(name, frames[0][0], action)
+    strip.name = name
+    strip.frame_start = frames[0][0]
+    strip.frame_end = frames[-1][0]
+    root.animation_data.action = None
+
+
+def add_runtime_animation_clips(root: bpy.types.Object, role: str) -> None:
+    bpy.context.scene.frame_start = 1
+    bpy.context.scene.frame_end = 72
+    bpy.context.scene.render.fps = 24
+
+    heavy = role in {"war-chariot", "war-elephant-commander"}
+    royal = role == "royal-commander"
+    move_lift = 0.025 if not heavy else 0.014
+    move_sway = math.radians(2.4 if not heavy else 1.2)
+    attack_reach = 0.22 if not heavy else 0.14
+    recoil = 0.12 if not heavy else 0.075
+
+    add_animation_clip(
+        root,
+        "idle",
+        [
+            (1, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+            (24, (0, 0, 0.01), (math.radians(0.45), 0, math.radians(0.6)), (1.006, 1.006, 1.006)),
+            (48, (0, 0, 0), (0, 0, math.radians(-0.45)), (0.997, 0.997, 0.997)),
+            (72, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+        ],
+    )
+    add_animation_clip(
+        root,
+        "move",
+        [
+            (1, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+            (7, (0.016, -0.018, move_lift), (math.radians(-1.6), 0, move_sway), (1, 1, 1)),
+            (13, (0, -0.035, 0), (0, 0, 0), (1, 1, 1)),
+            (19, (-0.016, -0.018, move_lift), (math.radians(-1.3), 0, -move_sway), (1, 1, 1)),
+            (25, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+        ],
+    )
+    add_animation_clip(
+        root,
+        "attack",
+        [
+            (1, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+            (8, (0, 0.035, 0.01), (math.radians(2.5), 0, math.radians(-1.4)), (0.992, 0.992, 0.992)),
+            (14, (0, -attack_reach, 0.018), (math.radians(-7), 0, math.radians(1.8)), (1.018, 1.018, 1.018)),
+            (24, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+        ],
+    )
+    add_animation_clip(
+        root,
+        "hit",
+        [
+            (1, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+            (9, (0, recoil, 0.008), (math.radians(7.5), 0, math.radians(-4)), (0.965, 0.965, 0.965)),
+            (18, (0, recoil * 0.42, 0.0), (math.radians(4), 0, math.radians(2.2)), (0.98, 0.98, 0.98)),
+            (34, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+        ],
+    )
+    add_animation_clip(
+        root,
+        "check",
+        [
+            (1, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+            (10, (0, 0, 0.015), (0, 0, math.radians(1.4)), (1.04, 1.04, 1.04)),
+            (20, (0, 0, 0), (0, 0, math.radians(-1.4)), (0.985, 0.985, 0.985)),
+            (30, (0, 0, 0.012), (0, 0, 0), (1.025 if royal else 1.012, 1.025 if royal else 1.012, 1.025 if royal else 1.012)),
+            (48, (0, 0, 0), (0, 0, 0), (1, 1, 1)),
+        ],
+    )
+    root["animation_clips"] = "idle,move,attack,hit,check"
+
+
 def add_unit(side: str, role: str) -> None:
     reset_scene()
     ensure_materials()
@@ -399,13 +495,14 @@ def add_unit(side: str, role: str) -> None:
     else:
         raise ValueError(role)
 
-    # Add a tiny named root marker and simple animation timing metadata.
+    # Add a tiny named root marker and runtime animation clips.
     root = bpy.data.objects.new(f"{side}-{role}-runtime-root", None)
     bpy.context.collection.objects.link(root)
     for obj in bpy.context.scene.objects:
         if obj is not root and obj.parent is None:
             obj.parent = root
-    root["required_animations"] = "idle,move,attack,hit"
+    add_runtime_animation_clips(root, role)
+    root["required_animations"] = "idle,move,attack,hit,check"
     root["forward_axis"] = "+Y in Blender, converted by glTF import"
     root["origin_policy"] = "ground centered"
 
@@ -424,6 +521,7 @@ def add_unit(side: str, role: str) -> None:
         export_copyright="MIRROR project-authored procedural Blender asset, AGPL-3.0-or-later",
         export_apply=True,
         export_animations=True,
+        export_nla_strips=True,
         export_yup=True,
     )
     print(f"wrote {filepath}")

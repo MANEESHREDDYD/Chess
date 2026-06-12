@@ -13,6 +13,11 @@ artist-sculpted/rigged AAA asset pack. It is allowed to ship as the current
 runtime 3D model pack, but future realism work should replace these files with
 approved higher-fidelity PBR/rigged models using the same filenames.
 
+Animation note: every file in this pack includes named Blender clips for
+`idle`, `move`, `attack`, `hit`, and `check`. The current runtime plays those
+clips with a Three.js `AnimationMixer`; future asset replacements must preserve
+those clip names or update the slot contract and verification script together.
+
 The runtime looks for these exact GLB files:
 
 - `pandava-foot-archer.glb`
@@ -41,9 +46,10 @@ Minimum asset requirements:
   ivory, dust-worn cloth, and ornamentation.
 - Prefer embedded or colocated textures; no external network texture references.
 - Rigged/skinned models are preferred for the next fidelity pass.
-- Animation clips should include: `idle`, `move`, `attack`, `hit`, and optional
-  role-specific clips such as `horse_leap`, `chariot_roll`, `elephant_step`,
-  `check`, and `defeat`.
+- Animation clips must include: `idle`, `move`, `attack`, `hit`, and `check`.
+  Optional role-specific clips such as `horse_leap`, `chariot_roll`,
+  `elephant_step`, and `defeat` may be added after the runtime slot contract is
+  expanded.
 
 If any file is missing, the app renders the procedural mesh fallback and must not
 claim production GLB mode.

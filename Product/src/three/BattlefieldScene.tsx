@@ -165,6 +165,7 @@ export function BattlefieldScene({
             reducedMotion={reducedMotion}
             availableModelUrls={productionModels.availableUrls}
             onSquareClick={handleSquareClick}
+            checked={piece.square === highlights.checkSquare}
           />
         ))}
       </Canvas>

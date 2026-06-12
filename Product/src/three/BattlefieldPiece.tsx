@@ -1,4 +1,4 @@
-import { Suspense, useRef } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
@@ -8,7 +8,7 @@ import {
   type PieceType,
 } from './battlefieldTypes';
 import { BattlefieldProductionUnit } from './BattlefieldProductionUnit';
-import { getBattlefieldModelSlot } from './battlefieldModelSlots';
+import { getBattlefieldModelSlot, type BattlefieldModelAnimationRole } from './battlefieldModelSlots';
 import { ATTACK_LUNGE_MS, CAPTURE_EFFECT_MS } from './useBattlefieldAnimations';
 
 // Volumetric board units. These are real Three.js meshes, not sprites or
@@ -237,11 +237,15 @@ function RealisticUnit({
   color,
   figureRef,
   availableModelUrls,
+  animationRole,
+  reducedMotion,
 }: {
   type: PieceType;
   color: PieceColor;
   figureRef: { current: THREE.Group | null };
   availableModelUrls?: ReadonlySet<string>;
+  animationRole: BattlefieldModelAnimationRole;
+  reducedMotion: boolean;
 }) {
   const modelSlot = getBattlefieldModelSlot(color, type);
   const hasProductionModel = Boolean(availableModelUrls?.has(modelSlot.url));
@@ -260,7 +264,11 @@ function RealisticUnit({
       <group ref={(node) => { figureRef.current = node; }} position={[0, 0, 0]}>
         {hasProductionModel ? (
           <Suspense fallback={<ProceduralFallbackUnit type={type} color={color} />}>
-            <BattlefieldProductionUnit slot={modelSlot} />
+            <BattlefieldProductionUnit
+              slot={modelSlot}
+              animationRole={animationRole}
+              reducedMotion={reducedMotion}
+            />
           </Suspense>
         ) : (
           <ProceduralFallbackUnit type={type} color={color} />
@@ -275,6 +283,7 @@ type BattlefieldPieceProps = {
   reducedMotion: boolean;
   availableModelUrls?: ReadonlySet<string>;
   onSquareClick?: (square: string) => void;
+  checked?: boolean;
 };
 
 export function BattlefieldPiece({
@@ -282,6 +291,7 @@ export function BattlefieldPiece({
   reducedMotion,
   availableModelUrls,
   onSquareClick,
+  checked = false,
 }: BattlefieldPieceProps) {
   const groupRef = useRef<THREE.Group>(null);
   const figureRef = useRef<THREE.Group>(null);
@@ -290,6 +300,13 @@ export function BattlefieldPiece({
   const target = squareToPosition(piece.square);
   const started = useRef(false);
   const animKeyRef = useRef('');
+  const [animationRole, setAnimationRole] = useState<BattlefieldModelAnimationRole>('idle');
+  const animationRoleRef = useRef<BattlefieldModelAnimationRole>('idle');
+  const setAnimationRoleIfChanged = (nextRole: BattlefieldModelAnimationRole) => {
+    if (animationRoleRef.current === nextRole) return;
+    animationRoleRef.current = nextRole;
+    setAnimationRole(nextRole);
+  };
 
   useFrame(({ clock }, delta) => {
     const group = groupRef.current;
@@ -321,6 +338,7 @@ export function BattlefieldPiece({
     const attackActive = attackAge < ATTACK_LUNGE_MS && !reducedMotion;
 
     if (piece.capturedAt !== null) {
+      setAnimationRoleIfChanged(reducedMotion ? 'idle' : 'hit');
       const t = reducedMotion ? 1 : Math.min(1, (now - piece.capturedAt) / CAPTURE_EFFECT_MS);
       const eased = easeOutCubic(t);
       const fallYaw = piece.capturedFromSquare
@@ -350,6 +368,7 @@ export function BattlefieldPiece({
     const dist = Math.hypot(dx, dz);
 
     if (dist > 0.005) {
+      setAnimationRoleIfChanged(reducedMotion ? 'idle' : 'move');
       const total = Math.max(Math.hypot(target[0] - from[0], target[2] - from[2]), 0.001);
       const progress = Math.min(1, Math.max(0, 1 - dist / total));
       const speed = piece.type === 'r' || piece.type === 'q' ? MOVE_SPEED * 0.82 : MOVE_SPEED;
@@ -368,6 +387,8 @@ export function BattlefieldPiece({
         figure.rotation.z = stride * (heavy ? 0.018 : 0.035);
       }
     } else {
+      const settledRole = attackActive ? 'attack' : checked && piece.type === 'k' ? 'check' : 'idle';
+      setAnimationRoleIfChanged(reducedMotion ? 'idle' : settledRole);
       group.position.set(target[0], 0, target[2]);
       group.rotation.y = attackActive ? moveYaw : idleYaw;
       if (figure) {
@@ -403,6 +424,8 @@ export function BattlefieldPiece({
         color={piece.color}
         figureRef={figureRef}
         availableModelUrls={availableModelUrls}
+        animationRole={animationRole}
+        reducedMotion={reducedMotion}
       />
       <group ref={attackRef} visible={false}>
         <mesh geometry={geo.shock} material={mat.shock} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.08, 0.18]} />

@@ -240,11 +240,33 @@ async function assertProductionGlbFiles() {
       try {
         const info = await stat(fullPath);
         if (info.size < 20000) failures.push(`production GLB is unexpectedly small: ${file} (${info.size} bytes)`);
+        const animationNames = readGlbAnimationNames(await readFile(fullPath));
+        const requiredAnimations = file.includes('royal-commander')
+          ? ['idle', 'move', 'attack', 'hit', 'check']
+          : ['idle', 'move', 'attack', 'hit'];
+        for (const animation of requiredAnimations) {
+          if (!animationNames.includes(animation)) {
+            failures.push(`production GLB ${file} missing animation clip: ${animation} (${animationNames.join(', ')})`);
+          }
+        }
       } catch {
         failures.push(`production GLB missing from repo: ${file}`);
       }
     })
   );
+}
+
+function readGlbAnimationNames(buffer) {
+  if (buffer.toString('ascii', 0, 4) !== 'glTF') {
+    throw new Error('not a binary glTF file');
+  }
+  const jsonLength = buffer.readUInt32LE(12);
+  const jsonType = buffer.toString('ascii', 16, 20);
+  if (jsonType !== 'JSON') {
+    throw new Error(`first GLB chunk is not JSON: ${jsonType}`);
+  }
+  const gltf = JSON.parse(buffer.subarray(20, 20 + jsonLength).toString('utf8'));
+  return (gltf.animations ?? []).map((animation) => animation.name).filter(Boolean);
 }
 
 async function assertStage(page, label) {

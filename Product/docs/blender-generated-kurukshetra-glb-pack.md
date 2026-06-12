@@ -43,8 +43,21 @@ The app checks for all 12 GLB files before entering production GLB mode. If any
 file is missing or fails the asset probe, the battlefield falls back to the older
 procedural mesh units.
 
+Each GLB now exports named Blender animation clips:
+
+- `idle`
+- `move`
+- `attack`
+- `hit`
+- `check`
+
+The Three.js runtime plays those clips with an `AnimationMixer` based on the
+piece state. Movement uses `move`, attack/capture timing uses `attack` and
+`hit`, and checked kings use `check`.
+
 The visual check `Product/scripts/run-3d-reference-implementation-check.mjs`
-now fails unless production GLB mode loads.
+now fails unless production GLB mode loads and the GLB files contain the
+required animation clips.
 
 ## Quality Boundary
 
@@ -55,12 +68,12 @@ not final AAA/film/game-quality realism. The generated pack does not include:
 - scanned or hand-painted PBR texture sets
 - realistic cloth simulation
 - skeletal rigs
-- authored idle, move, attack, hit, or defeat animation clips
+- skeletal or per-limb combat animation clips
 - cinematic Harry-Potter-style combat choreography
 
 ## Next 3D Milestone
 
 The next realism pass should replace these files with approved, higher-fidelity
 models using the same filenames and slot contract. That work should add PBR
-materials, rigs, animation clips, and stronger combat motion while preserving
+materials, skeletal rigs, richer combat animation, and stronger motion while preserving
 non-gory capture effects.
