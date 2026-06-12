@@ -720,6 +720,37 @@ html[data-ui-theme='dark'] .analytics-dashboard__metric-card {
   min-width: 0;
 }
 
+/* ---------------------------------------------------------------------------
+   HARD INVARIANT — board ancestors must never become containing blocks.
+   The board library renders its dragged-piece preview with position:fixed
+   (viewport coordinates). transform, filter, backdrop-filter, perspective,
+   will-change and contain on ANY ancestor re-anchor those coordinates to that
+   ancestor, and the dragged coin renders blocks away from the cursor (user-
+   reported twice: scroll-offset via a transformed route wrapper, then again
+   via a backdrop-filter glass card). `!important` is deliberate: this is a
+   correctness invariant, not styling, and it must beat every present and
+   future glass/skeuo polish rule on these containers.
+   ------------------------------------------------------------------------- */
+.ui-card:has(.board-stage),
+.nova-card:has(.board-stage),
+.ui-card:has(.board-frame),
+.play-board-card,
+.play-board-wrap,
+.clue-chess-page__board,
+.game-review__board-area,
+.story-encounter__board,
+.board-shell,
+.board-stage,
+.board-frame {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+  perspective: none !important;
+  will-change: auto !important;
+  contain: none !important;
+}
+
 /* Geometry-true drop-target ring: rendered by BoardView as an overlay (the
    board library's own drop highlight sticks to the source square and ignores
    square-style updates mid-drag). Always exactly under the pointer. */

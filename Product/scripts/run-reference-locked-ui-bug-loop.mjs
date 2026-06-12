@@ -150,6 +150,27 @@ try {
   await assertHistoryStarts(page, 'g4', 'scrolled kurukshetra drag');
   await page.setViewport({ width: 1366, height: 768 });
 
+  // A6c. User-reported 2026-06-12 conditions: DARK + Classic + BLACK
+  // orientation + scrolled page. The grabbed coin must track the cursor and
+  // the ring must sit on the pointer square (regression: transform-bearing
+  // route wrapper offset the fixed-position drag preview by the scroll).
+  await page.setViewport({ width: 1280, height: 620 });
+  await preparePlay(page, { theme: 'standard', uiTheme: 'dark' });
+  await startGame(page, 'black');
+  await page
+    .waitForFunction(() => window.__MIRROR_PLAY_TEST__.getState().history.length >= 1, { timeout: 30000 })
+    .catch(() => failures.push('dark scrolled black-orientation: engine never moved'));
+  await page.evaluate(() => window.scrollTo(0, 140));
+  await sleep(500);
+  await verifiedDrag(page, 'g7', 'g5', 'black', 'scrolled dark classic black-orientation drag', 'play-dark-scrolled-black-during-drag.png');
+  await sleep(1500);
+  const scrolledBlackHist = await page.evaluate(() => window.__MIRROR_PLAY_TEST__.getState().history);
+  if (!scrolledBlackHist.includes('g5')) {
+    failures.push(`scrolled dark black-orientation drag did not land on g5 (history: ${scrolledBlackHist})`);
+  }
+  await assertBoardIntegrity(page, 'scrolled dark black-orientation after move');
+  await page.setViewport({ width: 1366, height: 768 });
+
   // A7. Dark theme drag states (Classic).
   await preparePlay(page, { theme: 'standard', uiTheme: 'dark' });
   await startGame(page, 'white');
@@ -339,21 +360,58 @@ async function verifiedDrag(page, from, to, orientation, label, screenshotName =
             Math.abs(r.left - s.left) < 4 && Math.abs(r.top - s.top) < 4 && Math.abs(r.width - s.width) < 4;
         }
       }
-      // Dragged-piece preview must track the cursor. A transformed ancestor
-      // (e.g. a route-transition wrapper animating transform) turns the
-      // preview's position:fixed into ancestor-relative and the coin renders
-      // far from the pointer — the exact user-reported defect.
+      // Dragged-piece preview must track the cursor. Any ancestor with
+      // transform / filter / backdrop-filter / perspective / will-change /
+      // contain becomes the containing block for the preview's position:fixed
+      // and the coin renders blocks away from the pointer (user-reported
+      // twice). Two guards:
+      //  1) detect the preview node itself (the drag layer is a CLASSLESS
+      //     fixed div holding the piece img/svg — [data-piece] alone misses
+      //     it) and measure its distance to the pointer;
+      //  2) audit every board ancestor for containing-block creators.
       let previewDistance = null;
+      const candidates = new Set();
       for (const p of document.querySelectorAll('[data-piece]')) {
-        if (p.closest('[data-square]')) continue;
+        if (!p.closest('[data-square]')) candidates.add(p);
+      }
+      for (const el of document.querySelectorAll('div, img, svg')) {
+        const s = getComputedStyle(el);
+        if (s.position !== 'fixed') continue;
+        if (el.closest('.nova-appearance, .nova-header, .nova-popover__panel, .nova-nav')) continue;
+        const r0 = el.getBoundingClientRect();
+        if (r0.width === 0 || r0.width > 160 || r0.height > 160) continue;
+        if (el.tagName === 'IMG' || el.tagName === 'svg' || el.querySelector('img, svg')) candidates.add(el);
+      }
+      for (const p of candidates) {
         const b = p.getBoundingClientRect();
         if (b.width === 0) continue;
-        const cx = b.x + b.width / 2;
-        const cy = b.y + b.height / 2;
-        const d = Math.hypot(cx - px, cy - py);
+        // Headless CDP drags give react-dnd no drag offset, so its layer
+        // parks at the viewport origin — that is a harness artifact, not a
+        // mis-anchored preview (real browsers feed real coordinates). The
+        // ancestor containing-block audit below is the deterministic guard.
+        if (b.x < 4 && b.y < 4) continue;
+        const d = Math.hypot(b.x + b.width / 2 - px, b.y + b.height / 2 - py);
         previewDistance = previewDistance === null ? d : Math.min(previewDistance, d);
       }
-      return { pointerSquare, highlightSquare, ringOnSquare, previewDistance };
+      const containingBlockers = [];
+      let anc = document.querySelector('[data-qa="board-stage"]');
+      while (anc && anc !== document.documentElement) {
+        const s = getComputedStyle(anc);
+        const reasons = [];
+        if (s.transform !== 'none') reasons.push('transform');
+        if (s.filter !== 'none') reasons.push('filter');
+        if (s.backdropFilter && s.backdropFilter !== 'none') reasons.push('backdrop-filter');
+        if (s.perspective !== 'none') reasons.push('perspective');
+        if (/transform|filter|perspective/.test(s.willChange ?? '')) reasons.push('will-change');
+        if (/layout|paint|strict|content/.test(s.contain ?? '')) reasons.push('contain');
+        if (reasons.length) {
+          containingBlockers.push(
+            `${anc.tagName.toLowerCase()}.${(anc.className ?? '').toString().split(' ')[0]}[${reasons.join(',')}]`
+          );
+        }
+        anc = anc.parentElement;
+      }
+      return { pointerSquare, highlightSquare, ringOnSquare, previewDistance, containingBlockers };
     },
     { geometry: GEOMETRY_SNIPPET, px: b.x, py: b.y, orient: orientation }
   );
@@ -372,6 +430,9 @@ async function verifiedDrag(page, from, to, orientation, label, screenshotName =
   }
   if (mid.previewDistance !== null && mid.previewDistance > 90) {
     failures.push(`${label}: dragged piece preview is ${Math.round(mid.previewDistance)}px from the cursor`);
+  }
+  if (mid.containingBlockers && mid.containingBlockers.length > 0) {
+    failures.push(`${label}: board ancestor creates a fixed-position containing block: ${mid.containingBlockers.join('; ')}`);
   }
 
   if (screenshotName) {
