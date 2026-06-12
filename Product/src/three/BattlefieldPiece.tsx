@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
@@ -7,6 +7,8 @@ import {
   type PieceColor,
   type PieceType,
 } from './battlefieldTypes';
+import { BattlefieldProductionUnit } from './BattlefieldProductionUnit';
+import { getBattlefieldModelSlot } from './battlefieldModelSlots';
 import { ATTACK_LUNGE_MS, CAPTURE_EFFECT_MS } from './useBattlefieldAnimations';
 
 // Volumetric board units. These are real Three.js meshes, not sprites or
@@ -221,15 +223,28 @@ function WarChariot({ color }: { color: PieceColor }) {
   );
 }
 
+function ProceduralFallbackUnit({ type, color }: { type: PieceType; color: PieceColor }) {
+  if (type === 'p') return <Humanoid color={color} variant="archer" scale={0.86} />;
+  if (type === 'n') return <HorseArcher color={color} />;
+  if (type === 'b') return <Humanoid color={color} variant="standard" scale={0.9} />;
+  if (type === 'r') return <WarChariot color={color} />;
+  if (type === 'q') return <WarElephant color={color} />;
+  return <Humanoid color={color} variant="commander" scale={0.98} />;
+}
+
 function RealisticUnit({
   type,
   color,
   figureRef,
+  availableModelUrls,
 }: {
   type: PieceType;
   color: PieceColor;
   figureRef: { current: THREE.Group | null };
+  availableModelUrls?: ReadonlySet<string>;
 }) {
+  const modelSlot = getBattlefieldModelSlot(color, type);
+  const hasProductionModel = Boolean(availableModelUrls?.has(modelSlot.url));
   const shadowScale: Record<PieceType, [number, number, number]> = {
     p: [0.34, 0.25, 1],
     n: [0.56, 0.4, 1],
@@ -243,12 +258,13 @@ function RealisticUnit({
     <group name={`volumetric-${color}${type}`}>
       <ContactShadow scale={shadowScale[type]} />
       <group ref={(node) => { figureRef.current = node; }} position={[0, 0, 0]}>
-        {type === 'p' ? <Humanoid color={color} variant="archer" scale={0.86} /> : null}
-        {type === 'n' ? <HorseArcher color={color} /> : null}
-        {type === 'b' ? <Humanoid color={color} variant="standard" scale={0.9} /> : null}
-        {type === 'r' ? <WarChariot color={color} /> : null}
-        {type === 'q' ? <WarElephant color={color} /> : null}
-        {type === 'k' ? <Humanoid color={color} variant="commander" scale={0.98} /> : null}
+        {hasProductionModel ? (
+          <Suspense fallback={<ProceduralFallbackUnit type={type} color={color} />}>
+            <BattlefieldProductionUnit slot={modelSlot} />
+          </Suspense>
+        ) : (
+          <ProceduralFallbackUnit type={type} color={color} />
+        )}
       </group>
     </group>
   );
@@ -257,10 +273,16 @@ function RealisticUnit({
 type BattlefieldPieceProps = {
   piece: BattlefieldPieceInstance;
   reducedMotion: boolean;
+  availableModelUrls?: ReadonlySet<string>;
   onSquareClick?: (square: string) => void;
 };
 
-export function BattlefieldPiece({ piece, reducedMotion, onSquareClick }: BattlefieldPieceProps) {
+export function BattlefieldPiece({
+  piece,
+  reducedMotion,
+  availableModelUrls,
+  onSquareClick,
+}: BattlefieldPieceProps) {
   const groupRef = useRef<THREE.Group>(null);
   const figureRef = useRef<THREE.Group>(null);
   const dustRef = useRef<THREE.Group>(null);
@@ -376,7 +398,12 @@ export function BattlefieldPiece({ piece, reducedMotion, onSquareClick }: Battle
         onSquareClick(piece.square);
       }}
     >
-      <RealisticUnit type={piece.type} color={piece.color} figureRef={figureRef} />
+      <RealisticUnit
+        type={piece.type}
+        color={piece.color}
+        figureRef={figureRef}
+        availableModelUrls={availableModelUrls}
+      />
       <group ref={attackRef} visible={false}>
         <mesh geometry={geo.shock} material={mat.shock} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.08, 0.18]} />
         <mesh geometry={geo.spark} material={mat.spark} rotation={[0.9, 0.1, -0.35]} position={[0.13, 0.28, 0.18]} />

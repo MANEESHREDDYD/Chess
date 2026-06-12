@@ -6,6 +6,7 @@ import { BattlefieldCamera } from './BattlefieldCamera';
 import { BattlefieldDust } from './BattlefieldEffects';
 import { BattlefieldPiece } from './BattlefieldPiece';
 import { BattlefieldProps } from './BattlefieldProps';
+import { useBattlefieldProductionModels } from './useBattlefieldProductionModels';
 import { useBattlefieldPieces } from './useBattlefieldAnimations';
 import type { BattlefieldHighlights, SquareName } from './battlefieldTypes';
 
@@ -36,6 +37,7 @@ export function BattlefieldScene({
 }: BattlefieldSceneProps) {
   const [selected, setSelected] = useState<SquareName | null>(null);
   const pieces = useBattlefieldPieces(fen);
+  const productionModels = useBattlefieldProductionModels();
 
   const helpers = useMemo(() => {
     try {
@@ -95,11 +97,28 @@ export function BattlefieldScene({
 
   useEffect(() => {
     const w = window as typeof window & {
-      __BATTLEFIELD_TEST__?: { clickSquare: (square: string) => void; selected: () => string | null };
+      __BATTLEFIELD_TEST__?: {
+        clickSquare: (square: string) => void;
+        selected: () => string | null;
+        modelStatus: () => {
+          mode: string;
+          checked: boolean;
+          available: number;
+          detected: number;
+          missing: number;
+        };
+      };
     };
     w.__BATTLEFIELD_TEST__ = {
       clickSquare: (square: string) => handleSquareClick(square),
       selected: () => selected,
+      modelStatus: () => ({
+        mode: productionModels.mode,
+        checked: productionModels.checked,
+        available: productionModels.availableUrls.size,
+        detected: productionModels.detectedUrls.size,
+        missing: productionModels.missingUrls.length,
+      }),
     };
     return () => {
       delete w.__BATTLEFIELD_TEST__;
@@ -144,6 +163,7 @@ export function BattlefieldScene({
             key={piece.id}
             piece={piece}
             reducedMotion={reducedMotion}
+            availableModelUrls={productionModels.availableUrls}
             onSquareClick={handleSquareClick}
           />
         ))}

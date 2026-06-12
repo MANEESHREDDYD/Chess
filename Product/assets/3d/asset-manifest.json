@@ -37,6 +37,19 @@
       "notes": "Actual runtime playable units: mesh soldiers, horse archers, advisor/standard bearers, chariots, war elephants, royal commanders, weapons, contact shadows, attacker lunge, and non-gory capture impact/fall/dust."
     },
     {
+      "name": "Kurukshetra production GLB model slots",
+      "filename": "Product/public/assets/3d/kurukshetra-production-v1/README.md",
+      "source": "procedural",
+      "author": "MIRROR project",
+      "license": "AGPL-3.0-or-later (project code)",
+      "dateAdded": "2026-06-12",
+      "allowedUse": "unrestricted within the project",
+      "modifications": "n/a (asset contract only)",
+      "attributionRequirement": "none",
+      "aiGenerated": false,
+      "notes": "Runtime slot contract for approved production GLB models. The actual GLB files are intentionally absent until licensed or project-authored models are approved."
+    },
+    {
       "name": "Procedural battlefield environment and effects",
       "filename": "(none - generated in code: Product/src/three/*.tsx)",
       "source": "procedural",

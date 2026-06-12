@@ -55,6 +55,22 @@ try {
   await page.goto(`${BASE_URL}/play?stockfishBootCheck=1`, { waitUntil: 'networkidle0', timeout: 60000 });
   await page.waitForSelector('[data-qa="battlefield-3d"] canvas', { timeout: 25000 });
   await page.waitForFunction(() => Boolean(window.__MIRROR_PLAY_TEST__ && window.__BATTLEFIELD_TEST__), { timeout: 15000 });
+  const modelStatus = await page.evaluate(async () => {
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    for (let i = 0; i < 30; i += 1) {
+      const status = window.__BATTLEFIELD_TEST__.modelStatus?.();
+      if (status?.checked) return status;
+      await sleep(100);
+    }
+    return window.__BATTLEFIELD_TEST__.modelStatus?.() ?? null;
+  });
+  if (!modelStatus?.checked) failures.push(`3D model-pack status did not resolve (${JSON.stringify(modelStatus)})`);
+  if (modelStatus && modelStatus.mode === 'production-glb' && modelStatus.missing !== 0) {
+    failures.push(`production GLB mode has missing models (${JSON.stringify(modelStatus)})`);
+  }
+  if (modelStatus && modelStatus.mode === 'procedural-fallback' && modelStatus.detected > 0) {
+    failures.push(`partial production GLB pack detected; require all 12 models before mixed rendering (${JSON.stringify(modelStatus)})`);
+  }
   await page.evaluate(async () => {
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     window.__MIRROR_PLAY_TEST__.startGame('white', 'Casual');
@@ -158,12 +174,14 @@ try {
 }
 
 async function assertReferenceTerms() {
-  const [pieces, props, manifest] = await Promise.all([
+  const [pieces, props, modelSlots, productionReadme, manifest] = await Promise.all([
     readFile(path.resolve('src/three/BattlefieldPiece.tsx'), 'utf8'),
     readFile(path.resolve('src/three/BattlefieldProps.tsx'), 'utf8'),
+    readFile(path.resolve('src/three/battlefieldModelSlots.ts'), 'utf8'),
+    readFile(path.resolve('public/assets/3d/kurukshetra-production-v1/README.md'), 'utf8'),
     readFile(path.resolve('assets/3d/asset-manifest.json'), 'utf8'),
   ]);
-  const combined = `${pieces}\n${props}\n${manifest}`;
+  const combined = `${pieces}\n${props}\n${modelSlots}\n${productionReadme}\n${manifest}`;
   for (const forbidden of ['<sprite', 'spriteMaterial', 'ringMaterials', 'baseGeo']) {
     if (pieces.includes(forbidden)) failures.push(`camera-facing/base-marker implementation still present: ${forbidden}`);
   }
@@ -178,6 +196,10 @@ async function assertReferenceTerms() {
     'generated-image',
     'Volumetric board units',
     'not sprites or',
+    'kurukshetra-production-v1',
+    'pandava-foot-archer.glb',
+    'kaurava-war-elephant-commander.glb',
+    'production GLB',
     'WarElephant',
     'DistantFort',
   ]) {
