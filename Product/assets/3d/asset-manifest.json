@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-11",
+  "updated": "2026-06-12",
   "policy": "Every 3D asset must be declared here before use. Generated images are original project assets based on user-provided visual direction only; reference images are not copied or stored.",
   "assets": [
     {
@@ -37,17 +37,30 @@
       "notes": "Actual runtime playable units: mesh soldiers, horse archers, advisor/standard bearers, chariots, war elephants, royal commanders, weapons, contact shadows, attacker lunge, and non-gory capture impact/fall/dust."
     },
     {
-      "name": "Kurukshetra production GLB model slots",
-      "filename": "Product/public/assets/3d/kurukshetra-production-v1/README.md",
+      "name": "Blender-generated Kurukshetra production GLB pack",
+      "filenames": [
+        "Product/public/assets/3d/kurukshetra-production-v1/pandava-foot-archer.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/kaurava-foot-archer.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/pandava-horse-archer.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/kaurava-horse-archer.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/pandava-advisor-standard-bearer.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/kaurava-advisor-standard-bearer.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/pandava-war-chariot.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/kaurava-war-chariot.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/pandava-war-elephant-commander.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/kaurava-war-elephant-commander.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/pandava-royal-commander.glb",
+        "Product/public/assets/3d/kurukshetra-production-v1/kaurava-royal-commander.glb"
+      ],
       "source": "procedural",
       "author": "MIRROR project",
       "license": "AGPL-3.0-or-later (project code)",
       "dateAdded": "2026-06-12",
       "allowedUse": "unrestricted within the project",
-      "modifications": "n/a (asset contract only)",
+      "modifications": "Generated with Product/scripts/generate-kurukshetra-production-glbs.py in Blender 5.1; future approved PBR/rigged replacements must preserve these slot filenames.",
       "attributionRequirement": "none",
       "aiGenerated": false,
-      "notes": "Runtime slot contract for approved production GLB models. The actual GLB files are intentionally absent until licensed or project-authored models are approved."
+      "notes": "Original project-authored Blender geometry for Pandava/Kaurava foot archers, horse archers, advisor standard bearers, war chariots, war elephant commanders, and royal commanders. This upgrades the runtime from fallback meshes, but it is still not a final AAA scanned/rigged realism pack."
     },
     {
       "name": "Procedural battlefield environment and effects",

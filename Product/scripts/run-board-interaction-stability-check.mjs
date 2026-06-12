@@ -47,9 +47,22 @@ try {
     await clickSquare(page, 'e2');
     await sleep(150);
     await clickSquare(page, 'e4');
-    await sleep(2500); // our move + engine reply + animations settle
+    await sleep(600);
+    const engineRepliedAfterClick = await page
+      .waitForFunction(
+        () => {
+          const state = window.__MIRROR_PLAY_TEST__.getState();
+          return !state.engineThinking && state.history.length >= 2;
+        },
+        { timeout: 30000 }
+      )
+      .then(() => true)
+      .catch(() => false);
     const afterClickMove = await boardState(page);
     if (!afterClickMove.historyStartsE4) failures.push(`click-to-move failed (history: ${afterClickMove.history})`);
+    if (!engineRepliedAfterClick) {
+      failures.push(`engine did not reply before drag phase (history: ${afterClickMove.history})`);
+    }
     if (afterClickMove.pieceCount !== 32) failures.push(`piece count after opening moves is ${afterClickMove.pieceCount}, expected 32`);
     if (afterClickMove.escaped > 0) failures.push(`${afterClickMove.escaped} piece(s) rendered outside the board frame`);
     if (afterClickMove.duplicates.length > 0) failures.push(`duplicate piece on square(s): ${afterClickMove.duplicates.join(', ')}`);

@@ -7,7 +7,7 @@
  */
 import puppeteer from 'puppeteer';
 import { spawn } from 'node:child_process';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { inflateSync } from 'node:zlib';
 
@@ -22,7 +22,8 @@ let browser = null;
 
 try {
   await mkdir(ARTIFACT_DIR, { recursive: true });
-  assertReferenceTerms();
+  await assertReferenceTerms();
+  await assertProductionGlbFiles();
 
   if (!(await isServerReachable())) {
     server = startDevServer();
@@ -65,6 +66,9 @@ try {
     return window.__BATTLEFIELD_TEST__.modelStatus?.() ?? null;
   });
   if (!modelStatus?.checked) failures.push(`3D model-pack status did not resolve (${JSON.stringify(modelStatus)})`);
+  if (modelStatus?.mode !== 'production-glb') {
+    failures.push(`3D scene did not load production GLB mode (${JSON.stringify(modelStatus)})`);
+  }
   if (modelStatus && modelStatus.mode === 'production-glb' && modelStatus.missing !== 0) {
     failures.push(`production GLB mode has missing models (${JSON.stringify(modelStatus)})`);
   }
@@ -79,6 +83,12 @@ try {
   await sleep(1200);
   await assertStage(page, 'desktop initial');
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'reference-3d-desktop-initial.png'), fullPage: true });
+  await assertCameraInspectionControls(page);
+  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'reference-3d-camera-pan-zoom.png'), fullPage: true });
+  await page.reload({ waitUntil: 'networkidle0', timeout: 60000 });
+  await page.waitForSelector('[data-qa="battlefield-3d"] canvas', { timeout: 25000 });
+  await page.waitForFunction(() => Boolean(window.__MIRROR_PLAY_TEST__ && window.__BATTLEFIELD_TEST__), { timeout: 15000 });
+  await sleep(1200);
 
   const move = await page.evaluate(async () => {
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -200,11 +210,41 @@ async function assertReferenceTerms() {
     'pandava-foot-archer.glb',
     'kaurava-war-elephant-commander.glb',
     'production GLB',
+    'Blender-generated',
     'WarElephant',
     'DistantFort',
   ]) {
     if (!combined.includes(term)) failures.push(`reference-guided implementation term missing: ${term}`);
   }
+}
+
+async function assertProductionGlbFiles() {
+  const files = [
+    'pandava-foot-archer.glb',
+    'kaurava-foot-archer.glb',
+    'pandava-horse-archer.glb',
+    'kaurava-horse-archer.glb',
+    'pandava-advisor-standard-bearer.glb',
+    'kaurava-advisor-standard-bearer.glb',
+    'pandava-war-chariot.glb',
+    'kaurava-war-chariot.glb',
+    'pandava-war-elephant-commander.glb',
+    'kaurava-war-elephant-commander.glb',
+    'pandava-royal-commander.glb',
+    'kaurava-royal-commander.glb',
+  ];
+
+  await Promise.all(
+    files.map(async (file) => {
+      const fullPath = path.resolve('public/assets/3d/kurukshetra-production-v1', file);
+      try {
+        const info = await stat(fullPath);
+        if (info.size < 20000) failures.push(`production GLB is unexpectedly small: ${file} (${info.size} bytes)`);
+      } catch {
+        failures.push(`production GLB missing from repo: ${file}`);
+      }
+    })
+  );
 }
 
 async function assertStage(page, label) {
@@ -240,6 +280,44 @@ async function assertStage(page, label) {
     if (pixels.nonBlank < 500) failures.push(`${label}: stage screenshot appears blank (${pixels.nonBlank} nonblank samples)`);
     if (pixels.variation < 200) failures.push(`${label}: stage screenshot has too little visual variation (${pixels.variation})`);
   }
+}
+
+async function assertCameraInspectionControls(page) {
+  await page.waitForFunction(() => Boolean(window.__BATTLEFIELD_CAMERA_TEST__?.state?.()), { timeout: 10000 });
+  const before = await page.evaluate(() => window.__BATTLEFIELD_CAMERA_TEST__.state());
+  const rect = await page.evaluate(() => {
+    const stage = document.querySelector('[data-qa="battlefield-3d"]');
+    const box = stage?.getBoundingClientRect();
+    if (!box) return null;
+    return { left: box.left, top: box.top, width: box.width, height: box.height };
+  });
+  if (!rect) {
+    failures.push('camera inspection controls: 3D stage missing');
+    return;
+  }
+
+  await page.mouse.move(rect.left + rect.width * 0.78, rect.top + rect.height * 0.58);
+  await page.mouse.wheel({ deltaY: -700 });
+  await sleep(500);
+  const zoomed = await page.evaluate(() => window.__BATTLEFIELD_CAMERA_TEST__.state());
+  if (distance3(before.position, zoomed.position) < 0.1) {
+    failures.push(`camera inspection controls: wheel zoom did not move camera (${JSON.stringify({ before, zoomed })})`);
+  }
+
+  await page.mouse.move(rect.left + rect.width * 0.55, rect.top + rect.height * 0.55);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(rect.left + rect.width * 0.32, rect.top + rect.height * 0.46, { steps: 10 });
+  await page.mouse.up({ button: 'right' });
+  await sleep(500);
+  const panned = await page.evaluate(() => window.__BATTLEFIELD_CAMERA_TEST__.state());
+  if (!zoomed.target || !panned.target || distance3(zoomed.target, panned.target) < 0.05) {
+    failures.push(`camera inspection controls: pan did not move orbit target (${JSON.stringify({ zoomed, panned })})`);
+  }
+}
+
+function distance3(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
 function analyzePng(buffer) {

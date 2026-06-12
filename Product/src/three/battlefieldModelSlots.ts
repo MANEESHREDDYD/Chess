@@ -41,12 +41,12 @@ const FILE_BY_TYPE: Record<PieceType, string> = {
 };
 
 const SCALE_BY_TYPE: Record<PieceType, number> = {
-  p: 0.42,
-  n: 0.48,
-  b: 0.44,
-  r: 0.5,
+  p: 0.5,
+  n: 0.52,
+  b: 0.5,
+  r: 0.54,
   q: 0.52,
-  k: 0.46,
+  k: 0.52,
 };
 
 const REQUIRED_ANIMATIONS_BY_TYPE: Record<PieceType, BattlefieldModelAnimationRole[]> = {

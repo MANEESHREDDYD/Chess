@@ -1,7 +1,17 @@
 # Kurukshetra Production GLB Pack
 
-This folder is intentionally empty until approved, licensed, production-quality
-3D assets are available.
+This folder contains the first project-authored Blender GLB pack for the
+Kurukshetra battlefield.
+
+These files replace the previous procedural fallback at runtime when every slot
+is present. They are original generated geometry authored by the MIRROR project
+with Blender 5.1 from the user's approved visual direction. They are not copied
+from copyrighted reference images, games, films, or third-party model libraries.
+
+Quality note: this is a Blender-generated production pack, not a final
+artist-sculpted/rigged AAA asset pack. It is allowed to ship as the current
+runtime 3D model pack, but future realism work should replace these files with
+approved higher-fidelity PBR/rigged models using the same filenames.
 
 The runtime looks for these exact GLB files:
 
@@ -30,10 +40,10 @@ Minimum asset requirements:
 - PBR materials for skin, leather, fabric, bronze, steel, wood, horse, elephant,
   ivory, dust-worn cloth, and ornamentation.
 - Prefer embedded or colocated textures; no external network texture references.
-- Rigged/skinned models are preferred.
+- Rigged/skinned models are preferred for the next fidelity pass.
 - Animation clips should include: `idle`, `move`, `attack`, `hit`, and optional
   role-specific clips such as `horse_leap`, `chariot_roll`, `elephant_step`,
   `check`, and `defeat`.
 
-Until these files exist, the app renders the procedural mesh fallback and must
-not claim final realistic 3D.
+If any file is missing, the app renders the procedural mesh fallback and must not
+claim production GLB mode.
