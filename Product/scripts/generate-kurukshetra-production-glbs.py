@@ -475,7 +475,269 @@ def add_runtime_animation_clips(root: bpy.types.Object, role: str) -> None:
     root["animation_clips"] = "idle,move,attack,hit,check"
 
 
+# ---------------------------------------------------------------------------
+# Skeletal rig for the standalone humanoid units (foot archer, advisor-standard
+# bearer, royal commander). These units are joined into a single skinned mesh,
+# bound to an armature with per-limb bones, and animated with real bone poses so
+# the runtime plays articulated motion instead of a whole-body transform clip.
+# Mounted/vehicle units keep the lighter whole-object clip path above.
+# ---------------------------------------------------------------------------
+
+# (name, head, tail, parent) — rest pose matches the geometry built by add_human.
+HUMANOID_BONES = [
+    ("hips", (0.0, 0.0, 0.86), (0.0, 0.0, 1.04), None),
+    ("spine", (0.0, 0.0, 1.04), (0.0, 0.0, 1.26), "hips"),
+    ("chest", (0.0, 0.0, 1.26), (0.0, 0.0, 1.46), "spine"),
+    ("neck", (0.0, 0.0, 1.46), (0.0, 0.0, 1.55), "chest"),
+    ("head", (0.0, 0.0, 1.55), (0.0, 0.0, 1.76), "neck"),
+    ("shoulder.L", (-0.04, 0.0, 1.38), (-0.14, 0.0, 1.28), "chest"),
+    ("upperarm.L", (-0.14, 0.0, 1.28), (-0.31, -0.03, 1.06), "shoulder.L"),
+    ("forearm.L", (-0.31, -0.03, 1.06), (-0.38, -0.12, 0.89), "upperarm.L"),
+    ("hand.L", (-0.38, -0.12, 0.89), (-0.44, -0.2, 0.8), "forearm.L"),
+    ("shoulder.R", (0.04, 0.0, 1.38), (0.14, 0.0, 1.28), "chest"),
+    ("upperarm.R", (0.14, 0.0, 1.28), (0.31, -0.03, 1.06), "shoulder.R"),
+    ("forearm.R", (0.31, -0.03, 1.06), (0.39, -0.13, 0.9), "upperarm.R"),
+    ("hand.R", (0.39, -0.13, 0.9), (0.46, -0.2, 0.82), "forearm.R"),
+    ("thigh.L", (-0.07, 0.0, 0.82), (-0.07, 0.0, 0.42), "hips"),
+    ("shin.L", (-0.07, 0.0, 0.42), (-0.07, 0.0, 0.06), "thigh.L"),
+    ("foot.L", (-0.07, 0.0, 0.06), (-0.07, -0.1, 0.0), "shin.L"),
+    ("thigh.R", (0.07, 0.0, 0.82), (0.07, 0.0, 0.42), "hips"),
+    ("shin.R", (0.07, 0.0, 0.42), (0.07, 0.0, 0.06), "thigh.R"),
+    ("foot.R", (0.07, 0.0, 0.06), (0.07, -0.1, 0.0), "shin.R"),
+]
+
+
+def _point_segment_distance(p: Vector, a: Vector, b: Vector) -> float:
+    ab = b - a
+    denom = ab.length_squared
+    if denom < 1e-9:
+        return (p - a).length
+    t = max(0.0, min(1.0, (p - a).dot(ab) / denom))
+    return (p - (a + ab * t)).length
+
+
+def merge_unit_to_mesh(root: bpy.types.Object, name: str) -> bpy.types.Object:
+    """Convert curves, unparent, apply transforms, and join into one mesh."""
+    bpy.ops.object.mode_set(mode="OBJECT")
+    children = [o for o in bpy.data.objects if o.parent is root]
+    for obj in children:
+        if obj.type == "CURVE":
+            bpy.ops.object.select_all(action="DESELECT")
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.convert(target="MESH")
+    children = [o for o in bpy.data.objects if o.parent is root and o.type == "MESH"]
+
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in children:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = children[0]
+    bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
+
+    bpy.ops.object.select_all(action="DESELECT")
+    root.select_set(True)
+    bpy.context.view_layer.objects.active = root
+    bpy.ops.object.delete()
+
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in children:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = children[0]
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    bpy.ops.object.join()
+
+    body = bpy.context.view_layer.objects.active
+    body.name = name
+    return body
+
+
+def build_humanoid_armature(name: str) -> bpy.types.Object:
+    arm_data = bpy.data.armatures.new(f"{name} skeleton")
+    arm = bpy.data.objects.new(name, arm_data)
+    bpy.context.collection.objects.link(arm)
+    bpy.ops.object.select_all(action="DESELECT")
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode="EDIT")
+    created: dict[str, bpy.types.EditBone] = {}
+    for bname, head, tail, parent in HUMANOID_BONES:
+        bone = arm_data.edit_bones.new(bname)
+        bone.head = head
+        bone.tail = tail
+        bone.use_connect = False
+        if parent:
+            bone.parent = created[parent]
+        created[bname] = bone
+    bpy.ops.object.mode_set(mode="OBJECT")
+    return arm
+
+
+def bind_mesh_to_armature(body: bpy.types.Object, arm: bpy.types.Object) -> None:
+    # Drop the leftover bevel/weighted-normal modifiers inherited from the join
+    # so the skinned glTF export does not re-evaluate them on every sampled frame.
+    for mod in list(body.modifiers):
+        body.modifiers.remove(mod)
+    bones = [
+        (b.name, Vector(b.head_local), Vector(b.tail_local))
+        for b in arm.data.bones
+    ]
+    groups = {name: body.vertex_groups.new(name=name) for name, _, _ in bones}
+    for vert in body.data.vertices:
+        co = vert.co
+        best_name = None
+        best_dist = 1e9
+        for name, head, tail in bones:
+            dist = _point_segment_distance(co, head, tail)
+            if dist < best_dist:
+                best_dist = dist
+                best_name = name
+        groups[best_name].add([vert.index], 1.0, "REPLACE")
+    body.parent = arm
+    modifier = body.modifiers.new("Armature", "ARMATURE")
+    modifier.object = arm
+
+
+def _pose_clip(arm: bpy.types.Object, name: str, entries) -> None:
+    """entries: list of (frame, {bone: (rx, ry, rz) radians}, (lx, ly, lz) | None)."""
+    action = bpy.data.actions.new(name)
+    arm.animation_data_create()
+    arm.animation_data.action = action
+    for pbone in arm.pose.bones:
+        pbone.rotation_mode = "XYZ"
+    for frame, rotations, loc in entries:
+        for bname, rot in rotations.items():
+            pbone = arm.pose.bones[bname]
+            pbone.rotation_euler = rot
+            pbone.keyframe_insert(data_path="rotation_euler", frame=frame)
+        if loc is not None:
+            arm.location = loc
+            arm.keyframe_insert(data_path="location", frame=frame)
+    track = arm.animation_data.nla_tracks.new()
+    track.name = name
+    strip = track.strips.new(name, int(action.frame_range[0]), action)
+    strip.name = name
+    arm.animation_data.action = None
+    arm.location = (0.0, 0.0, 0.0)
+
+
+def animate_humanoid(arm: bpy.types.Object, role: str) -> None:
+    bpy.context.scene.frame_start = 1
+    bpy.context.scene.frame_end = 72
+    bpy.context.scene.render.fps = 24
+    r = math.radians
+    zero = (0.0, 0.0, 0.0)
+
+    _pose_clip(
+        arm,
+        "idle",
+        [
+            (1, {"chest": zero, "head": zero, "upperarm.L": zero, "upperarm.R": zero}, (0, 0, 0)),
+            (24, {"chest": (r(1.2), 0, 0), "head": (r(-1.0), 0, r(0.8)), "upperarm.L": (r(2.0), 0, 0), "upperarm.R": (r(2.0), 0, 0)}, (0, 0, 0.006)),
+            (48, {"chest": (r(-0.6), 0, 0), "head": (r(0.6), 0, r(-0.8)), "upperarm.L": (r(-1.0), 0, 0), "upperarm.R": (r(-1.0), 0, 0)}, (0, 0, 0)),
+            (72, {"chest": zero, "head": zero, "upperarm.L": zero, "upperarm.R": zero}, (0, 0, 0)),
+        ],
+    )
+
+    _pose_clip(
+        arm,
+        "move",
+        [
+            (1, {"thigh.L": zero, "thigh.R": zero, "shin.L": zero, "shin.R": zero, "upperarm.L": zero, "upperarm.R": zero, "spine": zero}, (0, 0, 0)),
+            (7, {"thigh.L": (r(24), 0, 0), "thigh.R": (r(-22), 0, 0), "shin.L": (r(-18), 0, 0), "shin.R": (r(10), 0, 0), "upperarm.L": (r(-16), 0, 0), "upperarm.R": (r(16), 0, 0), "spine": (r(2), 0, 0)}, (0, 0, 0.02)),
+            (13, {"thigh.L": zero, "thigh.R": zero, "shin.L": zero, "shin.R": zero, "upperarm.L": zero, "upperarm.R": zero, "spine": zero}, (0, 0, 0)),
+            (19, {"thigh.L": (r(-22), 0, 0), "thigh.R": (r(24), 0, 0), "shin.L": (r(10), 0, 0), "shin.R": (r(-18), 0, 0), "upperarm.L": (r(16), 0, 0), "upperarm.R": (r(-16), 0, 0), "spine": (r(2), 0, 0)}, (0, 0, 0.02)),
+            (25, {"thigh.L": zero, "thigh.R": zero, "shin.L": zero, "shin.R": zero, "upperarm.L": zero, "upperarm.R": zero, "spine": zero}, (0, 0, 0)),
+        ],
+    )
+
+    if role == "foot-archer":
+        attack = [
+            (1, {"chest": zero, "upperarm.L": zero, "forearm.L": zero, "upperarm.R": zero, "forearm.R": zero}, None),
+            (8, {"chest": (0, 0, r(10)), "upperarm.L": (r(-6), 0, r(18)), "forearm.L": (r(8), 0, r(34)), "upperarm.R": (r(-8), 0, r(-8)), "forearm.R": (r(-6), 0, 0)}, None),
+            (14, {"chest": (0, 0, r(-4)), "upperarm.L": (r(-4), 0, r(-10)), "forearm.L": (r(-14), 0, r(-12)), "upperarm.R": (r(-8), 0, r(-8)), "forearm.R": (r(-6), 0, 0)}, None),
+            (24, {"chest": zero, "upperarm.L": zero, "forearm.L": zero, "upperarm.R": zero, "forearm.R": zero}, None),
+        ]
+    else:
+        attack = [
+            (1, {"chest": zero, "upperarm.R": zero, "forearm.R": zero, "spine": zero}, None),
+            (8, {"chest": (0, 0, r(-12)), "upperarm.R": (r(-40), 0, 0), "forearm.R": (r(-20), 0, 0), "spine": (r(-3), 0, 0)}, None),
+            (14, {"chest": (0, 0, r(8)), "upperarm.R": (r(46), 0, 0), "forearm.R": (r(20), 0, 0), "spine": (r(5), 0, 0)}, None),
+            (24, {"chest": zero, "upperarm.R": zero, "forearm.R": zero, "spine": zero}, None),
+        ]
+    _pose_clip(arm, "attack", attack)
+
+    _pose_clip(
+        arm,
+        "hit",
+        [
+            (1, {"spine": zero, "chest": zero, "head": zero, "upperarm.L": zero, "upperarm.R": zero}, (0, 0, 0)),
+            (9, {"spine": (r(14), 0, 0), "chest": (r(8), 0, 0), "head": (r(12), 0, 0), "upperarm.L": (r(-20), 0, 0), "upperarm.R": (r(-20), 0, 0)}, (0, 0.02, -0.01)),
+            (18, {"spine": (r(-5), 0, 0), "chest": (r(-3), 0, 0), "head": (r(-4), 0, 0), "upperarm.L": (r(8), 0, 0), "upperarm.R": (r(8), 0, 0)}, (0, 0, 0)),
+            (34, {"spine": zero, "chest": zero, "head": zero, "upperarm.L": zero, "upperarm.R": zero}, (0, 0, 0)),
+        ],
+    )
+
+    _pose_clip(
+        arm,
+        "check",
+        [
+            (1, {"chest": zero, "head": zero, "upperarm.R": zero, "forearm.R": zero}, (0, 0, 0)),
+            (10, {"chest": (r(-6), 0, 0), "head": (r(-8), 0, 0), "upperarm.R": (r(-70), 0, 0), "forearm.R": (r(-20), 0, 0)}, (0, 0, 0.02)),
+            (20, {"chest": (r(-4), 0, 0), "head": (r(-6), 0, 0), "upperarm.R": (r(-64), 0, 0), "forearm.R": (r(-26), 0, 0)}, (0, 0, 0.01)),
+            (30, {"chest": (r(-6), 0, 0), "head": (r(-8), 0, 0), "upperarm.R": (r(-72), 0, 0), "forearm.R": (r(-18), 0, 0)}, (0, 0, 0.02)),
+            (48, {"chest": zero, "head": zero, "upperarm.R": zero, "forearm.R": zero}, (0, 0, 0)),
+        ],
+    )
+    arm["animation_clips"] = "idle,move,attack,hit,check"
+
+
+def add_skinned_human_unit(side: str, role: str, variant: str) -> None:
+    reset_scene()
+    ensure_materials()
+
+    root = add_human(side, variant, 1.0)
+    body = merge_unit_to_mesh(root, f"{side}-{role}-body")
+    arm = build_humanoid_armature(f"{side}-{role}-runtime-root")
+    bind_mesh_to_armature(body, arm)
+    animate_humanoid(arm, role)
+    arm["required_animations"] = "idle,move,attack,hit,check"
+    arm["forward_axis"] = "+Y in Blender, converted by glTF import"
+    arm["origin_policy"] = "ground centered"
+    arm["rig"] = "skeletal armature, per-limb bone animation"
+
+    bpy.ops.object.light_add(type="AREA", location=(0, -3, 5))
+    bpy.context.object.name = "preview softbox"
+    bpy.context.object.data.energy = 450
+    bpy.context.object.data.size = 4
+    bpy.ops.object.camera_add(location=(0, -5.0, 2.4), rotation=(math.radians(64), 0, 0))
+    bpy.context.scene.camera = bpy.context.object
+
+    filepath = OUT_DIR / f"{side}-{role}.glb"
+    bpy.ops.export_scene.gltf(
+        filepath=str(filepath),
+        export_format="GLB",
+        export_copyright="MIRROR project-authored procedural Blender asset, AGPL-3.0-or-later",
+        export_apply=False,
+        export_animations=True,
+        export_nla_strips=True,
+        export_skins=True,
+        export_yup=True,
+    )
+    print(f"wrote {filepath} (skeletal rig)")
+
+
 def add_unit(side: str, role: str) -> None:
+    if role in {"foot-archer", "advisor-standard-bearer", "royal-commander"}:
+        variant = {
+            "foot-archer": "archer",
+            "advisor-standard-bearer": "standard",
+            "royal-commander": "commander",
+        }[role]
+        add_skinned_human_unit(side, role, variant)
+        return
+
+    reset_scene()
+    ensure_materials()
     reset_scene()
     ensure_materials()
 

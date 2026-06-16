@@ -50,3 +50,8 @@ tools/
 *.tsbuildinfo
 art/quarantine/
 scratch/
+
+# realistic asset ingest: heavy source inputs + texture cache (not shipped)
+asset-sources/mixamo/
+asset-sources/cc0/
+.cache/

@@ -1,0 +1,121 @@
+{
+  "_comment": "Maps the 12 runtime slots to realistic source files you download. Paths are relative to asset-sources/. See README.md for exactly what to download. Human slots use Mixamo (character FBX + shared animation FBXs). Animal/mounted slots use CC0 GLB models. The royal-commander also needs a 'check' clip.",
+  "units": {
+    "pandava-foot-archer": {
+      "type": "fbx-mixamo",
+      "character": "mixamo/characters/pandava-foot-archer.fbx",
+      "target_height": 1.7,
+      "yaw_deg": 0,
+      "clips": {
+        "idle": "mixamo/anims/idle.fbx",
+        "move": "mixamo/anims/walk_in_place.fbx",
+        "attack": "mixamo/anims/bow_attack.fbx",
+        "hit": "mixamo/anims/hit.fbx"
+      }
+    },
+    "kaurava-foot-archer": {
+      "type": "fbx-mixamo",
+      "character": "mixamo/characters/kaurava-foot-archer.fbx",
+      "target_height": 1.7,
+      "yaw_deg": 0,
+      "clips": {
+        "idle": "mixamo/anims/idle.fbx",
+        "move": "mixamo/anims/walk_in_place.fbx",
+        "attack": "mixamo/anims/bow_attack.fbx",
+        "hit": "mixamo/anims/hit.fbx"
+      }
+    },
+    "pandava-advisor-standard-bearer": {
+      "type": "fbx-mixamo",
+      "character": "mixamo/characters/pandava-advisor.fbx",
+      "target_height": 1.72,
+      "yaw_deg": 0,
+      "clips": {
+        "idle": "mixamo/anims/idle.fbx",
+        "move": "mixamo/anims/walk_in_place.fbx",
+        "attack": "mixamo/anims/spear_attack.fbx",
+        "hit": "mixamo/anims/hit.fbx"
+      }
+    },
+    "kaurava-advisor-standard-bearer": {
+      "type": "fbx-mixamo",
+      "character": "mixamo/characters/kaurava-advisor.fbx",
+      "target_height": 1.72,
+      "yaw_deg": 0,
+      "clips": {
+        "idle": "mixamo/anims/idle.fbx",
+        "move": "mixamo/anims/walk_in_place.fbx",
+        "attack": "mixamo/anims/spear_attack.fbx",
+        "hit": "mixamo/anims/hit.fbx"
+      }
+    },
+    "pandava-royal-commander": {
+      "type": "fbx-mixamo",
+      "character": "mixamo/characters/pandava-commander.fbx",
+      "target_height": 1.78,
+      "yaw_deg": 0,
+      "clips": {
+        "idle": "mixamo/anims/idle.fbx",
+        "move": "mixamo/anims/walk_in_place.fbx",
+        "attack": "mixamo/anims/melee_attack.fbx",
+        "hit": "mixamo/anims/hit.fbx",
+        "check": "mixamo/anims/check.fbx"
+      }
+    },
+    "kaurava-royal-commander": {
+      "type": "fbx-mixamo",
+      "character": "mixamo/characters/kaurava-commander.fbx",
+      "target_height": 1.78,
+      "yaw_deg": 0,
+      "clips": {
+        "idle": "mixamo/anims/idle.fbx",
+        "move": "mixamo/anims/walk_in_place.fbx",
+        "attack": "mixamo/anims/melee_attack.fbx",
+        "hit": "mixamo/anims/hit.fbx",
+        "check": "mixamo/anims/check.fbx"
+      }
+    },
+    "pandava-horse-archer": {
+      "type": "gltf-animated",
+      "character": "cc0/pandava-horse-archer.glb",
+      "target_height": 1.9,
+      "yaw_deg": 0,
+      "clip_from": {}
+    },
+    "kaurava-horse-archer": {
+      "type": "gltf-animated",
+      "character": "cc0/kaurava-horse-archer.glb",
+      "target_height": 1.9,
+      "yaw_deg": 0,
+      "clip_from": {}
+    },
+    "pandava-war-chariot": {
+      "type": "gltf-animated",
+      "character": "cc0/pandava-war-chariot.glb",
+      "target_height": 1.8,
+      "yaw_deg": 0,
+      "clip_from": {}
+    },
+    "kaurava-war-chariot": {
+      "type": "gltf-animated",
+      "character": "cc0/kaurava-war-chariot.glb",
+      "target_height": 1.8,
+      "yaw_deg": 0,
+      "clip_from": {}
+    },
+    "pandava-war-elephant-commander": {
+      "type": "gltf-animated",
+      "character": "cc0/pandava-war-elephant.glb",
+      "target_height": 2.4,
+      "yaw_deg": 0,
+      "clip_from": {}
+    },
+    "kaurava-war-elephant-commander": {
+      "type": "gltf-animated",
+      "character": "cc0/kaurava-war-elephant.glb",
+      "target_height": 2.4,
+      "yaw_deg": 0,
+      "clip_from": {}
+    }
+  }
+}

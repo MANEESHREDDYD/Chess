@@ -135,8 +135,8 @@ export function BattlefieldScene({
       >
         <color attach="background" args={['#8f887e']} />
         <fog attach="fog" args={['#8f887e', 15, 32]} />
-        <ambientLight intensity={0.14} />
-        <hemisphereLight args={['#f4ead8', '#4f463d', 0.9]} />
+        <ambientLight intensity={0.24} />
+        <hemisphereLight args={['#f7ecdc', '#62584e', 1.05]} />
         <directionalLight
           position={[5.2, 10.5, 6.6]}
           intensity={2.25}
@@ -149,7 +149,8 @@ export function BattlefieldScene({
           shadow-camera-top={9}
           shadow-camera-bottom={-9}
         />
-        <directionalLight position={[-5, 5.5, -6]} intensity={0.5} color="#b8c4d6" />
+        <directionalLight position={[-5, 5.5, -6]} intensity={0.82} color="#c8d3e4" />
+        <directionalLight position={[0, 3.8, -7.5]} intensity={0.48} color="#ffe7c4" />
         <BattlefieldCamera playerColor={playerColor} />
         <BattlefieldProps />
         <BattlefieldDust reducedMotion={reducedMotion} />

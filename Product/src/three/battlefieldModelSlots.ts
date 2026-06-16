@@ -49,6 +49,15 @@ const SCALE_BY_TYPE: Record<PieceType, number> = {
   k: 0.52,
 };
 
+const Y_OFFSET_BY_TYPE: Record<PieceType, number> = {
+  p: -0.018,
+  n: -0.022,
+  b: -0.018,
+  r: -0.026,
+  q: -0.024,
+  k: -0.018,
+};
+
 const REQUIRED_ANIMATIONS_BY_TYPE: Record<PieceType, BattlefieldModelAnimationRole[]> = {
   p: ['idle', 'move', 'attack', 'hit'],
   n: ['idle', 'move', 'attack', 'hit'],
@@ -67,7 +76,7 @@ export const BATTLEFIELD_MODEL_SLOTS: BattlefieldModelSlot[] = (['w', 'b'] as co
       role: ROLE_BY_TYPE[type],
       url: `${MODEL_ROOT}/${color === 'w' ? 'pandava' : 'kaurava'}-${FILE_BY_TYPE[type]}.glb`,
       scale: SCALE_BY_TYPE[type],
-      yOffset: 0,
+      yOffset: Y_OFFSET_BY_TYPE[type],
       yawOffset: 0,
       requiredAnimations: REQUIRED_ANIMATIONS_BY_TYPE[type],
     }))

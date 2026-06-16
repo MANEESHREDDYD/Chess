@@ -2,6 +2,7 @@ import { useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { clone as cloneSkinnedScene } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { BattlefieldModelAnimationRole, BattlefieldModelSlot } from './battlefieldModelSlots';
 
 type BattlefieldProductionUnitProps = {
@@ -16,7 +17,10 @@ export function BattlefieldProductionUnit({
   reducedMotion,
 }: BattlefieldProductionUnitProps) {
   const gltf = useGLTF(slot.url);
-  const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
+  // SkeletonUtils.clone rebinds SkinnedMesh instances to a freshly cloned
+  // skeleton; a plain Object3D.clone would leave every rigged unit sharing the
+  // original armature, so the new skeletal GLBs would not deform per instance.
+  const scene = useMemo(() => cloneSkinnedScene(gltf.scene), [gltf.scene]);
   const mixer = useMemo(() => new THREE.AnimationMixer(scene), [scene]);
   const activeActionRef = useRef<THREE.AnimationAction | null>(null);
   const clipsByName = useMemo(() => {

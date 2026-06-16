@@ -68,7 +68,7 @@ const geo = {
 };
 
 const mat = {
-  shadow: new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.32, depthWrite: false }),
+  shadow: new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.2, depthWrite: false }),
   skin: new THREE.MeshStandardMaterial({ color: '#9f6b4a', roughness: 0.72 }),
   hair: new THREE.MeshStandardMaterial({ color: '#14110f', roughness: 0.95 }),
   leather: new THREE.MeshStandardMaterial({ color: '#5b3c27', roughness: 0.78 }),
@@ -105,7 +105,7 @@ function ContactShadow({ scale = [0.46, 0.34, 1] as [number, number, number] }) 
       geometry={geo.shadow}
       material={mat.shadow}
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, 0.012, 0]}
+      position={[0, 0.004, 0]}
       scale={scale}
     />
   );

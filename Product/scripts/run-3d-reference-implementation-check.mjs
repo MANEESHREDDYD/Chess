@@ -221,6 +221,12 @@ async function assertReferenceTerms() {
     'commander-sword-arc',
     'moveLiftFor',
     'attackProfileFor',
+    'SkeletonUtils.clone',
+    'fingernails',
+    'toenails',
+    'trunk wrinkles',
+    'chariot wheel rims',
+    'material-correct',
   ]) {
     if (!combined.includes(term)) failures.push(`reference-guided implementation term missing: ${term}`);
   }
