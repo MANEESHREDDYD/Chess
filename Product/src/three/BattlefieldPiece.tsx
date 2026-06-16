@@ -69,7 +69,7 @@ const geo = {
 };
 
 const mat = {
-  shadow: new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.2, depthWrite: false }),
+  shadow: new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.065, depthWrite: false }),
   skin: new THREE.MeshStandardMaterial({ color: '#9f6b4a', roughness: 0.72 }),
   hair: new THREE.MeshStandardMaterial({ color: '#14110f', roughness: 0.95 }),
   leather: new THREE.MeshStandardMaterial({ color: '#5b3c27', roughness: 0.78 }),

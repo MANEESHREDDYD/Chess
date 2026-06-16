@@ -81,9 +81,9 @@ def mat(name: str, color, roughness: float = 0.75, metallic: float = 0.0) -> bpy
 
 
 def ensure_mats() -> None:
-    mat("real warm skin", (0.72, 0.46, 0.31, 1), 0.68)
-    mat("skin shadow", (0.48, 0.27, 0.17, 1), 0.72)
-    mat("natural nails", (0.82, 0.69, 0.56, 1), 0.58)
+    mat("real warm skin", (0.62, 0.39, 0.25, 1), 0.66)
+    mat("skin shadow", (0.38, 0.22, 0.14, 1), 0.74)
+    mat("natural nails", (0.74, 0.57, 0.43, 1), 0.6)
     mat("cloth saffron", (0.82, 0.38, 0.12, 1), 0.86)
     mat("cloth indigo", (0.025, 0.14, 0.42, 1), 0.84)
     mat("cloth wine", (0.34, 0.05, 0.045, 1), 0.86)
@@ -97,6 +97,9 @@ def ensure_mats() -> None:
     mat("paint white", (0.85, 0.78, 0.62, 1), 0.82)
     mat("paint blue", (0.02, 0.25, 0.70, 1), 0.82)
     mat("paint red", (0.55, 0.035, 0.03, 1), 0.82)
+    mat("eye white", (0.82, 0.75, 0.62, 1), 0.5)
+    mat("eye dark iris", (0.035, 0.022, 0.014, 1), 0.32)
+    mat("mouth shadow", (0.18, 0.055, 0.04, 1), 0.68)
 
 
 def assign(obj: bpy.types.Object, material_name: str) -> bpy.types.Object:
@@ -192,6 +195,106 @@ def curve(name: str, pts, bevel: float, material: str) -> bpy.types.Object:
     bpy.context.collection.objects.link(obj)
     assign(obj, material)
     return obj
+
+
+def parent_to_bone(
+    obj: bpy.types.Object,
+    arm: bpy.types.Object,
+    bone_name: str,
+    *,
+    loc=(0, 0, 0),
+    rot=(0, 0, 0),
+    scale=(1, 1, 1),
+) -> bpy.types.Object:
+    """Attach decorative/weapon geometry to a rig bone in local bone space."""
+    obj.parent = arm
+    if bone_name in arm.pose.bones:
+        obj.parent_type = "BONE"
+        obj.parent_bone = bone_name
+    obj.location = loc
+    obj.rotation_euler = rot
+    obj.scale = scale
+    return obj
+
+
+def parent_to_bone_keep_world(
+    obj: bpy.types.Object,
+    arm: bpy.types.Object,
+    bone_name: str,
+) -> bpy.types.Object:
+    """Bone-parent an already placed object without moving it at bind time."""
+    matrix_world = obj.matrix_world.copy()
+    obj.parent = arm
+    if bone_name in arm.pose.bones:
+        obj.parent_type = "BONE"
+        obj.parent_bone = bone_name
+    obj.matrix_world = matrix_world
+    obj["bone_locked_to"] = bone_name
+    return obj
+
+
+def make_bone_cylinder(
+    name: str,
+    arm: bpy.types.Object,
+    bone_name: str,
+    *,
+    length: float,
+    radius: float,
+    material: str,
+    loc=(0, 0, 0),
+    rot=(0, 0, 0),
+    verts: int = 12,
+) -> bpy.types.Object:
+    bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=radius, depth=length)
+    obj = bpy.context.object
+    obj.name = name
+    assign(obj, material)
+    shade(obj)
+    return parent_to_bone(obj, arm, bone_name, loc=loc, rot=rot)
+
+
+def make_bone_cube(
+    name: str,
+    arm: bpy.types.Object,
+    bone_name: str,
+    *,
+    material: str,
+    loc=(0, 0, 0),
+    rot=(0, 0, 0),
+    scale=(1, 1, 1),
+    bevel: float = 0.0,
+) -> bpy.types.Object:
+    obj = cube(name, (0, 0, 0), scale, material, bevel)
+    return parent_to_bone(obj, arm, bone_name, loc=loc, rot=rot)
+
+
+def make_bone_sphere(
+    name: str,
+    arm: bpy.types.Object,
+    bone_name: str,
+    *,
+    material: str,
+    loc=(0, 0, 0),
+    scale=(1, 1, 1),
+    segs: int = 16,
+) -> bpy.types.Object:
+    obj = sphere(name, (0, 0, 0), scale, material, segs)
+    return parent_to_bone(obj, arm, bone_name, loc=loc)
+
+
+def make_bone_torus(
+    name: str,
+    arm: bpy.types.Object,
+    bone_name: str,
+    *,
+    material: str,
+    major: float,
+    minor: float,
+    loc=(0, 0, 0),
+    rot=(0, 0, 0),
+) -> bpy.types.Object:
+    obj = torus(name, (0, 0, 0), major, minor, material, 32)
+    return parent_to_bone(obj, arm, bone_name, loc=loc, rot=rot)
 
 
 def bounds(objects):
@@ -334,38 +437,105 @@ def add_body_overlays(side: str, role: str, arm: bpy.types.Object) -> list[bpy.t
 
     if role == "royal-commander":
         out.append(cone("royal crown", (0, -0.005, 1.78), 0.09, 0.045, 0.15, "brass", 32))
+    lock_body_overlays_to_rig(out, arm)
+    out += add_face_and_armor_microdetails(side, role, arm)
     return out
 
 
-def add_role_weapon(side: str, role: str) -> list[bpy.types.Object]:
+def lock_body_overlays_to_rig(out: list[bpy.types.Object], arm: bpy.types.Object) -> None:
+    for obj in out:
+        name = obj.name.lower()
+        if any(k in name for k in ("headband", "hair", "tilak", "cheek", "crown")):
+            parent_to_bone_keep_world(obj, arm, "head")
+        elif "wrist" in name:
+            parent_to_bone_keep_world(obj, arm, "hand.L" if "-1" in name else "hand.R")
+        elif "shoulder" in name:
+            parent_to_bone_keep_world(obj, arm, "upper_arm.L" if "-1" in name else "upper_arm.R")
+        elif any(k in name for k in ("dhoti", "waist", "cloth fold")):
+            parent_to_bone_keep_world(obj, arm, "pelvis")
+        else:
+            parent_to_bone_keep_world(obj, arm, "spine.004")
+
+
+def add_face_and_armor_microdetails(side: str, role: str, arm: bpy.types.Object) -> list[bpy.types.Object]:
+    paint = "paint blue" if side == "pandava" else "paint red"
+    out: list[bpy.types.Object] = []
+    # Facial anchors are placed in model space, then bone-parented to the head.
+    for sx in (-1, 1):
+        eye = sphere(f"actual eye white {sx}", (sx * 0.036, -0.105, 1.585), (0.015, 0.006, 0.010), "eye white", 14)
+        iris = sphere(f"actual dark iris {sx}", (sx * 0.036, -0.111, 1.585), (0.007, 0.003, 0.006), "eye dark iris", 10)
+        brow = cube(f"angled eyebrow {sx}", (sx * 0.038, -0.108, 1.606), (0.030, 0.004, 0.004), "hair black", 0.001)
+        brow.rotation_euler = (0, 0, math.radians(-8 * sx))
+        cheek = cube(f"thin cheek war paint {sx}", (sx * 0.058, -0.111, 1.545), (0.035, 0.003, 0.005), paint, 0.001)
+        for obj in (eye, iris, brow, cheek):
+            out.append(parent_to_bone_keep_world(obj, arm, "head"))
+    nose_bridge = cube("defined nose bridge", (0, -0.113, 1.565), (0.010, 0.006, 0.030), "skin shadow", 0.002)
+    mouth = cube("mouth shadow line", (0, -0.113, 1.505), (0.042, 0.003, 0.004), "mouth shadow", 0.001)
+    moustache = cube("dark moustache", (0, -0.116, 1.522), (0.058, 0.004, 0.006), "hair black", 0.001)
+    beard = sphere("short jaw beard", (0, -0.095, 1.485), (0.060, 0.020, 0.022), "hair black", 16)
+    for obj in (nose_bridge, mouth, moustache, beard):
+        out.append(parent_to_bone_keep_world(obj, arm, "head"))
+
+    # Armor rivets and strap anchors are bone-locked to torso/limbs, not left
+    # floating in board space.
+    for i, x in enumerate((-0.12, -0.06, 0.0, 0.06, 0.12)):
+        rivet = sphere(f"cuirass rivet row upper {i}", (x, -0.132, 1.36), (0.010, 0.006, 0.010), "brass", 10)
+        out.append(parent_to_bone_keep_world(rivet, arm, "spine.004"))
+    for sx in (-1, 1):
+        cuff = torus(f"bone locked wrist cuff {sx}", (sx * 0.34, -0.115, 0.86), 0.035, 0.006, "brass", 28)
+        cuff.rotation_euler = (math.radians(88), 0, math.radians(12 * sx))
+        out.append(parent_to_bone_keep_world(cuff, arm, "hand.L" if sx < 0 else "hand.R"))
+        anklet = torus(f"bone locked ankle cuff {sx}", (sx * 0.10, -0.012, 0.12), 0.035, 0.006, "brass", 28)
+        anklet.rotation_euler = (math.radians(90), 0, 0)
+        out.append(parent_to_bone_keep_world(anklet, arm, "foot.L" if sx < 0 else "foot.R"))
+    return out
+
+
+def add_role_weapon(side: str, role: str, arm: bpy.types.Object) -> list[bpy.types.Object]:
     cloth = "cloth indigo" if side == "pandava" else "cloth wine"
     out: list[bpy.types.Object] = []
     if role == "foot-archer":
-        out.append(curve("recurve bow held at side", [(-0.38, -0.11, 0.48), (-0.47, -0.14, 0.84), (-0.38, -0.11, 1.2)], 0.012, "wood"))
-        out.append(curve("bow string", [(-0.38, -0.11, 0.48), (-0.32, -0.1, 0.84), (-0.38, -0.11, 1.2)], 0.003, "steel"))
-        out.append(cyl_between("ready arrow shaft", (0.19, -0.115, 0.82), (0.5, -0.13, 1.05), 0.005, "wood", 8))
-        out.append(cone("ready arrow head", (0.52, -0.132, 1.07), 0.016, 0, 0.052, "steel", 10))
-        out[-1].rotation_euler = (math.radians(36), 0, math.radians(-38))
-        out.append(cone("back quiver", (0.12, 0.11, 1.2), 0.045, 0.04, 0.34, "dark leather", 16))
-        out[-1].rotation_euler = (math.radians(16), 0, math.radians(-12))
+        bow = curve("bone locked recurve bow", [(-0.37, -0.11, 0.55), (-0.49, -0.14, 0.88), (-0.37, -0.11, 1.22)], 0.012, "wood")
+        string = curve("bone locked bow string", [(-0.37, -0.11, 0.55), (-0.31, -0.10, 0.88), (-0.37, -0.11, 1.22)], 0.003, "steel")
+        grip = torus("left hand wrapped around bow grip", (-0.36, -0.12, 0.88), 0.030, 0.005, "skin shadow", 24)
+        grip.rotation_euler = (math.radians(90), 0, 0)
+        for obj in (bow, string, grip):
+            out.append(parent_to_bone_keep_world(obj, arm, "hand.L"))
+        shaft = cyl_between("right hand arrow shaft", (0.16, -0.115, 0.86), (0.52, -0.13, 1.04), 0.005, "wood", 8)
+        head = cone("right hand arrow head", (0.54, -0.132, 1.055), 0.016, 0, 0.052, "steel", 10)
+        head.rotation_euler = (math.radians(36), 0, math.radians(-38))
+        out.append(parent_to_bone_keep_world(shaft, arm, "hand.R"))
+        out.append(parent_to_bone_keep_world(head, arm, "hand.R"))
+        quiver = cone("bone locked back quiver", (0.12, 0.11, 1.2), 0.045, 0.04, 0.34, "dark leather", 16)
+        quiver.rotation_euler = (math.radians(16), 0, math.radians(-12))
+        out.append(parent_to_bone_keep_world(quiver, arm, "spine.004"))
         for i in range(6):
-            out.append(cyl_between(f"quiver arrow {i}", (0.08 + i * 0.012, 0.12, 1.35), (0.1 + i * 0.012, 0.16, 1.58), 0.004, "wood", 6))
+            arrow = cyl_between(f"bone locked quiver arrow {i}", (0.08 + i * 0.012, 0.12, 1.35), (0.1 + i * 0.012, 0.16, 1.58), 0.004, "wood", 6)
+            out.append(parent_to_bone_keep_world(arrow, arm, "spine.004"))
     elif role == "advisor-standard-bearer":
-        out.append(cyl_between("standard pole", (0.42, -0.16, 0.58), (0.42, -0.16, 1.82), 0.012, "wood", 12))
-        out.append(cone("standard spear head", (0.42, -0.16, 1.92), 0.04, 0, 0.16, "steel", 14))
-        out.append(cube("battle standard cloth", (0.54, -0.16, 1.48), (0.14, 0.009, 0.28), cloth, 0.003))
-        out.append(torus("right hand gripping pole", (0.42, -0.16, 0.92), 0.035, 0.006, "paint white", 24))
+        pole = cyl_between("bone locked standard pole", (0.40, -0.16, 0.58), (0.40, -0.16, 1.82), 0.012, "wood", 12)
+        head = cone("bone locked standard spear head", (0.40, -0.16, 1.92), 0.04, 0, 0.16, "steel", 14)
+        banner = cube("battle standard cloth", (0.52, -0.16, 1.48), (0.14, 0.009, 0.28), cloth, 0.003)
+        grip = torus("right hand closed on standard pole", (0.40, -0.16, 0.92), 0.035, 0.006, "skin shadow", 24)
+        grip.rotation_euler = (math.radians(90), 0, 0)
+        for obj in (pole, head, banner, grip):
+            out.append(parent_to_bone_keep_world(obj, arm, "hand.R"))
     else:
-        out.append(cyl_between("sword blade", (0.43, -0.18, 0.86), (0.55, -0.2, 1.38), 0.018, "steel", 8))
-        out.append(cyl_between("sword grip", (0.39, -0.17, 0.72), (0.44, -0.18, 0.88), 0.014, "wood", 8))
-        out.append(cube("sword guard", (0.43, -0.18, 0.88), (0.09, 0.018, 0.018), "brass", 0.006))
+        blade = cyl_between("bone locked sword blade", (0.39, -0.18, 0.88), (0.52, -0.2, 1.36), 0.018, "steel", 8)
+        grip = cyl_between("bone locked sword grip", (0.35, -0.17, 0.74), (0.40, -0.18, 0.90), 0.014, "wood", 8)
+        guard = cube("bone locked sword guard", (0.40, -0.18, 0.91), (0.09, 0.018, 0.018), "brass", 0.006)
+        closed_hand = torus("right hand closed on sword grip", (0.38, -0.18, 0.83), 0.033, 0.006, "skin shadow", 24)
+        closed_hand.rotation_euler = (math.radians(90), 0, 0)
+        for obj in (blade, grip, guard, closed_hand):
+            out.append(parent_to_bone_keep_world(obj, arm, "hand.R"))
         shield = cone("round shield", (-0.42, -0.2, 1.04), 0.16, 0.16, 0.035, "bronze", 36)
         shield.rotation_euler = (math.radians(90), 0, 0)
-        out.append(shield)
         rim = torus("shield rim", (-0.42, -0.222, 1.04), 0.16, 0.009, "brass", 42)
         rim.rotation_euler = (math.radians(90), 0, 0)
-        out.append(rim)
-        out.append(torus("right hand gripping sword", (0.42, -0.17, 0.84), 0.035, 0.006, "paint white", 24))
+        shield_grip = torus("left hand shield handle grip", (-0.39, -0.205, 1.04), 0.030, 0.006, "skin shadow", 24)
+        shield_grip.rotation_euler = (math.radians(90), 0, 0)
+        for obj in (shield, rim, shield_grip):
+            out.append(parent_to_bone_keep_world(obj, arm, "hand.L"))
     return out
 
 
@@ -456,9 +626,10 @@ def export_unit(side: str, role: str) -> None:
     reset_scene()
     ensure_mats()
     arm, body, fitted_assets = import_charmorph_body(side, role)
-    extras = add_body_overlays(side, role, arm) + add_role_weapon(side, role)
+    extras = add_body_overlays(side, role, arm) + add_role_weapon(side, role, arm)
     for obj in extras:
-        obj.parent = arm
+        if obj.parent is None:
+            obj.parent = arm
     create_clips(arm, role)
 
     arm["required_animations"] = "idle,move,attack,hit,check"

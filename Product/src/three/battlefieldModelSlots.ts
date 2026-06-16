@@ -41,12 +41,12 @@ const FILE_BY_TYPE: Record<PieceType, string> = {
 };
 
 const SCALE_BY_TYPE: Record<PieceType, number> = {
-  p: 0.5,
-  n: 0.52,
-  b: 0.5,
-  r: 0.54,
-  q: 0.52,
-  k: 0.52,
+  p: 0.58,
+  n: 0.57,
+  b: 0.58,
+  r: 0.55,
+  q: 0.55,
+  k: 0.59,
 };
 
 const Y_OFFSET_BY_TYPE: Record<PieceType, number> = {

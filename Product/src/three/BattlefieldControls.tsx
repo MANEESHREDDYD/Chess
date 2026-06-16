@@ -27,7 +27,7 @@ export function BattlefieldControls({ mode, setMode, webGlAvailable }: Battlefie
         className={cx('battlefield-toggle__btn', mode === '3d' && 'is-active')}
         aria-pressed={mode === '3d'}
         disabled={!webGlAvailable}
-        title={webGlAvailable ? 'Kurukshetra battlefield (procedural preview)' : '3D requires WebGL'}
+        title={webGlAvailable ? 'Kurukshetra battlefield 3D' : '3D requires WebGL'}
         onClick={() => setMode('3d')}
       >
         3D

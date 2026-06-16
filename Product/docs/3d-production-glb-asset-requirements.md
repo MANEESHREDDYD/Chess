@@ -110,4 +110,14 @@ Those mounted files place CharMorph/MB-Lab skinned riders on animal/vehicle shel
 
 `Product/scripts/generate-kurukshetra-realistic-glbs.py`
 
+The 2026-06-17 corrective pass also:
+
+- assigns mounted horse/elephant/chariot material tuples during export instead of leaving default Blender materials
+- bone-locks humanoid face, armor, cloth, and weapon overlays to head/torso/hand/foot bones
+- corrects the mounted rider arm-pose convention so riders no longer export with arms spread in a T-pose-like stance
+- softens the runtime contact-shadow marker so it reads as grounding rather than a plastic base
+- darkens the CharMorph exported skin material toward the reference warrior tone
+- lowers rider placement on horse/chariot/elephant units and flattens the elephant platform so it reads less like a cube seat
+- adds low howdah rails, hanging cloth, belly straps, horse girths, and chariot lattice/waist rails
+
 They are now the runtime 3D model pack, but they are still not final AAA/film/game-quality assets. The next realism milestone should replace or upgrade the animal/vehicle shells first with approved PBR materials, higher-detail animal/vehicle sculpts, rigs, weapon constraints, and authored combat animation clips.

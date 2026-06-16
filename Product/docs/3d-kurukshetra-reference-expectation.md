@@ -108,3 +108,20 @@ The references define direction and quality bar only. Production assets must be 
   references are not satisfied yet.
 - Final 3D still requires approved realistic animal/vehicle assets and authored
   combat animation.
+
+## 2026-06-17 Corrective Update
+
+- Mounted export now applies material assignments for procedural horse,
+  elephant, chariot, tack, wheel, and howdah objects before GLB export.
+- Human overlay props are bone-locked instead of being re-parented to the
+  armature root after creation.
+- Mounted rider base pose and rider clips share one pose source, with corrected
+  arm-axis signs to reduce arms-out/T-pose-like silhouettes.
+- Runtime GLB scale is slightly larger and hard circular contact shadows are
+  softened.
+- The latest generated pack also darkens the human skin material toward the
+  reference tone, lowers mounted rider placement, flattens the elephant
+  platform, and adds extra rails, straps, hanging cloth, horse girths, and
+  chariot lattice details.
+- Remaining gap: animal/vehicle bodies are still procedural shells and do not
+  meet the user's PUBG/GTA/Harry-Potter-chess realism target.

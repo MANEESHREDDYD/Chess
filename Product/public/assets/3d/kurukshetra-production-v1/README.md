@@ -18,6 +18,16 @@ Current status:
   vehicle. The horse, elephant, chariot shells, wheels, tack, and howdah remain
   MIRROR-authored procedural Blender geometry and still sit below the user's
   realistic reference target.
+- The 2026-06-17 corrective pass assigns all generated mount/vehicle materials
+  before export, bone-locks humanoid face/armor/clothing/weapon overlays to the
+  relevant rig bones, corrects the mounted rider arm-pose convention, and
+  softens the runtime contact-shadow marker so pieces read more grounded.
+- A follow-up 2026-06-17 pass darkens the CharMorph runtime skin material toward
+  the user's reference tone, lowers mounted rider placement, reshapes the
+  elephant platform away from the obvious cube/howdah silhouette, and adds
+  low rails, saddle cloth, belly straps, horse girths, and chariot lattice
+  details. This improves the current pack but does not replace the need for
+  true rigged/PBR animal and vehicle assets.
 - Verification phrase: mounted/vehicle shells remain procedural; riders are CharMorph skinned rigs.
 
 License status:

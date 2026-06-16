@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Chess } from 'chess.js';
 import { BattlefieldBoard } from './BattlefieldBoard';
@@ -36,8 +36,18 @@ export function BattlefieldScene({
   reducedMotion,
 }: BattlefieldSceneProps) {
   const [selected, setSelected] = useState<SquareName | null>(null);
+  const selectedRef = useRef<SquareName | null>(null);
+  const fenRef = useRef(fen);
+  const statusRef = useRef(status);
+  const engineThinkingRef = useRef(engineThinking);
+  const onMoveRef = useRef(onMove);
   const pieces = useBattlefieldPieces(fen);
   const productionModels = useBattlefieldProductionModels();
+
+  fenRef.current = fen;
+  statusRef.current = status;
+  engineThinkingRef.current = engineThinking;
+  onMoveRef.current = onMove;
 
   const helpers = useMemo(() => {
     try {
@@ -76,24 +86,46 @@ export function BattlefieldScene({
     checkSquare: helpers.checkSquare,
   };
 
-  const handleSquareClick = (square: SquareName) => {
-    if (status !== 'playing' || engineThinking || !helpers.chess) return;
+  const handleSquareClick = useCallback((square: SquareName) => {
+    if (statusRef.current !== 'playing' || engineThinkingRef.current) return;
 
-    if (selected) {
-      const move = helpers.verbose.find((m) => m.to === square);
+    let chess: Chess;
+    try {
+      chess = new Chess(fenRef.current);
+    } catch {
+      selectedRef.current = null;
+      setSelected(null);
+      return;
+    }
+
+    const currentSelected = selectedRef.current;
+    if (currentSelected) {
+      const move = chess.moves({ square: currentSelected as never, verbose: true }).find((m) => m.to === square);
       if (move) {
-        onMove(selected, square, move.promotion ? 'q' : undefined);
+        onMoveRef.current(currentSelected, square, move.promotion ? 'q' : undefined);
+        selectedRef.current = null;
         setSelected(null);
         return;
       }
     }
-    const piece = helpers.chess.get(square as never);
-    if (piece && piece.color === helpers.chess.turn()) {
+    const piece = chess.get(square as never);
+    if (piece && piece.color === chess.turn()) {
+      selectedRef.current = square;
       setSelected(square);
       return;
     }
+    selectedRef.current = null;
     setSelected(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+
+  useEffect(() => {
+    selectedRef.current = null;
+    setSelected(null);
+  }, [fen, playerColor, status]);
 
   useEffect(() => {
     const w = window as typeof window & {
