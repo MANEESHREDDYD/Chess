@@ -204,13 +204,21 @@ async function assertReferenceTerms() {
     'queen-war-elephant.png',
     'king-royal-commander.png',
     'generated-image',
-    'Volumetric board units',
-    'not sprites or',
+    'Procedural fallback board units',
+    'not sprites',
     'kurukshetra-production-v1',
     'pandava-foot-archer.glb',
     'kaurava-war-elephant-commander.glb',
     'production GLB',
-    'Blender-generated',
+    'CharMorph',
+    'MB-Lab',
+    '159-joint',
+    'AGPL3-derived',
+    'mounted/vehicle shells remain procedural',
+    'riders are CharMorph skinned rigs',
+    'generate-kurukshetra-charmorph-mounted-glbs.py',
+    'rider_idle',
+    'rider_attack',
     'WarElephant',
     'DistantFort',
     'BattlefieldAttackCue',
@@ -222,17 +230,29 @@ async function assertReferenceTerms() {
     'moveLiftFor',
     'attackProfileFor',
     'SkeletonUtils.clone',
-    'fingernails',
-    'toenails',
-    'trunk wrinkles',
-    'chariot wheel rims',
-    'material-correct',
+    'weapon constraints',
   ]) {
     if (!combined.includes(term)) failures.push(`reference-guided implementation term missing: ${term}`);
   }
 }
 
 async function assertProductionGlbFiles() {
+  const humanoidFiles = new Set([
+    'pandava-foot-archer.glb',
+    'kaurava-foot-archer.glb',
+    'pandava-advisor-standard-bearer.glb',
+    'kaurava-advisor-standard-bearer.glb',
+    'pandava-royal-commander.glb',
+    'kaurava-royal-commander.glb',
+  ]);
+  const mountedFiles = new Set([
+    'pandava-horse-archer.glb',
+    'kaurava-horse-archer.glb',
+    'pandava-war-chariot.glb',
+    'kaurava-war-chariot.glb',
+    'pandava-war-elephant-commander.glb',
+    'kaurava-war-elephant-commander.glb',
+  ]);
   const files = [
     'pandava-foot-archer.glb',
     'kaurava-foot-archer.glb',
@@ -254,13 +274,38 @@ async function assertProductionGlbFiles() {
       try {
         const info = await stat(fullPath);
         if (info.size < 20000) failures.push(`production GLB is unexpectedly small: ${file} (${info.size} bytes)`);
-        const animationNames = readGlbAnimationNames(await readFile(fullPath));
+        const gltf = readGlbJson(await readFile(fullPath));
+        const animationNames = readGltfAnimationNames(gltf);
         const requiredAnimations = file.includes('royal-commander')
           ? ['idle', 'move', 'attack', 'hit', 'check']
           : ['idle', 'move', 'attack', 'hit'];
         for (const animation of requiredAnimations) {
           if (!animationNames.includes(animation)) {
             failures.push(`production GLB ${file} missing animation clip: ${animation} (${animationNames.join(', ')})`);
+          }
+        }
+        if (humanoidFiles.has(file) || mountedFiles.has(file)) {
+          const maxJoints = Math.max(0, ...(gltf.skins ?? []).map((skin) => skin.joints?.length ?? 0));
+          const skinnedNodes = (gltf.nodes ?? []).filter((node) => Number.isInteger(node.skin)).length;
+          const meshCount = gltf.meshes?.length ?? 0;
+          if (maxJoints < 100 || skinnedNodes < 1) {
+            failures.push(`production human-bearing GLB ${file} regressed from CharMorph rig (${JSON.stringify({ maxJoints, skinnedNodes })})`);
+          }
+          if (humanoidFiles.has(file) && meshCount < 20) {
+            failures.push(`production humanoid GLB ${file} has too few meshes for current equipped human export (${meshCount})`);
+          }
+          if (mountedFiles.has(file) && meshCount < 50) {
+            failures.push(`production mounted GLB ${file} has too few meshes for the CharMorph rider + mount export (${meshCount})`);
+          }
+          if (info.size < (mountedFiles.has(file) ? 10_000_000 : 6_000_000)) {
+            failures.push(`production human-bearing GLB ${file} is too small for the current CharMorph export (${info.size} bytes)`);
+          }
+          if (mountedFiles.has(file)) {
+            for (const animation of ['rider_idle', 'rider_move', 'rider_attack', 'rider_hit']) {
+              if (!animationNames.includes(animation)) {
+                failures.push(`production mounted GLB ${file} missing mounted rider clip: ${animation} (${animationNames.join(', ')})`);
+              }
+            }
           }
         }
       } catch {
@@ -270,7 +315,7 @@ async function assertProductionGlbFiles() {
   );
 }
 
-function readGlbAnimationNames(buffer) {
+function readGlbJson(buffer) {
   if (buffer.toString('ascii', 0, 4) !== 'glTF') {
     throw new Error('not a binary glTF file');
   }
@@ -279,7 +324,10 @@ function readGlbAnimationNames(buffer) {
   if (jsonType !== 'JSON') {
     throw new Error(`first GLB chunk is not JSON: ${jsonType}`);
   }
-  const gltf = JSON.parse(buffer.subarray(20, 20 + jsonLength).toString('utf8'));
+  return JSON.parse(buffer.subarray(20, 20 + jsonLength).toString('utf8'));
+}
+
+function readGltfAnimationNames(gltf) {
   return (gltf.animations ?? []).map((animation) => animation.name).filter(Boolean);
 }
 

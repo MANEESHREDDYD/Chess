@@ -8,8 +8,11 @@
 export type BattlefieldAsset = {
   name: string;
   kind: 'piece' | 'prop' | 'terrain' | 'effect';
-  source: 'generated-image' | 'procedural';
-  license: 'project-generated for MIRROR' | 'project (AGPL-3.0-or-later, generated in code)';
+  source: 'generated-image' | 'procedural' | 'licensed-derived';
+  license:
+    | 'project-generated for MIRROR'
+    | 'project (AGPL-3.0-or-later, generated in code)'
+    | 'AGPL3-derived CharMorph/MB-Lab humanoid rigs plus project-authored mounts/equipment';
   aiGenerated: boolean;
   notes: string;
 };
@@ -23,7 +26,7 @@ export const BATTLEFIELD_ASSETS: BattlefieldAsset[] = [
   { name: 'archived royal-commander king reference PNG', kind: 'piece', source: 'generated-image', license: 'project-generated for MIRROR', aiGenerated: true, notes: 'transparent PNG in public/assets/3d/kurukshetra-realism-v1/king-royal-commander.png; retained as visual reference, not used as the playable unit mesh' },
   { name: 'realistic Kurukshetra board texture', kind: 'terrain', source: 'generated-image', license: 'project-generated for MIRROR', aiGenerated: true, notes: 'top-down board PNG in public/assets/3d/kurukshetra-realism-v1/realistic-board-texture.png' },
   { name: 'playable volumetric mesh chess army', kind: 'piece', source: 'procedural', license: 'project (AGPL-3.0-or-later, generated in code)', aiGenerated: false, notes: 'soldiers, horse archers, advisor-standard bearers, chariots, war elephants, royal commanders, bows, shields, swords, wheels, tusks, howdahs, and contact shadows in Product/src/three/BattlefieldPiece.tsx' },
-  { name: 'Blender-generated production GLB army pack', kind: 'piece', source: 'procedural', license: 'project (AGPL-3.0-or-later, generated in code)', aiGenerated: false, notes: '12 original project-authored GLB files in public/assets/3d/kurukshetra-production-v1 generated with Product/scripts/generate-kurukshetra-production-glbs.py; current runtime pack, replaceable by approved higher-fidelity PBR/rigged models' },
+  { name: 'production GLB army pack with CharMorph human rigs', kind: 'piece', source: 'licensed-derived', license: 'AGPL3-derived CharMorph/MB-Lab humanoid rigs plus project-authored mounts/equipment', aiGenerated: false, notes: '12 GLB files in public/assets/3d/kurukshetra-production-v1. Six standalone humanoids are 159-joint CharMorph/MB-Lab mb_male-derived skinned bodies with fitted lower-body cloth and hair generated with Product/scripts/generate-kurukshetra-charmorph-humanoid-glbs.py. Mounted files are generated with Product/scripts/generate-kurukshetra-charmorph-mounted-glbs.py and include CharMorph skinned riders/drivers on project-authored procedural horse, elephant, chariot, tack, wheel, and howdah shells.' },
   { name: 'battlefield board and ground', kind: 'terrain', source: 'procedural', license: 'project (AGPL-3.0-or-later, generated in code)', aiGenerated: false, notes: 'sand/clay board, bronze in-scene rail, sand terrain disc' },
   { name: 'distant fort and camp', kind: 'prop', source: 'procedural', license: 'project (AGPL-3.0-or-later, generated in code)', aiGenerated: false, notes: 'wall blocks, towers, tents, fogged boundary silhouettes' },
   { name: 'rocks and sparse dry trees', kind: 'prop', source: 'procedural', license: 'project (AGPL-3.0-or-later, generated in code)', aiGenerated: false, notes: 'deterministic off-board scenery' },

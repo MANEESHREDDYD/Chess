@@ -1,95 +1,102 @@
 # 3D Realism Gap Assessment
 
 Date: 2026-06-16
-Status: Upgraded to an anatomical, textured, rigged procedural pack
-(`scripts/generate-kurukshetra-realistic-glbs.py`). This is the ceiling of
-code-generated geometry: stylized-realistic, not photoreal. Photoreal requires
-real sculpted/scanned/Mixamo assets, for which a drop-in ingest pipeline now
-exists (`scripts/ingest-realistic-units.py`, `asset-sources/README.md`).
+Status: All playable files that contain humans now include CharMorph/MB-Lab
+159-joint real-human rigs. Animal and vehicle shells remain procedural, so the
+full battlefield is still not final realistic 3D.
 
 ## Direct Answer
 
-The battlefield loads a 12-unit Blender pack where each warrior is a continuous
-anatomical mesh (torso, limbs, fingers, toes, joints, face, hair) on a 19-bone
-rig with synthesized PBR (WEBP) textures, and animals/chariots use the same
-Skin-modifier anatomy. It is a large step up from the earlier primitive figures
-but is still procedural/stylized; NOT final PUBG/GTA/Harry-Potter realism.
-True photorealism needs the Mixamo + CC0 asset path (see asset-sources/).
+The user's latest screenshots correctly show that the earlier generated units
+were too basic: mannequin-like humans, simplified animals, weak weapon holds,
+uneven grounding, and non-cinematic movement. That result must not be called
+realistic, PUBG/GTA quality, or Harry-Potter-chess quality.
 
-The screenshot reported on 2026-06-16 was correctly judged as not realistic:
-it showed stylized procedural assets and also exposed a material-export bug in
-the mounted/vehicle assembly path where joined primitive parts could keep
-Blender's default material, making the chariot read as a plain white cube. That
-path is fixed in `generate-kurukshetra-realistic-glbs.py` by assigning each
-part's intended material before GLB export.
+This pass replaces the earlier toy-like human bodies in both standalone and
+mounted/vehicle slots:
+
+- Pandava foot archer
+- Kaurava foot archer
+- Pandava advisor standard bearer
+- Kaurava advisor standard bearer
+- Pandava royal commander
+- Kaurava royal commander
+- Pandava/Kaurava horse archer riders
+- Pandava/Kaurava chariot drivers
+- Pandava/Kaurava elephant commanders
+
+Those files now use CharMorph/MB-Lab `mb_male` real-human meshes with 159-joint
+skinned rigs and MIRROR-authored Kurukshetra equipment. They replace the older
+19-bone procedural mannequin bodies and the visibly floating mounted riders.
 
 ## What Is Improved
 
-- The battlefield is rendered in Three.js.
-- The playable units are Blender-exported GLB models when the complete pack exists.
-- The app falls back to procedural volumetric meshes only if the GLB pack is incomplete.
-- Units are grounded on board squares.
-- Armies face each other instead of always facing the camera.
-- Movement and capture are animated through the chess pipeline.
-- Production GLBs now include named `idle`, `move`, `attack`, and `hit` clips;
-  royal commanders also include `check`. The runtime plays those clips with a
-  Three.js `AnimationMixer`.
-- The standalone humanoid units (foot archer, advisor-standard bearer, royal
-  commander) are now single skinned meshes bound to a 19-bone armature, so their
-  clips drive real per-limb motion (stride, bow draw, recoil, raised sword)
-  instead of a whole-body transform. The runtime clones them with
-  `SkeletonUtils.clone` so each instance gets its own skeleton.
-- Runtime combat cues now differ by role: arrow volley, spear thrust, chariot
-  crash, elephant stomp, and commander sword arc.
-- The regenerated 2026-06-16 pack adds visible micro-geometry for fingernails,
-  toenails, knuckles, knee/elbow caps, collarbones, abdomen planes, face paint,
-  bow grip/feathers, spear wrap, sword fuller, shield rim, horse bridles/reins,
-  hooves/stirrups, elephant trunk wrinkles/toenails/anklets, howdah rails, and
-  chariot wheel rims/reins/spare javelins.
-- The follow-up 2026-06-16 pass lightened the skin/leather palette, replaced the
-  blocky headband with a thin ring, added dhoti trouser panels and back straps,
-  added explicit weapon hand-wrap geometry, reduced contact-shadow heaviness,
-  and lowered production model offsets so feet/hooves/wheels sit on the board.
-- Missing production models no longer crash the scene; an incomplete pack triggers fallback.
+- Human bodies use real-human mesh topology from CharMorph/MB-Lab.
+- Each upgraded human-bearing GLB has one skin, 159 joints, and required
+  animation clips.
+- Human bodies are no longer simple cylinder/capsule procedural figures.
+- Mounted files include `rider_idle`, `rider_move`, `rider_attack`, and
+  `rider_hit` clips that the runtime plays alongside mount/vehicle motion.
+- Horse archers, chariot drivers, and elephant commanders are now seated on the
+  mount/vehicle instead of exported as detached procedural mannequins.
+- The generator preserves CharMorph texture data with glTF `AUTO` image export.
+- Project-authored overlays add dhoti cloth, leather cuirass, straps, headband,
+  crown, quiver, bow, arrow, sword, shield, spear/standard, and faction colors.
+- Runtime loading still uses the same 12 fixed slot filenames, so gameplay and
+  chess rules are unchanged.
+- `SkeletonUtils.clone` remains required so each rigged unit instance gets its
+  own skeleton.
 
-## Why It Still Fails The Reference
+## What Still Fails The Reference
 
-- Human anatomy, faces, hands, cloth folds, belts, jewelry, and hair are still simplified compared with the references.
-- Horses, elephants, and chariots are generated Blender models, but not hand-sculpted/rigged production characters.
-- Materials use Blender procedural colors and roughness, not full PBR texture sets.
-- Movement now uses skinned per-limb clips for standalone humanoids and
-  role-specific whole-object clips for mounted/vehicle units, but it is not full
-  cinematic combat choreography.
-- Capture has stronger role-specific impact effects, but not cinematic
-  skeletal combat choreography.
-- It does not yet match the visual fidelity of the provided archer, horse, elephant, chariot, PUBG/GTA, or Harry-Potter chess references.
-
-## Required Fix
-
-Do not call this final realistic 3D.
-
-Final visual quality requires replacing or upgrading the generated GLBs with an approved high-fidelity model pack:
-
-- realistic/stylized-realistic warrior models
-- horse archer model
-- war elephant commander model
-- chariot model
-- royal commander model
-- Kaurava/Pandava variants
-- PBR textures
-- rigs and skeletal/per-limb animation clips
-- non-gory attack/hit/defeat motion
+- Horses are still unskinned procedural assets.
+- Elephants are still unskinned procedural assets.
+- Chariots, wheels, tack, yokes, and howdahs are still procedural and not
+  production vehicle/animal rigs.
+- Mounted riders are rigged, but their saddle/rein/weapon constraints are still
+  approximate rather than authored production constraints.
+- Weapons are visually placed with overlay geometry; final weapon grips need
+  authored hand poses, constraints, and combat animation.
+- Cloth, armor, hair, face detail, jewelry, fingers, toes, and skin quality are
+  improved for standalone humans but still not scanned/AAA quality.
+- Combat is still short chess-piece animation language, not full cinematic
+  strike, block, recoil, defeat, and retreat choreography.
+- The full board still does not yet match the user's references for realistic
+  mounted units, elephants, chariots, animal tack, battlefield dust, and
+  Harry-Potter-style physical combat.
 
 ## Current Engineering Status
 
-The runtime now has a complete Blender-generated GLB pack in:
+The runtime pack lives in:
 
 `Product/public/assets/3d/kurukshetra-production-v1/`
 
-The pack is generated by:
+The standalone humanoids are generated by:
+
+`Product/scripts/generate-kurukshetra-charmorph-humanoid-glbs.py`
+
+The mounted rider/driver files are generated by:
+
+`Product/scripts/generate-kurukshetra-charmorph-mounted-glbs.py`
+
+The procedural animal/vehicle shell baseline is:
 
 `Product/scripts/generate-kurukshetra-realistic-glbs.py`
 
-The app may claim production GLB mode when all 12 files load and their required
-clips are present. It must not claim final realistic/AAA quality until approved
-PBR/rigged assets and skeletal combat animations exist.
+The asset manifest declares the CharMorph/MB-Lab AGPL3 derivation in:
+
+`Product/assets/3d/asset-manifest.json`
+
+## Required Next Fix
+
+Do not call this complete. The next 3D milestone must focus on replacing the
+remaining non-human and vehicle shell units with approved realistic assets:
+
+- rigged horse with horse gait/leap, saddle, bridle, and rein constraints
+- rigged war elephant with hide detail, trunk/ear motion, howdah, and commander
+- rigged/animated chariot with realistic horses, wheels, yoke, reins, and driver
+- authored hand-held weapons and constraints
+- real attack/hit/defeat animations with no blood and no gore
+- visual proof from screenshots and interaction videos
+
+Final realism remains blocked until those assets and animations exist.

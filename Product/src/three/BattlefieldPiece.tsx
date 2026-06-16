@@ -11,9 +11,10 @@ import { BattlefieldProductionUnit } from './BattlefieldProductionUnit';
 import { getBattlefieldModelSlot, type BattlefieldModelAnimationRole } from './battlefieldModelSlots';
 import { ATTACK_LUNGE_MS, CAPTURE_EFFECT_MS } from './useBattlefieldAnimations';
 
-// Volumetric board units. These are real Three.js meshes, not sprites or
-// camera-facing image planes. Final PUBG/GTA/Harry-Potter-chess fidelity still
-// requires authored rigged GLB characters and animation clips.
+// Procedural fallback board units. These are real Three.js meshes, not sprites
+// or camera-facing image planes, but they are not the final realism target.
+// Final PUBG/GTA/Harry-Potter-chess fidelity still requires approved rigged GLB
+// humans, animals, chariots, weapon constraints, and combat animation clips.
 
 const MOVE_SPEED = 3.35;
 

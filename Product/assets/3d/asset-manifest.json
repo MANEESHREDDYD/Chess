@@ -37,7 +37,7 @@
       "notes": "Actual runtime playable units: mesh soldiers, horse archers, advisor/standard bearers, chariots, war elephants, royal commanders, weapons, contact shadows, attacker lunge, and non-gory capture impact/fall/dust."
     },
     {
-      "name": "Blender-generated Kurukshetra production GLB pack",
+      "name": "Kurukshetra production GLB pack with CharMorph humanoid rigs",
       "filenames": [
         "Product/public/assets/3d/kurukshetra-production-v1/pandava-foot-archer.glb",
         "Product/public/assets/3d/kurukshetra-production-v1/kaurava-foot-archer.glb",
@@ -52,15 +52,15 @@
         "Product/public/assets/3d/kurukshetra-production-v1/pandava-royal-commander.glb",
         "Product/public/assets/3d/kurukshetra-production-v1/kaurava-royal-commander.glb"
       ],
-      "source": "procedural",
-      "author": "MIRROR project",
-      "license": "AGPL-3.0-or-later (project code)",
+      "source": "mixed: CharMorph MB-Lab AGPL3-derived humanoid rigs plus MIRROR procedural Blender animal/vehicle shells",
+      "author": "MIRROR project; CharMorph/MB-Lab for humanoid base meshes and fitted cloth/hair",
+      "license": "AGPL-3.0-or-later; humanoid bodies and mounted riders are AGPL3-derived from CharMorph MB-Lab mb_male",
       "dateAdded": "2026-06-12",
       "allowedUse": "unrestricted within the project",
-      "modifications": "Generated with Product/scripts/generate-kurukshetra-realistic-glbs.py in Blender 5.1 with synthesized PBR WEBP textures, material-correct joined geometry, anatomical warrior meshes, visible fingers/toes/joints, weapons, reins, bridles, hooves, elephant trunk wrinkles/toenails, chariot rim/tool detail, and named idle/move/attack/hit clips plus check for royal commanders. Future approved PBR/rigged replacements must preserve these slot filenames and clip names.",
-      "attributionRequirement": "none",
+      "modifications": "Six standalone humanoid files are generated with Product/scripts/generate-kurukshetra-charmorph-humanoid-glbs.py from CharMorph/MB-Lab mb_male, fitted with CharMorph lower-body cloth/hair meshes, then dressed with MIRROR-authored leather armor, weapons, banners, shields, and faction accents. Horse archer, war elephant, and war chariot files are generated with Product/scripts/generate-kurukshetra-charmorph-mounted-glbs.py: CharMorph/MB-Lab skinned riders/drivers are seated on MIRROR-authored procedural horse, elephant, chariot, tack, wheel, and howdah shells. Future approved replacements must preserve slot filenames and required clip names.",
+      "attributionRequirement": "Document CharMorph/MB-Lab AGPL3 derivation for all humanoid and mounted-rider GLBs and keep AGPL-compatible source/license notes.",
       "aiGenerated": false,
-      "notes": "Original project-authored Blender geometry for Pandava/Kaurava foot archers, horse archers, advisor standard bearers, war chariots, war elephant commanders, and royal commanders. Standalone humanoids are skinned 19-bone GLBs; mounted/vehicle units use role-specific whole-object clips with richer modeled equipment. The runtime plays embedded animation clips plus role-specific combat cues, but this is still not a final AAA scanned/rigged realism pack."
+      "notes": "All playable files with a human now include 159-joint skinned CharMorph real-human rigs; mounted files add rider_idle/rider_move/rider_attack/rider_hit overlays. Animal and vehicle shells remain procedural and remain the largest visible realism gap. The runtime plays embedded animation clips plus role-specific combat cues, but this is still not a final PUBG/GTA/Harry-Potter-chess realism pack."
     },
     {
       "name": "Procedural battlefield environment and effects",

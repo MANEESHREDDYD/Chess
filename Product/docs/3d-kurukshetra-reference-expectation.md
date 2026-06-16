@@ -2,11 +2,11 @@
 
 Milestone: M-REFERENCE-LOCKED-APPLE-MONO-UI-AND-BOARD-HITTEST-FIX-1
 Updated by: M-3D-REFERENCE-ANALYSIS-AND-ASSET-BRIEF-1
-Status: Initial user references reviewed. A procedural reference-guided implementation pass is allowed; final model/animation asset integration is still not approved.
+Status: User references reviewed. Licensed CharMorph human-rig replacement passes are implemented for the standalone humanoid slots plus mounted riders and chariot drivers. Final full-battlefield realism is still not approved because animal/vehicle shells, chariots, weapon constraints, and cinematic combat animation remain below the reference target.
 
 The user will provide references. Initial in-chat references were provided on 2026-06-11 and are analyzed here as direction only. The images are not stored in the repo unless the user confirms they may be stored.
 
-Do not start final GLB/model/texture/rig/animation integration for soldiers, horses, elephants, chariots, weapons, rocks, trees, terrain, dust, or effects until production assets are approved and licensed. The current pass may only use project-authored procedural geometry and materials.
+Do not claim final GLB/model/texture/rig/animation completion for soldiers, horses, elephants, chariots, weapons, rocks, trees, terrain, dust, or effects until production assets are approved, licensed, implemented, and visually verified. The current implementation may use declared compatible assets: humanoids and mounted riders are CharMorph/MB-Lab AGPL3-derived real-human rigs with project-authored equipment, while animal and vehicle shells remain procedural placeholders.
 
 ## Reference Analysis Template
 
@@ -93,3 +93,18 @@ Do not start final GLB/model/texture/rig/animation integration for soldiers, hor
 ## Licensing Caveat
 
 The references define direction and quality bar only. Production assets must be licensed, commissioned, or authored with clear usage rights. No copyrighted or unlicensed models, textures, rigs, or animations may ship.
+
+## 2026-06-16 Implementation Update
+
+- The old standalone procedural mannequin humans were rejected as not realistic.
+- Six standalone humanoid GLBs were replaced with CharMorph/MB-Lab `mb_male`
+  real-human meshes using 159-joint skinned rigs.
+- Horse archer, chariot, and elephant commander GLBs now include CharMorph
+  159-joint skinned riders/drivers with `rider_idle`, `rider_move`,
+  `rider_attack`, and `rider_hit` clips.
+- The replacement improves body proportions, body topology, texture basis, and
+  limb animation potential for pawn/bishop/king human pieces and mounted riders.
+- The horse, elephant, chariot, animal tack, vehicle shell, and vehicle motion
+  references are not satisfied yet.
+- Final 3D still requires approved realistic animal/vehicle assets and authored
+  combat animation.

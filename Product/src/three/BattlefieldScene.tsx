@@ -23,9 +23,9 @@ type BattlefieldSceneProps = {
  * Kurukshetra Battlefield Mode.
  *
  * Rendering only: chess.js inside the game store remains the rules authority.
- * The current visuals are a reference-guided procedural prototype, not final
- * realistic character art. Production realism still requires approved,
- * licensed or project-authored models, rigs, and animations.
+ * The current visuals are a reference-guided mixed asset prototype. Human and
+ * mounted-rider slots use CharMorph/MB-Lab skinned GLBs; animal/vehicle shells
+ * still need approved realistic rigs, PBR materials, and combat animations.
  */
 export function BattlefieldScene({
   fen,
