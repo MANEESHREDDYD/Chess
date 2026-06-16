@@ -119,5 +119,7 @@ The 2026-06-17 corrective pass also:
 - darkens the CharMorph exported skin material toward the reference warrior tone
 - lowers rider placement on horse/chariot/elephant units and flattens the elephant platform so it reads less like a cube seat
 - adds low howdah rails, hanging cloth, belly straps, horse girths, and chariot lattice/waist rails
+- removes the live off-board procedural horse/elephant/chariot entourage because close-camera screenshots showed toy-scale and floating artifacts
+- withholds loose weapon overlay meshes from the current GLB exports because bows, arrows, swords, and shields were visibly detached from hands/backs under close zoom
 
 They are now the runtime 3D model pack, but they are still not final AAA/film/game-quality assets. The next realism milestone should replace or upgrade the animal/vehicle shells first with approved PBR materials, higher-detail animal/vehicle sculpts, rigs, weapon constraints, and authored combat animation clips.

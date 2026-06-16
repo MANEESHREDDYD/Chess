@@ -96,7 +96,9 @@ def add_rider(side: str, role: str, mounted_role: str, *, loc, scale, rot=(0, 0,
     rest_pose = mounted_rest_pose(mounted_role)
     apply_pose_as_rest(arm, rest_pose)
     extras = cm.add_body_overlays(side, role, arm)
-    extras += add_mounted_weapon_details(side, role, mounted_role, arm)
+    # Close camera review exposed the mounted weapon meshes as detached/floating
+    # clutter. Keep the riders grounded and dressed, but hold back mounted
+    # weapons until a proper rigged constraint pass exists.
     for obj in extras:
         ensure_parent_keep_world(obj, arm)
 

@@ -123,5 +123,9 @@ The references define direction and quality bar only. Production assets must be 
   reference tone, lowers mounted rider placement, flattens the elephant
   platform, and adds extra rails, straps, hanging cloth, horse girths, and
   chariot lattice details.
+- A follow-up close-camera review found detached weapons and toy-like
+  off-board animal/vehicle props in the live board. Those loose weapon overlays
+  are withheld from export, and the off-board procedural horse/elephant/chariot
+  entourage is no longer rendered until proper rigged assets exist.
 - Remaining gap: animal/vehicle bodies are still procedural shells and do not
   meet the user's PUBG/GTA/Harry-Potter-chess realism target.

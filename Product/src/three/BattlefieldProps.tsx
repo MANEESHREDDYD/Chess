@@ -129,57 +129,6 @@ function DistantFort() {
   );
 }
 
-function WarElephant({ position, rotationY, side }: { position: [number, number, number]; rotationY: number; side: 'pandava' | 'kaurava' }) {
-  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
-  return (
-    <group position={position} rotation={[0, rotationY, 0]} scale={0.95}>
-      <mesh geometry={geo.elephantBody} material={mat.elephant} rotation={[0, 0, Math.PI / 2]} position={[0, 0.62, 0]} castShadow />
-      <mesh geometry={geo.caparison} material={cloth} position={[0, 0.84, -0.02]} castShadow />
-      <mesh geometry={geo.elephantHead} material={mat.elephant} position={[0.74, 0.74, 0]} castShadow />
-      <mesh geometry={geo.elephantTrunk} material={mat.elephant} rotation={[0, 0, -0.72]} position={[1.04, 0.42, 0]} castShadow />
-      <mesh geometry={geo.tusk} material={mat.ivory} rotation={[0, 0, -1.18]} position={[1.02, 0.66, -0.12]} castShadow />
-      <mesh geometry={geo.tusk} material={mat.ivory} rotation={[0, 0, -1.18]} position={[1.02, 0.66, 0.12]} castShadow />
-      <mesh geometry={geo.elephantEar} material={cloth} rotation={[0, 1.2, 0]} position={[0.5, 0.78, -0.28]} castShadow />
-      <mesh geometry={geo.elephantEar} material={cloth} rotation={[0, -1.2, 0]} position={[0.5, 0.78, 0.28]} castShadow />
-      {[[-0.34, 0.26], [0.34, 0.26], [-0.34, -0.28], [0.34, -0.28]].map(([x, z], i) => (
-        <mesh key={i} geometry={geo.elephantLeg} material={mat.elephant} position={[x, 0.26, z]} castShadow />
-      ))}
-      <mesh geometry={geo.howdah} material={mat.bronze} position={[-0.04, 1.18, 0]} castShadow />
-      <BattleLineSoldier position={[-0.04, 1.16, 0]} side={side} rotationY={0} />
-    </group>
-  );
-}
-
-function HorseArcherProp({ position, rotationY, side }: { position: [number, number, number]; rotationY: number; side: 'pandava' | 'kaurava' }) {
-  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
-  return (
-    <group position={position} rotation={[0, rotationY, 0]} scale={0.95}>
-      <mesh geometry={geo.horseBody} material={mat.horse} rotation={[0, 0, Math.PI / 2]} position={[0, 0.42, 0]} castShadow />
-      <mesh geometry={geo.horseNeck} material={mat.horse} rotation={[0, 0, -0.75]} position={[0.44, 0.68, 0]} castShadow />
-      <mesh geometry={geo.horseHead} material={mat.horse} position={[0.66, 0.82, 0]} castShadow />
-      {[[-0.22, 0.2], [0.2, 0.2], [-0.22, -0.2], [0.2, -0.2]].map(([x, z], i) => (
-        <mesh key={i} geometry={geo.horseLeg} material={mat.horse} position={[x, 0.2, z]} castShadow />
-      ))}
-      <mesh geometry={geo.saddle} material={cloth} position={[0, 0.65, 0]} castShadow />
-      <BattleLineSoldier position={[0, 0.65, 0]} side={side} rotationY={0} />
-    </group>
-  );
-}
-
-function ChariotProp({ position, rotationY, side }: { position: [number, number, number]; rotationY: number; side: 'pandava' | 'kaurava' }) {
-  const cloth = side === 'pandava' ? mat.blueCloth : mat.redCloth;
-  return (
-    <group position={position} rotation={[0, rotationY, 0]} scale={0.9}>
-      <mesh geometry={geo.chariot} material={mat.leather} position={[0, 0.42, 0]} castShadow />
-      <mesh geometry={geo.chariotPanel} material={cloth} position={[0, 0.63, 0.34]} castShadow />
-      {[-0.48, 0.48].map((x) => (
-        <mesh key={x} geometry={geo.wheel} material={mat.bronze} rotation={[0, Math.PI / 2, 0]} position={[x, 0.28, 0.36]} castShadow />
-      ))}
-      <BattleLineSoldier position={[0, 0.68, 0]} side={side} rotationY={0} />
-    </group>
-  );
-}
-
 export function BattlefieldProps() {
   const rocks = useMemo(
     () =>
@@ -246,12 +195,11 @@ export function BattlefieldProps() {
       <mesh geometry={geo.tent} material={mat.tent} position={[9.6, 0.43, 9.2]} castShadow />
       <mesh geometry={geo.tent} material={mat.tent} position={[8.0, 0.43, 10.1]} castShadow />
 
-      <WarElephant position={[-8.7, 0, 3.55]} rotationY={0.56} side="pandava" />
-      <WarElephant position={[8.85, 0, -3.25]} rotationY={-2.42} side="kaurava" />
-      <HorseArcherProp position={[-8.2, 0, -4.55]} rotationY={1.15} side="kaurava" />
-      <HorseArcherProp position={[8.35, 0, 5.0]} rotationY={-1.86} side="pandava" />
-      <ChariotProp position={[-9.35, 0, 0.1]} rotationY={1.08} side="pandava" />
-      <ChariotProp position={[9.35, 0, -0.1]} rotationY={-2.05} side="kaurava" />
+      {/*
+        The previous off-board entourage used procedural horse/elephant/chariot
+        meshes. At close zoom they read as floating toy props, so they stay out
+        of the live scene until replaced by approved realistic rigged assets.
+      */}
     </group>
   );
 }

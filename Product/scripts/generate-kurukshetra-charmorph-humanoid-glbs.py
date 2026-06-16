@@ -626,7 +626,11 @@ def export_unit(side: str, role: str) -> None:
     reset_scene()
     ensure_mats()
     arm, body, fitted_assets = import_charmorph_body(side, role)
-    extras = add_body_overlays(side, role, arm) + add_role_weapon(side, role, arm)
+    # Do not export loose weapon overlays in this corrective pass. The previous
+    # bow/arrow/sword meshes were bone-parented but still read as floating at
+    # close camera zoom. Keep body/armor/face overlays; weapon visuals return
+    # only when they are authored as proper constrained rig assets.
+    extras = add_body_overlays(side, role, arm)
     for obj in extras:
         if obj.parent is None:
             obj.parent = arm

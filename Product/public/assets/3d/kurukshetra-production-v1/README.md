@@ -11,8 +11,8 @@ Current status:
   generated from CharMorph/MB-Lab `mb_male` real-human meshes with 159-joint
   skinned rigs. They replace the earlier 19-bone procedural mannequin humans.
 - Humanoid lower-body cloth and hair use fitted CharMorph/MB-Lab asset meshes;
-  armor, weapons, banners, shields, quivers, crowns, and faction accents are
-  MIRROR-authored Blender overlay geometry.
+  armor, face marks, crowns, and faction accents are MIRROR-authored Blender
+  overlay geometry.
 - Horse archer, war chariot, and war elephant commander slots now include
   CharMorph/MB-Lab 159-joint skinned riders/drivers seated on the mount or
   vehicle. The horse, elephant, chariot shells, wheels, tack, and howdah remain
@@ -28,6 +28,11 @@ Current status:
   low rails, saddle cloth, belly straps, horse girths, and chariot lattice
   details. This improves the current pack but does not replace the need for
   true rigged/PBR animal and vehicle assets.
+- A second close-camera corrective pass on 2026-06-17 removes the live
+  off-board procedural horse/elephant/chariot entourage and withholds loose
+  bow/arrow/sword/shield overlay meshes from export because they visibly
+  detached from hands and backs in the user's screenshots. Weapons return only
+  after they are authored as constrained rig assets with verified hand holds.
 - Verification phrase: mounted/vehicle shells remain procedural; riders are CharMorph skinned rigs.
 
 License status:
@@ -63,7 +68,7 @@ and verification script together.
 
 Rig note: every playable file that contains a human now includes a skinned
 CharMorph armature with 159 joints, fitted lower-body cloth and hair meshes, and
-MIRROR-authored leather/weapon overlays. Clips can drive rider or standalone
+MIRROR-authored close-fit leather/face/cloth overlays. Clips can drive rider or standalone
 limb/body motion instead of only moving a rigid figure. The runtime clones
 rigged units with `SkeletonUtils.clone`; a plain `Object3D.clone` would make
 instances share one skeleton.
