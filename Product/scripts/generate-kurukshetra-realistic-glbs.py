@@ -212,8 +212,8 @@ def build_all_materials() -> dict:
         ("leather_dark", (0.36, 0.23, 0.14), dict(grain="leather", rough_lo=0.5, rough_hi=0.78, bump=3.0, metallic=0, seed=31)),
         ("leather_warm", (0.60, 0.38, 0.21), dict(grain="leather", rough_lo=0.5, rough_hi=0.78, bump=3.0, metallic=0, seed=32)),
         ("cloth_saffron", (0.80, 0.40, 0.11), dict(grain="cloth", rough_lo=0.6, rough_hi=0.85, bump=2.5, metallic=0, seed=41)),
-        ("cloth_indigo", (0.05, 0.13, 0.36), dict(grain="cloth", rough_lo=0.6, rough_hi=0.85, bump=2.5, metallic=0, seed=42)),
-        ("cloth_wine", (0.34, 0.06, 0.05), dict(grain="cloth", rough_lo=0.6, rough_hi=0.85, bump=2.5, metallic=0, seed=43)),
+        ("cloth_indigo", (0.04, 0.10, 0.20), dict(grain="cloth", rough_lo=0.62, rough_hi=0.9, bump=2.5, metallic=0, seed=42)),
+        ("cloth_wine", (0.24, 0.055, 0.045), dict(grain="cloth", rough_lo=0.62, rough_hi=0.9, bump=2.5, metallic=0, seed=43)),
         ("cloth_black", (0.04, 0.04, 0.05), dict(grain="cloth", rough_lo=0.6, rough_hi=0.85, bump=2.5, metallic=0, seed=44)),
         ("bronze", (0.62, 0.42, 0.20), dict(grain="metal", rough_lo=0.28, rough_hi=0.5, bump=1.6, metallic=1.0, seed=51)),
         ("brass", (0.86, 0.62, 0.26), dict(grain="metal", rough_lo=0.22, rough_hi=0.42, bump=1.4, metallic=1.0, seed=52)),
@@ -226,8 +226,8 @@ def build_all_materials() -> dict:
         ("hide_shadow", (0.16, 0.16, 0.15), dict(grain="hide", rough_lo=0.68, rough_hi=0.9, bump=3.4, metallic=0, seed=74)),
         ("ivory", (0.86, 0.80, 0.66), dict(grain="smooth", rough_lo=0.35, rough_hi=0.5, bump=1.0, metallic=0, seed=81)),
         ("war_paint_white", (0.82, 0.76, 0.62), dict(grain="smooth", rough_lo=0.62, rough_hi=0.88, bump=1.4, metallic=0, seed=91)),
-        ("war_paint_blue", (0.02, 0.22, 0.62), dict(grain="cloth", rough_lo=0.62, rough_hi=0.9, bump=1.2, metallic=0, seed=92)),
-        ("war_paint_red", (0.50, 0.04, 0.03), dict(grain="cloth", rough_lo=0.62, rough_hi=0.9, bump=1.2, metallic=0, seed=93)),
+        ("war_paint_blue", (0.05, 0.16, 0.30), dict(grain="cloth", rough_lo=0.66, rough_hi=0.92, bump=1.2, metallic=0, seed=92)),
+        ("war_paint_red", (0.36, 0.06, 0.045), dict(grain="cloth", rough_lo=0.66, rough_hi=0.92, bump=1.2, metallic=0, seed=93)),
     ]
     for nm, rgb, kw in specs:
         pbr_material(nm, synth_material_set(nm, rgb, **kw))
@@ -1029,30 +1029,22 @@ def build_horse(side: str, mats: dict, dark: bool = False, scale: float = 1.0,
         out.append((_smooth(eye, 0), "eye"))
         nostril = _prim_sphere(f"hnostril{sx}", (sx * 0.034, -1.045, 1.08), (0.012, 0.006, 0.008), 8)
         out.append((_smooth(nostril, 0), "hide_shadow"))
-    # Hooves, fetlock hair, bridle, reins, stirrups, and flank muscle marks.
+    # Hooves, fetlock hair, bridle, and flank muscle marks.
+    # Small ring/rein/stirrup meshes looked like detached golden hoops and
+    # loose wires in close gameplay screenshots, so they are withheld until the
+    # horse tack is rebuilt as a proper rigged/constrained asset.
     for sx in (-1, 1):
         for yi, y in enumerate([-0.16, 0.5]):
             hoof = _prim_cube(f"hhoof-detail{sx}-{yi}", (sx * (0.17 if y < 0 else 0.18), y, 0.0), (0.055, 0.07, 0.028))
             out.append((_bevel_join_safe(hoof), "iron_dark"))
             fetlock = _prim_sphere(f"fetlock{sx}-{yi}", (sx * (0.17 if y < 0 else 0.18), y, 0.105), (0.04, 0.035, 0.034), 10)
             out.append((_smooth(fetlock, 0), "hair"))
-        cheek_ring = _prim_torus(f"horse cheek ring{sx}", (sx * 0.095, -0.88, 1.15), 0.025, 0.004, 24)
-        cheek_ring.rotation_euler = (math.radians(90), 0, 0)
-        out.append((_smooth(cheek_ring, 0), "brass"))
     out.append((_curve_mesh("bridle noseband", [(-0.09, -0.94, 1.1), (0, -0.985, 1.08), (0.09, -0.94, 1.1)], 0.009, "leather_dark", mats), "leather_dark"))
-    out.append((_curve_mesh("left rein", [(-0.07, -0.9, 1.1), (-0.24, -0.48, 1.08), (-0.18, -0.02, 1.04)], 0.006, "leather_dark", mats), "leather_dark"))
-    out.append((_curve_mesh("right rein", [(0.07, -0.9, 1.1), (0.24, -0.48, 1.08), (0.18, -0.02, 1.04)], 0.006, "leather_dark", mats), "leather_dark"))
     out.append((_curve_mesh("horse shoulder muscle left", [(-0.16, -0.22, 0.83), (-0.2, 0.02, 0.78), (-0.18, 0.2, 0.78)], 0.005, "hide_shadow", mats), "hide_shadow"))
     out.append((_curve_mesh("horse shoulder muscle right", [(0.16, -0.22, 0.83), (0.2, 0.02, 0.78), (0.18, 0.2, 0.78)], 0.005, "hide_shadow", mats), "hide_shadow"))
     # saddle blanket
     blanket = _prim_cube("blanket", (0, 0.05, 1.02), (0.34, 0.42, 0.05))
     out.append((_smooth(blanket, 1), palette_for(side)["sash"]))
-    for sx in (-1, 1):
-        stirrup = _prim_torus(f"stirrup{sx}", (sx * 0.27, -0.02, 0.7), 0.045, 0.006, 24)
-        stirrup.rotation_euler = (math.radians(90), 0, 0)
-        out.append((_smooth(stirrup, 0), "steel"))
-        strap = _curve_mesh(f"stirrup strap{sx}", [(sx * 0.24, 0.0, 1.04), (sx * 0.27, -0.02, 0.72)], 0.006, "leather_dark", mats)
-        out.append((strap, "leather_dark"))
     # scale/translate all
     for o, _ in out:
         o.location = (o.location[0] * scale + loc[0], o.location[1] * scale + loc[1], o.location[2] * scale + loc[2])
@@ -1097,11 +1089,8 @@ def build_elephant(side: str, mats: dict, scale: float = 1.0, loc=(0, 0, 0)) -> 
         out.append((_smooth(eye, 0), "eye"))
         brow = _prim_sphere(f"elephant brow ridge{sx}", (sx * 0.15, -0.86, 1.18), (0.052, 0.018, 0.018), 10)
         out.append((_smooth(brow, 0), "hide_shadow"))
-    # Trunk rings, toenails, anklets, painted forehead, and howdah hardware.
-    for i, (y, z, radius) in enumerate([(-0.89, 0.85, 0.12), (-0.94, 0.72, 0.105), (-0.99, 0.58, 0.085), (-0.98, 0.43, 0.065), (-0.95, 0.3, 0.045)]):
-        ring = _prim_torus(f"trunk wrinkle ring{i}", (0, y, z), radius, 0.006, 36)
-        ring.rotation_euler = (math.radians(90), 0, 0)
-        out.append((_smooth(ring, 0), "hide_shadow"))
+    # Toenails, painted forehead, and howdah hardware. Torus trunk rings and
+    # anklets are withheld because they read as floating board-space loops.
     out.append((_smooth(_prim_cube("elephant forehead paint", (0, -0.9, 1.23), (0.045, 0.008, 0.07)), 0), "war_paint_white"))
     for sx in (-1, 1):
         for yi, y in enumerate([-0.3, 0.5]):
@@ -1110,9 +1099,6 @@ def build_elephant(side: str, mats: dict, scale: float = 1.0, loc=(0, 0, 0)) -> 
                 nail = _prim_cone(f"elephant toenail{sx}-{yi}-{ti}", (x + dx, y - 0.055, 0.045), 0.032, 0.0, 0.045, 10)
                 nail.rotation_euler = (math.radians(90), 0, 0)
                 out.append((_smooth(nail, 0), "ivory"))
-            anklet = _prim_torus(f"elephant anklet{sx}-{yi}", (x, y, 0.18), 0.12, 0.008, 28)
-            anklet.rotation_euler = (math.radians(90), 0, 0)
-            out.append((_smooth(anklet, 0), "brass"))
     # caparison + howdah platform
     capar = _prim_cube("caparison", (0, 0.05, 1.42), (0.62, 0.78, 0.05))
     out.append((_smooth(capar, 1), palette_for(side)["sash"]))
@@ -1155,17 +1141,8 @@ def build_chariot(side: str, mats: dict) -> list:
     out.append((_smooth(pole, 0), "wood"))
     rail = _prim_cube("rail", (0, 0.25, 0.92), (0.5, 0.42, 0.03))
     out.append((_bevel_join_safe(rail), "brass"))
-    for sx in (-1, 1):
-        side_trim = _curve_mesh(f"chariot engraved side rail{sx}", [(sx * 0.28, 0.02, 0.82), (sx * 0.31, 0.25, 0.92), (sx * 0.28, 0.48, 0.82)], 0.008, "brass", mats)
-        out.append((side_trim, "brass"))
-        rein = _curve_mesh(f"chariot rein{sx}", [(sx * 0.08, 0.06, 0.86), (sx * 0.18, -0.46, 0.76), (sx * 0.28, -0.98, 0.72)], 0.006, "leather_dark", mats)
-        out.append((rein, "leather_dark"))
-    for i, x in enumerate([-0.19, 0, 0.19]):
-        javelin = _prim_cube(f"chariot spare javelin{i}", (x, 0.48, 1.05), (0.008, 0.008, 0.44))
-        javelin.rotation_euler = (math.radians(8), 0, 0)
-        out.append((_smooth(javelin, 0), "wood"))
-        head = _prim_cone(f"chariot spare javelin head{i}", (x, 0.5, 1.29), 0.022, 0.0, 0.07, 10)
-        out.append((_smooth(head, 0), "steel"))
+    # Reins and spare javelins are held back until they can be constrained to a
+    # rider/driver rig. The earlier loose curves were visible as floating lines.
     return out
 
 

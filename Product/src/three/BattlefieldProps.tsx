@@ -130,6 +130,8 @@ function DistantFort() {
 }
 
 export function BattlefieldProps() {
+  const showPrototypeDressing = false;
+
   const rocks = useMemo(
     () =>
       [
@@ -171,34 +173,40 @@ export function BattlefieldProps() {
         <mesh key={i} geometry={geo.rock} material={mat.rock} position={[x, y + 0.16 * s, z]} scale={s} castShadow />
       ))}
 
-      <Tree position={[-7.3, 0, -2.4]} scale={1.1} />
-      <Tree position={[7.4, 0, 2.1]} scale={0.96} />
-      <Tree position={[-6.8, 0, 6.55]} scale={0.82} />
-      <Tree position={[6.9, 0, -6.25]} scale={0.74} />
+      {showPrototypeDressing ? (
+        <>
+          <Tree position={[-7.3, 0, -2.4]} scale={1.1} />
+          <Tree position={[7.4, 0, 2.1]} scale={0.96} />
+          <Tree position={[-6.8, 0, 6.55]} scale={0.82} />
+          <Tree position={[6.9, 0, -6.25]} scale={0.74} />
 
-      <Banner position={[-5.4, 0, 6.2]} side="pandava" />
-      <Banner position={[5.4, 0, 6.2]} side="pandava" />
-      <Banner position={[-5.4, 0, -6.2]} side="kaurava" />
-      <Banner position={[5.4, 0, -6.2]} side="kaurava" />
+          <Banner position={[-5.4, 0, 6.2]} side="pandava" />
+          <Banner position={[5.4, 0, 6.2]} side="pandava" />
+          <Banner position={[-5.4, 0, -6.2]} side="kaurava" />
+          <Banner position={[5.4, 0, -6.2]} side="kaurava" />
 
-      {soldiers.map(([x, y, z, side, rot], i) => (
-        <BattleLineSoldier
-          key={i}
-          position={[x, y, z]}
-          side={side}
-          rotationY={rot}
-        />
-      ))}
+          {soldiers.map(([x, y, z, side, rot], i) => (
+            <BattleLineSoldier
+              key={i}
+              position={[x, y, z]}
+              side={side}
+              rotationY={rot}
+            />
+          ))}
 
-      <mesh geometry={geo.tent} material={mat.tent} position={[-9.5, 0.43, -9]} castShadow />
-      <mesh geometry={geo.tent} material={mat.tent} position={[-7.8, 0.43, -10]} castShadow />
-      <mesh geometry={geo.tent} material={mat.tent} position={[9.6, 0.43, 9.2]} castShadow />
-      <mesh geometry={geo.tent} material={mat.tent} position={[8.0, 0.43, 10.1]} castShadow />
+          <mesh geometry={geo.tent} material={mat.tent} position={[-9.5, 0.43, -9]} castShadow />
+          <mesh geometry={geo.tent} material={mat.tent} position={[-7.8, 0.43, -10]} castShadow />
+          <mesh geometry={geo.tent} material={mat.tent} position={[9.6, 0.43, 9.2]} castShadow />
+          <mesh geometry={geo.tent} material={mat.tent} position={[8.0, 0.43, 10.1]} castShadow />
+        </>
+      ) : null}
 
       {/*
         The previous off-board entourage used procedural horse/elephant/chariot
         meshes. At close zoom they read as floating toy props, so they stay out
         of the live scene until replaced by approved realistic rigged assets.
+        Trees, tents, banners, and side-line soldiers are similarly withheld
+        from close review until they are upgraded from prototype geometry.
       */}
     </group>
   );

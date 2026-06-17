@@ -40,10 +40,11 @@ skinned rigs and MIRROR-authored Kurukshetra equipment. They replace the older
 - Horse archers, chariot drivers, and elephant commanders are now seated on the
   mount/vehicle instead of exported as detached procedural mannequins.
 - The generator preserves CharMorph texture data with glTF `AUTO` image export.
-- Project-authored overlays add dhoti cloth, leather cuirass, straps, headband,
-  crown, face marks, and faction colors. Loose weapon overlays were removed from
-  the current export after close-camera screenshots showed detached/floating
-  bows, arrows, swords, and shields.
+- Project-authored overlays add dhoti cloth, leather cuirass, straps, crown,
+  face marks, and faction colors. Loose weapon overlays and ring-shaped
+  accessories were removed from the current export after close-camera
+  screenshots showed detached/floating bows, arrows, swords, shields, headbands,
+  wrist cuffs, ankle cuffs, tack rings, reins, and javelins.
 - Runtime loading still uses the same 12 fixed slot filenames, so gameplay and
   chess rules are unchanged.
 - `SkeletonUtils.clone` remains required so each rigged unit instance gets its
@@ -60,6 +61,12 @@ skinned rigs and MIRROR-authored Kurukshetra equipment. They replace the older
 - Weapons are temporarily absent from the current human GLB export; final weapon
   grips need authored hand poses, constraints, and combat animation before they
   return.
+- Horse tack, elephant ornaments, chariot reins, and side battlefield dressing
+  are temporarily reduced or hidden because the previous details floated or read
+  as toy props in close camera review.
+- Bright faction colors and circular target rings were toned down in the 3D
+  board view because they read as tabletop game markers instead of grounded
+  battlefield direction.
 - Cloth, armor, hair, face detail, jewelry, fingers, toes, and skin quality are
   improved for standalone humans but still not scanned/AAA quality.
 - Combat is still short chess-piece animation language, not full cinematic

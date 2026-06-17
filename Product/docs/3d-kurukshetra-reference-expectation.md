@@ -127,5 +127,13 @@ The references define direction and quality bar only. Production assets must be 
   off-board animal/vehicle props in the live board. Those loose weapon overlays
   are withheld from export, and the off-board procedural horse/elephant/chariot
   entourage is no longer rendered until proper rigged assets exist.
+- The latest close-camera review also found detached ring/tack artifacts and
+  toy-like environment dressing. Ring-shaped headband/wrist/ankle accessories,
+  horse cheek rings/stirrups/reins, elephant anklets/trunk rings, chariot reins,
+  spare javelins, trees, tents, banners, and side-line soldiers are withheld
+  until they can be replaced by grounded rigged/PBR assets.
+- The current live board now uses muted faction cloth/paint and subdued square
+  target overlays instead of bright blue/red game-token colors and circular
+  rings. This is a cleanup step only, not a final realism approval.
 - Remaining gap: animal/vehicle bodies are still procedural shells and do not
   meet the user's PUBG/GTA/Harry-Potter-chess realism target.

@@ -53,15 +53,15 @@ try {
       JSON.stringify({ state: { activeTheme: 'mahabharata', audioEnabled: false, audioVolume: 0.5 }, version: 0 })
     );
   });
-  await page.goto(`${BASE_URL}/play?stockfishBootCheck=1`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await page.goto(`${BASE_URL}/play?stockfishBootCheck=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForSelector('[data-qa="battlefield-3d"] canvas', { timeout: 25000 });
   await page.waitForFunction(() => Boolean(window.__MIRROR_PLAY_TEST__ && window.__BATTLEFIELD_TEST__), { timeout: 15000 });
   const modelStatus = await page.evaluate(async () => {
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    for (let i = 0; i < 30; i += 1) {
+    for (let i = 0; i < 100; i += 1) {
       const status = window.__BATTLEFIELD_TEST__.modelStatus?.();
       if (status?.checked) return status;
-      await sleep(100);
+      await sleep(250);
     }
     return window.__BATTLEFIELD_TEST__.modelStatus?.() ?? null;
   });
@@ -85,7 +85,7 @@ try {
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'reference-3d-desktop-initial.png'), fullPage: true });
   await assertCameraInspectionControls(page);
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'reference-3d-camera-pan-zoom.png'), fullPage: true });
-  await page.reload({ waitUntil: 'networkidle0', timeout: 60000 });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForSelector('[data-qa="battlefield-3d"] canvas', { timeout: 25000 });
   await page.waitForFunction(() => Boolean(window.__MIRROR_PLAY_TEST__ && window.__BATTLEFIELD_TEST__), { timeout: 15000 });
   await sleep(1200);
@@ -128,7 +128,7 @@ try {
 
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await page.setViewport({ width: 1440, height: 900 });
-  await page.reload({ waitUntil: 'networkidle0', timeout: 60000 });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
   await sleep(1200);
   const reduced = await page.evaluate(() => ({
     canvas: Boolean(document.querySelector('[data-qa="battlefield-3d"] canvas')),
@@ -161,7 +161,7 @@ try {
       JSON.stringify({ state: { activeTheme: 'mahabharata', audioEnabled: false, audioVolume: 0.5 }, version: 0 })
     );
   });
-  await noGlPage.goto(`${BASE_URL}/play?stockfishBootCheck=1`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await noGlPage.goto(`${BASE_URL}/play?stockfishBootCheck=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await sleep(1800);
   const noGlState = await noGlPage.evaluate(() => ({
     canvas: Boolean(document.querySelector('[data-qa="battlefield-3d"] canvas')),
@@ -332,6 +332,13 @@ function readGltfAnimationNames(gltf) {
 }
 
 async function assertStage(page, label) {
+  await page.waitForFunction(() => {
+    const stage = document.querySelector('[data-qa="battlefield-3d"]');
+    if (!stage) return false;
+    const rect = stage.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }, { timeout: 30000 });
+
   const state = await page.evaluate(() => {
     const stage = document.querySelector('[data-qa="battlefield-3d"]');
     const canvas = stage?.querySelector('canvas');
@@ -359,6 +366,10 @@ async function assertStage(page, label) {
       width: Math.min(state.width, viewport.width - Math.max(0, state.left)),
       height: Math.min(state.height, viewport.height - Math.max(0, state.top)),
     };
+    if (clip.width <= 0 || clip.height <= 0) {
+      failures.push(`${label}: stage clip invalid (${JSON.stringify(clip)})`);
+      return;
+    }
     const png = await page.screenshot({ clip });
     const pixels = analyzePng(png);
     if (pixels.nonBlank < 500) failures.push(`${label}: stage screenshot appears blank (${pixels.nonBlank} nonblank samples)`);

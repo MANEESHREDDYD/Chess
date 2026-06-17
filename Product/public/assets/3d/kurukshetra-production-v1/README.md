@@ -33,6 +33,15 @@ Current status:
   bow/arrow/sword/shield overlay meshes from export because they visibly
   detached from hands and backs in the user's screenshots. Weapons return only
   after they are authored as constrained rig assets with verified hand holds.
+- A third close-camera corrective pass on 2026-06-17 removes ring-shaped
+  headband, wrist, ankle, horse tack, elephant anklet/trunk, chariot rein, and
+  spare-javelin details because they appeared as floating hoops or loose wires
+  in gameplay screenshots. Prototype trees, tents, banners, and side-line
+  soldiers are also hidden from the live scene until upgraded.
+- A fourth close-camera corrective pass on 2026-06-17 mutes the faction cloth
+  and face-paint palette and changes the live 3D move targets from bright
+  circular rings to restrained square overlays so the board reads less like a
+  toy tabletop prototype. This does not close the remaining realistic asset gap.
 - Verification phrase: mounted/vehicle shells remain procedural; riders are CharMorph skinned rigs.
 
 License status:

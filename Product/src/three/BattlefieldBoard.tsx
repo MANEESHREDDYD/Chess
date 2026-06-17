@@ -20,14 +20,14 @@ const hitSquareMat = new THREE.MeshBasicMaterial({
   side: THREE.DoubleSide,
 });
 
-const ringGeo = new THREE.RingGeometry(0.12, 0.2, 24);
-const captureRingGeo = new THREE.RingGeometry(0.34, 0.45, 28);
-const haloGeo = new THREE.RingGeometry(0.4, 0.48, 32);
+const legalTargetGeo = new THREE.PlaneGeometry(SQUARE_SIZE * 0.28, SQUARE_SIZE * 0.28);
+const captureTargetGeo = new THREE.PlaneGeometry(SQUARE_SIZE * 0.76, SQUARE_SIZE * 0.76);
+const selectedGeo = new THREE.PlaneGeometry(SQUARE_SIZE * 0.9, SQUARE_SIZE * 0.9);
 
-const legalMat = new THREE.MeshBasicMaterial({ color: '#0a84ff', transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
-const captureMat = new THREE.MeshBasicMaterial({ color: '#0a84ff', transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false });
-const selectedMat = new THREE.MeshBasicMaterial({ color: '#409cff', transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
-const lastMoveMat = new THREE.MeshBasicMaterial({ color: '#0a84ff', transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false });
+const legalMat = new THREE.MeshBasicMaterial({ color: '#8eb7df', transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false });
+const captureMat = new THREE.MeshBasicMaterial({ color: '#d6b06f', transparent: true, opacity: 0.42, side: THREE.DoubleSide, depthWrite: false });
+const selectedMat = new THREE.MeshBasicMaterial({ color: '#8eb7df', transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false });
+const lastMoveMat = new THREE.MeshBasicMaterial({ color: '#8eb7df', transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false });
 const checkMat = new THREE.MeshBasicMaterial({ color: '#ff453a', transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
 const lastMoveGeo = new THREE.PlaneGeometry(SQUARE_SIZE * 0.96, SQUARE_SIZE * 0.96);
 
@@ -112,7 +112,7 @@ export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: B
       })}
       {highlights.selected ? (
         <mesh
-          geometry={haloGeo}
+          geometry={selectedGeo}
           material={selectedMat}
           rotation={[-Math.PI / 2, 0, 0]}
           position={[squareToPosition(highlights.selected)[0], 0.014, squareToPosition(highlights.selected)[2]]}
@@ -124,7 +124,7 @@ export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: B
         return (
           <mesh
             key={`legal-${square}`}
-            geometry={capture ? captureRingGeo : ringGeo}
+            geometry={capture ? captureTargetGeo : legalTargetGeo}
             material={capture ? captureMat : legalMat}
             rotation={[-Math.PI / 2, 0, 0]}
             position={[pos[0], 0.013, pos[2]]}
@@ -134,7 +134,7 @@ export function BattlefieldBoard({ highlights, onSquareClick, reducedMotion }: B
       {highlights.checkSquare ? (
         <mesh
           ref={checkRef}
-          geometry={haloGeo}
+          geometry={selectedGeo}
           material={checkMat}
           rotation={[-Math.PI / 2, 0, 0]}
           position={[squareToPosition(highlights.checkSquare)[0], 0.016, squareToPosition(highlights.checkSquare)[2]]}

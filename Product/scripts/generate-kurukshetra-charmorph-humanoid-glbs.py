@@ -85,8 +85,8 @@ def ensure_mats() -> None:
     mat("skin shadow", (0.38, 0.22, 0.14, 1), 0.74)
     mat("natural nails", (0.74, 0.57, 0.43, 1), 0.6)
     mat("cloth saffron", (0.82, 0.38, 0.12, 1), 0.86)
-    mat("cloth indigo", (0.025, 0.14, 0.42, 1), 0.84)
-    mat("cloth wine", (0.34, 0.05, 0.045, 1), 0.86)
+    mat("cloth indigo", (0.035, 0.095, 0.18, 1), 0.88)
+    mat("cloth wine", (0.22, 0.045, 0.035, 1), 0.88)
     mat("warm leather", (0.45, 0.25, 0.12, 1), 0.72)
     mat("dark leather", (0.18, 0.10, 0.055, 1), 0.78)
     mat("bronze", (0.70, 0.45, 0.20, 1), 0.42, 0.55)
@@ -95,8 +95,8 @@ def ensure_mats() -> None:
     mat("wood", (0.38, 0.22, 0.10, 1), 0.8)
     mat("hair black", (0.025, 0.018, 0.014, 1), 0.9)
     mat("paint white", (0.85, 0.78, 0.62, 1), 0.82)
-    mat("paint blue", (0.02, 0.25, 0.70, 1), 0.82)
-    mat("paint red", (0.55, 0.035, 0.03, 1), 0.82)
+    mat("paint blue", (0.055, 0.16, 0.30, 1), 0.88)
+    mat("paint red", (0.36, 0.06, 0.045, 1), 0.88)
     mat("eye white", (0.82, 0.75, 0.62, 1), 0.5)
     mat("eye dark iris", (0.035, 0.022, 0.014, 1), 0.32)
     mat("mouth shadow", (0.18, 0.055, 0.04, 1), 0.68)
@@ -428,8 +428,6 @@ def add_body_overlays(side: str, role: str, arm: bpy.types.Object) -> list[bpy.t
         out.append(cyl_between(f"cross chest strap {sx} upper", (sx * -0.145, -0.13, 1.405), (0, -0.142, 1.25), 0.009, "dark leather", 8))
         out.append(cyl_between(f"cross chest strap {sx} lower", (0, -0.142, 1.25), (sx * 0.145, -0.125, 1.075), 0.009, "dark leather", 8))
         out.append(sphere(f"small shoulder bronze cap {sx}", (sx * 0.18, -0.025, 1.36), (0.042, 0.03, 0.025), "bronze", 16))
-        out.append(torus(f"wrist guard {sx}", (sx * 0.35, -0.09, 0.86), 0.03, 0.006, "bronze", 24))
-    out.append(torus("thin cloth headband", (0, -0.015, 1.58), 0.105, 0.009, cloth, 42))
     out.append(sphere("top hair knot", (0, 0.04, 1.74), (0.045, 0.045, 0.052), "hair black", 18))
     out.append(cube("forehead tilak", (0, -0.105, 1.62), (0.012, 0.005, 0.05), "paint white", 0.001))
     out.append(cube("left cheek paint", (-0.055, -0.105, 1.54), (0.035, 0.004, 0.008), paint, 0.001))
@@ -481,13 +479,9 @@ def add_face_and_armor_microdetails(side: str, role: str, arm: bpy.types.Object)
     for i, x in enumerate((-0.12, -0.06, 0.0, 0.06, 0.12)):
         rivet = sphere(f"cuirass rivet row upper {i}", (x, -0.132, 1.36), (0.010, 0.006, 0.010), "brass", 10)
         out.append(parent_to_bone_keep_world(rivet, arm, "spine.004"))
-    for sx in (-1, 1):
-        cuff = torus(f"bone locked wrist cuff {sx}", (sx * 0.34, -0.115, 0.86), 0.035, 0.006, "brass", 28)
-        cuff.rotation_euler = (math.radians(88), 0, math.radians(12 * sx))
-        out.append(parent_to_bone_keep_world(cuff, arm, "hand.L" if sx < 0 else "hand.R"))
-        anklet = torus(f"bone locked ankle cuff {sx}", (sx * 0.10, -0.012, 0.12), 0.035, 0.006, "brass", 28)
-        anklet.rotation_euler = (math.radians(90), 0, 0)
-        out.append(parent_to_bone_keep_world(anklet, arm, "foot.L" if sx < 0 else "foot.R"))
+    # Ring-shaped wrist/ankle/head accessories read as detached floating hoops
+    # in close camera gameplay screenshots, so they are intentionally withheld
+    # until the accessory meshes are skin-weighted or constrained correctly.
     return out
 
 
